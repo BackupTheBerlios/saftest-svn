@@ -3,7 +3,9 @@
  *	I N C L U D E S
  *
  **********************************************************************/
-#include "saftest_driver.h"
+#include "saftest_driver_lib_utils.h"
+#include "saftest_log.h"
+#include "saftest_comm.h"
 #include "saLck.h"
 
 /**********************************************************************
@@ -254,6 +256,12 @@ const char *get_library_id()
 int get_library_message_size()
 {
     return sizeof(ais_test_lck_request_t);
+}
+
+void saftest_daemon_init(FILE *log_fp)
+{
+    assert(NULL != log_fp);
+    ais_test_log_set_fp(log_fp);
 }
 
 static ais_test_lck_request_op_t
@@ -1762,7 +1770,6 @@ saftest_driver_client_main(int argc, char **argv,
     if (!op_name_flag || !socket_file_flag) {
         usage();
     }
-    saftest_driver_client_init(run_path);
 
     ais_test_uds_connect(&client_fd, socket_file);
     ais_test_send_request(client_fd, first_request, first_request_length, 0);

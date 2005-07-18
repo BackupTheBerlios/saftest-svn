@@ -1,4 +1,7 @@
+#include "saftest_common.h"
 #include "saftest_driver.h"
+#include "saftest_log.h"
+#include "saftest_comm.h"
 
 typedef struct shared_library {
     void *handle;
@@ -7,6 +10,7 @@ typedef struct shared_library {
     int library_message_size;
     int loaded;
     saftest_driver_handle_client_message_func_t daemon_handle_message_func;
+    saftest_driver_init_func_t daemon_init_func;
     saftest_driver_add_fds_func_t daemon_add_fds_func;
     saftest_driver_check_fds_func_t daemon_check_fds_func;
     saftest_driver_client_main_func_t client_main;
@@ -32,8 +36,9 @@ typedef struct ais_test_request {
 
 GList *shlib_list = NULL;
 GList *client_list = NULL;
-int   daemon_listen_fd = -1;
-char  daemon_pid_file[BUF_SIZE];
+static int   daemon_listen_fd = -1;
+static char  daemon_pid_file[BUF_SIZE];
+static FILE *daemon_log_fp = NULL;
 
 /*
  * Each utility daemon must define this function in their own file.  Their
@@ -51,9 +56,10 @@ usage()
     printf("                         --log-file <log file>\n");
     printf("                         --pid-file <pid file>\n");
     printf("                         --load-libs <lib1>,<lib2>,...,<libn>\n");
-    printf("                        [-no-daemonize]\n");
+    printf("                        [--no-daemonize]\n");
 
     printf("\n");
+    ais_test_abort("blah\n");
     exit(255);
 }
 
@@ -166,6 +172,21 @@ load_shared_library(gpointer data, gpointer user_data)
                   error);
     }
     s->library_message_size = get_library_message_size_fn();
+/*
+    ais_test_log("Shared library \"%s\" has message size %d\n", 
+                 s->path, s->library_message_size);
+*/
+
+    dlerror(); /* Clear existing errors */
+    s->daemon_init_func = dlsym(s->handle, "saftest_daemon_init");
+    if ((error = dlerror()) != NULL)  {
+        err_exit ("Failed to lookup saf_test_daemon_init symbol: %s\n", 
+                  error);
+    }
+    if (NULL != daemon_log_fp) {
+        s->daemon_init_func(daemon_log_fp);
+    }
+
 /*
     ais_test_log("Shared library \"%s\" has message size %d\n", 
                  s->path, s->library_message_size);
@@ -465,7 +486,6 @@ main(int argc, char *argv[], char *envp[])
     int                 pid_file_flag = 0;
     int                 load_libs_flag = 0;
     char                run_path[BUF_SIZE];
-    char                pid_file[BUF_SIZE];
     char                log_file[BUF_SIZE];
     char                socket_file[BUF_SIZE];
     ais_test_request_t *first_request = NULL;
@@ -473,6 +493,8 @@ main(int argc, char *argv[], char *envp[])
     int is_daemon = 0;
     shared_library_t *shlib;
     GList *element;
+
+    saftest_driver_init("/root/src/saftest_ng/trunk/results/run");
 
     argc_copy = argc;
     argv_copy = (char **)malloc(sizeof(char*) * argc);
@@ -550,7 +572,7 @@ main(int argc, char *argv[], char *envp[])
                         usage();
                     }
                     pid_file_flag++;
-                    strcpy(pid_file, optarg);
+                    strcpy(daemon_pid_file, optarg);
                     break;
                 case LOAD_LIBS_OPTION:
                     if (load_libs_flag) {
@@ -585,10 +607,10 @@ main(int argc, char *argv[], char *envp[])
         }
         
         saftest_driver_init(run_path);
+        daemonize(!no_daemonize_flag, daemon_pid_file);
+        daemon_log_fp = setup_log_file(log_file);
         load_shared_libraries(libs_string);
 
-        daemonize(!no_daemonize_flag, pid_file);
-        setup_log_file(log_file);
         ais_test_daemon_select_loop(socket_file);
     } else {
         saftest_driver_client_init(run_path);

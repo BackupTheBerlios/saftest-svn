@@ -1,13 +1,13 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
-require 'AISImplementation'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
+require 'SAFImplementation'
 require 'test/unit'
 
 clmDir = "%s/AIS-clm-%s" % \
-         [ENV['AIS_TEST_ROOT'], 
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'], 
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << clmDir
 
 class ClusterTrackChangesWithNodeRunAndStopCase < Test::Unit::TestCase
@@ -21,14 +21,14 @@ class ClusterTrackChangesWithNodeRunAndStopCase < Test::Unit::TestCase
         @driver.start()
         @resourceID = @driver.createTestResource()
         @driver.init(@resourceID, true, true, "SA_DISPATCH_ALL",
-                     AISTestUtils::AISTestUtils.SA_AIS_OK)
+                     SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         @driver.selectObjectGet(@resourceID, false,
-                                AISTestUtils::AISTestUtils.SA_AIS_OK)
+                                SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         @driver.clusterTrack(@resourceID, true, true, false, false,
                              true, true, 0,
-                             AISTestUtils::AISTestUtils.SA_AIS_OK)
+                             SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         @impl = @driver.getImplementation()
-        tmpDir = '%s/results/tmp' % [ENV['AIS_TEST_ROOT']]
+        tmpDir = '%s/results/tmp' % [ENV['SAFTEST_ROOT']]
         @driver.runCommand("mkdir -p %s" % [tmpDir])
         @xmlFile = '%s/cluster.xml' % [tmpDir]
         validateCluster()
@@ -56,7 +56,7 @@ class ClusterTrackChangesWithNodeRunAndStopCase < Test::Unit::TestCase
             end
         end
 
-        @driver.finalize(@resourceID, AISTestUtils::AISTestUtils.SA_AIS_OK)
+        @driver.finalize(@resourceID, SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         @driver.stop()
     end
 
@@ -80,9 +80,9 @@ class ClusterTrackChangesWithNodeRunAndStopCase < Test::Unit::TestCase
 
     def validateCluster()
         @driver.dispatch(@resourceID, "SA_DISPATCH_ALL",
-                         AISTestUtils::AISTestUtils.SA_AIS_OK)
+                         SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         @driver.displayLastNotificationBuffer(@resourceID, @xmlFile, 
-                                              AISTestUtils::AISTestUtils.SA_AIS_OK)
+                                              SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         cluster1 = @impl.getClusterFromCommand()
         cluster2 = @impl.getClusterFromFile(@xmlFile)
         @driver.runCommand("rm -f %s" % [@xmlFile])

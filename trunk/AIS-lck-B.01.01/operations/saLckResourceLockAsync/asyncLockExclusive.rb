@@ -1,12 +1,12 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 require 'test/unit'
 
 lckDir = "%s/AIS-lck-%s" % \
-         [ENV['AIS_TEST_ROOT'], 
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'], 
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << lckDir
 
 class AsyncLockEXCase < Test::Unit::TestCase
@@ -19,18 +19,18 @@ class AsyncLockEXCase < Test::Unit::TestCase
         driver.start()
         resourceID = driver.createTestResource()
         driver.init(resourceID, "SA_DISPATCH_ALL",
-                    AISTestUtils::AISTestUtils.SA_AIS_OK)
+                    SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.selectObjectGet(resourceID, false,
-                               AISTestUtils::AISTestUtils.SA_AIS_OK)
+                               SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.resourceOpen(resourceID, "lock1", 
-                            AISTestUtils::AISTestUtils.SA_AIS_OK)
+                            SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.lockAsync(resourceID, 'EX', @@INVOCATION, false, false, false, 
                          false,
-                         AISTestUtils::AISTestUtils.SA_AIS_OK)
+                         SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         sleep(2)
         driver.lockGetAsyncLockStatus(resourceID, @@INVOCATION,
                                       'SA_LCK_LOCK_GRANTED',
-                                      AISTestUtils::AISTestUtils.SA_AIS_OK)
+                                      SAFTestUtils::SAFTestUtils.SA_AIS_OK)
 
         driver.stop()
     end

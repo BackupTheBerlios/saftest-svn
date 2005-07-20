@@ -1,14 +1,14 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 
 clmDir = "%s/AIS-clm-%s" % \
-         [ENV['AIS_TEST_ROOT'],
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'],
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << clmDir
 
-require 'AISTestSuite'
+require 'SAFTestSuite'
 require 'test/unit/testsuite'
 
 require 'lifecycle/saClmInitialize/initialize'
@@ -63,7 +63,7 @@ require 'operation/saClmClusterTrackStop/clusterTrackStopFinalizedHandle'
 require 'operation/saClmClusterTrackStop/clusterTrackStopInvalidHandle'
 require 'operation/saClmClusterTrackStop/clusterTrackStopWithTrackCurrent'
 
-class CLMTestSuite < AISTestSuite::AISTestSuite
+class CLMTestSuite < SAFTestSuite::SAFTestSuite
     def initialize()
         @suites = []
 

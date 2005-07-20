@@ -1,10 +1,10 @@
 module SGImplementation
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 
-require 'AISTestUtils'
+require 'SAFTestUtils'
 
-class SGBase < AISTestUtils::AISTestUtils
+class SGBase < SAFTestUtils::SAFTestUtils
     def initialize()
         super()
         @map = {} # key=>value

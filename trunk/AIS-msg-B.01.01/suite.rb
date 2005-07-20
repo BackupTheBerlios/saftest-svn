@@ -1,14 +1,14 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 
 msgDir = "%s/AIS-msg-%s" % \
-         [ENV['AIS_TEST_ROOT'],
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'],
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << msgDir
 
-require 'AISTestSuite'
+require 'SAFTestSuite'
 require 'test/unit/testsuite'
 
 require 'lifecycle/saMsgInitialize/initialize'
@@ -33,7 +33,7 @@ require 'lifecycle/saMsgDispatch/dispatchAllInvalidHandle'
 require 'lifecycle/saMsgDispatch/dispatchAllInvalidFlags'
 require 'lifecycle/saMsgDispatch/dispatchAllFinalizedHandle'
 
-class MSGTestSuite < AISTestSuite::AISTestSuite
+class MSGTestSuite < SAFTestSuite::SAFTestSuite
     def initialize()
         @suites = []
 

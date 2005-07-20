@@ -1,194 +1,194 @@
-module AISTestUtils
+module SAFTestUtils
 
-class AISTestUtils
-    def AISTestUtils.SA_AIS_OK
+class SAFTestUtils
+    def SAFTestUtils.SA_AIS_OK
         return 1
     end
 
-    def AISTestUtils.SA_AIS_ERR_LIBRARY
+    def SAFTestUtils.SA_AIS_ERR_LIBRARY
         return 2
     end
     
-    def AISTestUtils.SA_AIS_ERR_VERSION
+    def SAFTestUtils.SA_AIS_ERR_VERSION
         return 3
     end
 
-    def AISTestUtils.SA_AIS_ERR_INIT
+    def SAFTestUtils.SA_AIS_ERR_INIT
         return 4
     end
 
-    def AISTestUtils.SA_AIS_ERR_TIMEOUT
+    def SAFTestUtils.SA_AIS_ERR_TIMEOUT
         return 5
     end
 
-    def AISTestUtils.SA_AIS_ERR_TRY_AGAIN
+    def SAFTestUtils.SA_AIS_ERR_TRY_AGAIN
         return 6
     end
 
-    def AISTestUtils.SA_AIS_ERR_INVALID_PARAM
+    def SAFTestUtils.SA_AIS_ERR_INVALID_PARAM
         return 7
     end
 
-    def AISTestUtils.SA_AIS_ERR_NO_MEMORY
+    def SAFTestUtils.SA_AIS_ERR_NO_MEMORY
         return 8
     end
 
-    def AISTestUtils.SA_AIS_ERR_BAD_HANDLE
+    def SAFTestUtils.SA_AIS_ERR_BAD_HANDLE
         return 9
     end
 
-    def AISTestUtils.SA_AIS_ERR_BUSY
+    def SAFTestUtils.SA_AIS_ERR_BUSY
         return 10 
     end
 
-    def AISTestUtils.SA_AIS_ERR_ACCESS
+    def SAFTestUtils.SA_AIS_ERR_ACCESS
         return 11
     end
 
-    def AISTestUtils.SA_AIS_ERR_NOT_EXIST
+    def SAFTestUtils.SA_AIS_ERR_NOT_EXIST
         return 12
     end
 
-    def AISTestUtils.SA_AIS_ERR_NAME_TOO_LONG
+    def SAFTestUtils.SA_AIS_ERR_NAME_TOO_LONG
         return 13
     end
 
-    def AISTestUtils.SA_AIS_ERR_EXIST
+    def SAFTestUtils.SA_AIS_ERR_EXIST
         return 14
     end
 
-    def AISTestUtils.SA_AIS_ERR_NO_SPACE
+    def SAFTestUtils.SA_AIS_ERR_NO_SPACE
         return 15
     end
 
-    def AISTestUtils.SA_AIS_ERR_INTERRUPT
+    def SAFTestUtils.SA_AIS_ERR_INTERRUPT
         return 16
     end
 
-    def AISTestUtils.SA_AIS_ERR_NAME_NOT_FOUND
+    def SAFTestUtils.SA_AIS_ERR_NAME_NOT_FOUND
         return 17
     end
 
-    def AISTestUtils.SA_AIS_ERR_NO_RESOURCES
+    def SAFTestUtils.SA_AIS_ERR_NO_RESOURCES
         return 18
     end
 
-    def AISTestUtils.SA_AIS_ERR_NOT_SUPPORTED
+    def SAFTestUtils.SA_AIS_ERR_NOT_SUPPORTED
         return 19
     end
 
-    def AISTestUtils.SA_AIS_ERR_BAD_OPERATION
+    def SAFTestUtils.SA_AIS_ERR_BAD_OPERATION
         return 20
     end
 
-    def AISTestUtils.SA_AIS_ERR_FAILED_OPERATION
+    def SAFTestUtils.SA_AIS_ERR_FAILED_OPERATION
         return 21
     end
 
-    def AISTestUtils.SA_AIS_ERR_MESSAGE_ERROR
+    def SAFTestUtils.SA_AIS_ERR_MESSAGE_ERROR
         return 22
     end
 
-    def AISTestUtils.SA_AIS_ERR_QUEUE_FULL
+    def SAFTestUtils.SA_AIS_ERR_QUEUE_FULL
         return 23
     end
 
-    def AISTestUtils.SA_AIS_ERR_QUEUE_NOT_AVAILABLE
+    def SAFTestUtils.SA_AIS_ERR_QUEUE_NOT_AVAILABLE
         return 24
     end
 
-    def AISTestUtils.SA_AIS_ERR_BAD_FLAGS
+    def SAFTestUtils.SA_AIS_ERR_BAD_FLAGS
         return 25
     end
-    def AISTestUtils.SA_AIS_ERR_TOO_BIG
+    def SAFTestUtils.SA_AIS_ERR_TOO_BIG
         return 26
     end
 
-    def AISTestUtils.SA_AIS_ERR_NO_SECTIONS
+    def SAFTestUtils.SA_AIS_ERR_NO_SECTIONS
         return 27
     end
 
     def mapErrorCodeToString(code)
         case code
-            when AISTestUtils.SA_AIS_OK
+            when SAFTestUtils.SA_AIS_OK
                 return "SA_AIS_OK"
 
-            when AISTestUtils.SA_AIS_ERR_LIBRARY
+            when SAFTestUtils.SA_AIS_ERR_LIBRARY
                 return "SA_AIS_ERR_LIBRARY"
         
-            when AISTestUtils.SA_AIS_ERR_VERSION
+            when SAFTestUtils.SA_AIS_ERR_VERSION
                 return "SA_AIS_ERR_VERSION"
 
-            when AISTestUtils.SA_AIS_ERR_INIT
+            when SAFTestUtils.SA_AIS_ERR_INIT
                 return "SA_AIS_ERR_INIT"
 
-            when  AISTestUtils.SA_AIS_ERR_TIMEOUT
+            when  SAFTestUtils.SA_AIS_ERR_TIMEOUT
                 return "SA_AIS_ERR_TIMEOUT"
 
-            when AISTestUtils.SA_AIS_ERR_TRY_AGAIN
+            when SAFTestUtils.SA_AIS_ERR_TRY_AGAIN
                 return "SA_AIS_ERR_TRY_AGAIN"
 
-            when AISTestUtils.SA_AIS_ERR_INVALID_PARAM
+            when SAFTestUtils.SA_AIS_ERR_INVALID_PARAM
                 return "SA_AIS_ERR_INVALID_PARAM"
 
-            when AISTestUtils.SA_AIS_ERR_NO_MEMORY
+            when SAFTestUtils.SA_AIS_ERR_NO_MEMORY
                 return "SA_AIS_ERR_NO_MEMORY"
 
-            when AISTestUtils.SA_AIS_ERR_BAD_HANDLE
+            when SAFTestUtils.SA_AIS_ERR_BAD_HANDLE
                 return "SA_AIS_ERR_BAD_HANDLE"
 
-            when AISTestUtils.SA_AIS_ERR_BUSY
+            when SAFTestUtils.SA_AIS_ERR_BUSY
                 return "SA_AIS_ERR_BUSY"
 
-            when AISTestUtils.SA_AIS_ERR_ACCESS
+            when SAFTestUtils.SA_AIS_ERR_ACCESS
                 return "SA_AIS_ERR_ACCESS"
 
-            when AISTestUtils.SA_AIS_ERR_NOT_EXIST
+            when SAFTestUtils.SA_AIS_ERR_NOT_EXIST
                 return "SA_AIS_ERR_NOT_EXIST"
 
-            when AISTestUtils.SA_AIS_ERR_NAME_TOO_LONG
+            when SAFTestUtils.SA_AIS_ERR_NAME_TOO_LONG
                 return "SA_AIS_ERR_NAME_TOO_LONG"
 
-            when AISTestUtils.SA_AIS_ERR_EXIST
+            when SAFTestUtils.SA_AIS_ERR_EXIST
                 return "SA_AIS_ERR_EXIST"
 
-            when AISTestUtils.SA_AIS_ERR_NO_SPACE
+            when SAFTestUtils.SA_AIS_ERR_NO_SPACE
                 return "SA_AIS_ERR_NO_SPACE"
 
-            when AISTestUtils.SA_AIS_ERR_INTERRUPT
+            when SAFTestUtils.SA_AIS_ERR_INTERRUPT
                 return "SA_AIS_ERR_INTERRUPT"
 
-            when AISTestUtils.SA_AIS_ERR_NAME_NOT_FOUND
+            when SAFTestUtils.SA_AIS_ERR_NAME_NOT_FOUND
                 return "SA_AIS_ERR_NAME_NOT_FOUND"
 
-            when AISTestUtils.SA_AIS_ERR_NO_RESOURCES
+            when SAFTestUtils.SA_AIS_ERR_NO_RESOURCES
                 return "SA_AIS_ERR_NO_RESOURCES"
 
-            when AISTestUtils.SA_AIS_ERR_NOT_SUPPORTED
+            when SAFTestUtils.SA_AIS_ERR_NOT_SUPPORTED
                 return "SA_AIS_ERR_NOT_SUPPORTED"
 
-            when AISTestUtils.SA_AIS_ERR_BAD_OPERATION
+            when SAFTestUtils.SA_AIS_ERR_BAD_OPERATION
                 return "SA_AIS_ERR_BAD_OPERATION"
 
-            when AISTestUtils.SA_AIS_ERR_FAILED_OPERATION
+            when SAFTestUtils.SA_AIS_ERR_FAILED_OPERATION
                 return "SA_AIS_ERR_FAILED_OPERATION"
 
-            when AISTestUtils.SA_AIS_ERR_MESSAGE_ERROR
+            when SAFTestUtils.SA_AIS_ERR_MESSAGE_ERROR
                 return "SA_AIS_ERR_MESSAGE_ERROR"
 
-            when AISTestUtils.SA_AIS_ERR_QUEUE_FULL
+            when SAFTestUtils.SA_AIS_ERR_QUEUE_FULL
                 return "SA_AIS_ERR_QUEUE_FULL"
 
-            when AISTestUtils.SA_AIS_ERR_QUEUE_NOT_AVAILABLE
+            when SAFTestUtils.SA_AIS_ERR_QUEUE_NOT_AVAILABLE
                 return "SA_AIS_ERR_QUEUE_NOT_AVAILABLE"
 
-            when AISTestUtils.SA_AIS_ERR_BAD_FLAGS
+            when SAFTestUtils.SA_AIS_ERR_BAD_FLAGS
                 return "SA_AIS_ERR_BAD_FLAGS"
 
-            when AISTestUtils.SA_AIS_ERR_TOO_BIG
+            when SAFTestUtils.SA_AIS_ERR_TOO_BIG
                 return "SA_AIS_ERR_TOO_BIG"
 
-            when AISTestUtils.SA_AIS_ERR_NO_SECTIONS
+            when SAFTestUtils.SA_AIS_ERR_NO_SECTIONS
                 return "SA_AIS_ERR_NO_SECTIONS"
         end
     end
@@ -197,29 +197,29 @@ class AISTestUtils
     @@SA_AIS_MAJOR_VERSION="01"
     @@SA_AIS_MINOR_VERSION="01"
 
-    def AISTestUtils.SA_AIS_RELEASE_CODE_INTEGER()
+    def SAFTestUtils.SA_AIS_RELEASE_CODE_INTEGER()
         return @@SA_AIS_RELEASE_CODE[0].to_i
     end
 
-    def AISTestUtils.SA_AIS_MAJOR_VERSION_INTEGER()
+    def SAFTestUtils.SA_AIS_MAJOR_VERSION_INTEGER()
         return @@SA_AIS_MAJOR_VERSION.to_i
     end
 
-    def AISTestUtils.SA_AIS_MINOR_VERSION_INTEGER()
+    def SAFTestUtils.SA_AIS_MINOR_VERSION_INTEGER()
         return @@SA_AIS_MINOR_VERSION.to_i
     end
 
-    def AISTestUtils.getAISLibVersion()
+    def SAFTestUtils.getAISLibVersion()
         return "%s.%s.%s" % \
                [@@SA_AIS_RELEASE_CODE, @@SA_AIS_MAJOR_VERSION,
                 @@SA_AIS_MINOR_VERSION]
     end
 
     def initialize()
-        require 'AISSys'
+        require 'SAFSys'
 
-        @aisSys = AISSys::AISSys.new()
-        @rootDir = ENV['AIS_TEST_ROOT']
+        @safSys = SAFSys::SAFSys.new()
+        @rootDir = ENV['SAFTEST_ROOT']
         @runDir = "%s/results/run" % [@rootDir]
         @logDir = "%s/results/log" % [@rootDir]
         @logLevel = 0
@@ -258,16 +258,16 @@ class AISTestUtils
     EXPECT_FAILURE = false
 
     def fullHostname()
-        return @aisSys.fullHostname()
+        return @safSys.fullHostname()
     end
 
     def simpleHostname()
-        return @aisSys.simpleHostname()
+        return @safSys.simpleHostname()
     end
 
     def logCommand(cmd, node, user)
         if nil == node
-            node = @aisSys.simpleHostname()
+            node = @safSys.simpleHostname()
         end
         if nil == user
             user = 'root'
@@ -277,14 +277,14 @@ class AISTestUtils
 
     def runCommand(cmd, node=nil, user=nil)
         logCommand(cmd, node, user)
-        exitCode = @aisSys.runCommand(cmd, node, user)
+        exitCode = @safSys.runCommand(cmd, node, user)
         return exitCode
     end
 
     def runAndCheckCommand(cmd, expectZeroStatus, errorMessage="", 
                            node=nil, user=nil)
         logCommand(cmd, node, user)
-        exitCode = @aisSys.runCommand(cmd, node, user)
+        exitCode = @safSys.runCommand(cmd, node, user)
         zeroStatus = (exitCode == 0)
         if expectZeroStatus != zeroStatus then
             failed(errorMessage)
@@ -293,7 +293,7 @@ class AISTestUtils
 
     def captureCommand(cmd, node=nil, user=nil)
         logCommand(cmd, node, user)
-        array = @aisSys.captureCommand(cmd, node, user)
+        array = @safSys.captureCommand(cmd, node, user)
         return array
     end
 

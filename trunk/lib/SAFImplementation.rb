@@ -1,8 +1,8 @@
-module AISImplementation
+module SAFImplementation
 
-require 'AISTestUtils'
+require 'SAFTestUtils'
 
-class AISNetworkAddressImplementation < AISTestUtils::AISTestUtils
+class SAFNetworkAddressImplementation < SAFTestUtils::SAFTestUtils
     def initialize()
         super()
         @family = 'SA_CLM_AF_INET'
@@ -35,7 +35,7 @@ class AISNetworkAddressImplementation < AISTestUtils::AISTestUtils
     end
 
     def ==(other)
-        return false unless AISNetworkAddressImplementation === other
+        return false unless SAFNetworkAddressImplementation === other
         return false unless @family == other.getFamily()
         return false unless @length == other.getLength()
         return false unless @value == other.getValue()
@@ -50,7 +50,7 @@ class AISNetworkAddressImplementation < AISTestUtils::AISTestUtils
     end
 end
 
-class AISNodeImplementation < AISTestUtils::AISTestUtils
+class SAFNodeImplementation < SAFTestUtils::SAFTestUtils
     def initialize()
         super()
         @name = ''
@@ -114,7 +114,7 @@ class AISNodeImplementation < AISTestUtils::AISTestUtils
     end
 
     def ==(other)
-        return false unless AISNodeImplementation === other
+        return false unless SAFNodeImplementation === other
         return false unless @name == other.getName()
         return false unless @id == other.getID()
         return false unless @member == other.getMember()
@@ -147,7 +147,7 @@ class AISNodeImplementation < AISTestUtils::AISTestUtils
     end
 end
 
-class AISClusterImplementation < AISTestUtils::AISTestUtils
+class SAFClusterImplementation < SAFTestUtils::SAFTestUtils
     def initialize()
         super()
         @nodes = [] # Array of node objects
@@ -168,7 +168,7 @@ class AISClusterImplementation < AISTestUtils::AISTestUtils
                             when ''
                                 raise 'Empty Start Tag?'
                             when 'SAFNode'
-                                currentNode = AISNodeImplementation.new()
+                                currentNode = SAFNodeImplementation.new()
                                 # No attributes on these tags
                                 #data.each do |key, value|
                                 #end
@@ -198,7 +198,7 @@ class AISClusterImplementation < AISTestUtils::AISTestUtils
                                 currentNode.setInitialViewNumber(data.to_i)
                             when 'Address'
                                 currentAddress = 
-                                    AISNetworkAddressImplementation.new()
+                                    SAFNetworkAddressImplementation.new()
                             when 'family'
                                 currentAddress.setFamily(data)
                             when 'length'
@@ -276,7 +276,7 @@ class AISClusterImplementation < AISTestUtils::AISTestUtils
     end
 
     def ==(other)
-        return false unless AISClusterImplementation === other
+        return false unless SAFClusterImplementation === other
         return false unless other.getNodes().length == @nodes.length
 
         @nodes.each do |selfNode|
@@ -296,7 +296,7 @@ class AISClusterImplementation < AISTestUtils::AISTestUtils
 
 end
 
-class AISImplementation < AISTestUtils::AISTestUtils
+class SAFImplementation < SAFTestUtils::SAFTestUtils
     def initialize(cluster_commands_path)
         super()
         @config = {}
@@ -315,7 +315,7 @@ class AISImplementation < AISTestUtils::AISTestUtils
     end
 
     def getClusterFromCommand()
-        cluster = AISClusterImplementation.new()
+        cluster = SAFClusterImplementation.new()
         xml = ''
         array = captureCommand(@config['DISPLAY_CLUSTER'])
         ret = array[0]
@@ -338,7 +338,7 @@ class AISImplementation < AISTestUtils::AISTestUtils
     end
 
     def getClusterFromFile(path)
-        cluster = AISClusterImplementation.new()
+        cluster = SAFClusterImplementation.new()
         f = open(File.expand_path(path), 'r')
         xmlLines = f.readlines()
         f.close
@@ -353,7 +353,7 @@ class AISImplementation < AISTestUtils::AISTestUtils
 
     def stopNode(nodeName)
         stopCommand = "%s %s" % [@config['STOP_NODE'], nodeName]
-        #AISTestUtils::AISTestUtils::EXPECT_SUCCESS
+        #SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS
         runAndCheckCommand(stopCommand, 
                            EXPECT_SUCCESS,
                            "Unable to halt node %s" % [nodeName])
@@ -361,7 +361,7 @@ class AISImplementation < AISTestUtils::AISTestUtils
 
     def startNode(nodeName)
         startCommand = "%s %s" % [@config['START_NODE'], nodeName]
-        #AISTestUtils::AISTestUtils::EXPECT_SUCCESS
+        #SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS
         runAndCheckCommand(startCommand, 
                            EXPECT_SUCCESS,
                            "Unable to start node %s" % [nodeName])
@@ -373,6 +373,6 @@ class AISImplementation < AISTestUtils::AISTestUtils
         end
     end
 
-end # class AISImplementation
+end # class SAFImplementation
 
-end # module AISImplementation
+end # module SAFImplementation

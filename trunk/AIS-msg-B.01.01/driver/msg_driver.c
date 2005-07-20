@@ -60,6 +60,8 @@ typedef struct ais_test_msg_request {
     int null_version_flag;
     int null_selection_object_flag;
     char queue_name[BUF_SIZE];
+    SaMsgQueueCreationAttributesT queue_creation_attributes;
+    SaMsgQueueOpenFlagsT queue_open_flags;
 } ais_test_msg_request_t;
 
 /*
@@ -82,6 +84,7 @@ typedef struct msg_resource {
     SaTimeT timeout;
     SaDispatchFlagsT dispatch_flags;
     SaMsgHandleT msg_handle;
+    SaMsgQueueHandleT queue_handle;
     SaMsgCallbacksT msg_callbacks;
     SaSelectionObjectT selection_object;
 } msg_resource_t;
@@ -159,6 +162,17 @@ usage()
     printf("                           <SA_MSG_DISPATCH_BLOCKING |\n");
     printf("                            SA_MSG_DISPATCH_ONE |\n");
     printf("                            SA_MSG_DISPATCH_ALL>  \n");
+    printf("\n");
+    printf("Client Usage: msg_driver --o QUEUE_OPEN\n");
+    printf("                         --socket-file <socket path>\n");
+    printf("                         --run-dir <run path>\n");
+    printf("                         --resource-id <resource id>\n");
+    printf("                         --retention-time <time>\n");
+    printf("                         --size-array <sizes CDL>\n");
+    printf("                         [--persistent]\n");
+    printf("                         [--create]\n");
+    printf("                         [--receive-callback]\n");
+    printf("                         [--empty]\n");
     printf("\n");
 	exit(255);
 }
@@ -453,6 +467,7 @@ ais_test_daemon_handle_queue_open_request(ais_test_msg_request_t *request,
                                           ais_test_msg_reply_t *reply)
 {
     msg_resource_t *msg_res = NULL;
+    SaNameT queue_name;
 
     ais_test_log("Received a queue open request for id %d queue name %s\n",
                 request->msg_resource_id, request->queue_name);
@@ -461,6 +476,14 @@ ais_test_daemon_handle_queue_open_request(ais_test_msg_request_t *request,
         ais_test_abort("Unknown resource id %d\n",
                     request->msg_resource_id);
     }
+    queue_name.length = strlen(request->queue_name)+1;
+    strncpy(queue_name.value, request->queue_name, queue_name.length);
+
+    reply->status = saMsgQueueOpen(msg_res->msg_handle, 
+                                   &queue_name,
+                                   &(request->queue_creation_attributes),
+                                   request->queue_open_flags,
+                                   0, &(msg_res->queue_handle)); 
 }
 
 void
@@ -717,13 +740,34 @@ int
 ais_test_client_handle_queue_open_request(int fd,
                                           ais_test_msg_request_t *request,
                                           int msg_resource_id,
-                                          const char *queue_name)
+                                          const char *queue_name,
+                                          SaTimeT retention_time,
+                                          SaSizeT *sizes,
+                                          int persistent, int create, 
+                                          int receive_callback, int empty)
 {
     ais_test_msg_reply_t *reply;
     SaAisErrorT status;
  
     request->msg_resource_id = msg_resource_id;
     strcpy(request->queue_name, queue_name);
+    if (persistent) {
+        request->queue_creation_attributes.creationFlags 
+            |= SA_MSG_QUEUE_PERSISTENT;
+    }
+    memcpy(request->queue_creation_attributes.size, sizes, 
+           sizeof(request->queue_creation_attributes.size));
+    request->queue_creation_attributes.retentionTime = retention_time;
+    if (create) {
+        request->queue_open_flags |= SA_MSG_QUEUE_CREATE;
+    }
+    if (receive_callback) {
+        request->queue_open_flags |= SA_MSG_QUEUE_RECEIVE_CALLBACK;
+    }
+    if (empty) {
+        request->queue_open_flags |= SA_MSG_QUEUE_EMPTY;
+    }
+    
     reply = ais_test_send_request(fd, request,
                                   sizeof(ais_test_msg_request_t),
                                   sizeof(ais_test_msg_reply_t));
@@ -764,6 +808,12 @@ ais_test_client_handle_queue_open_request(int fd,
 #define VERSION_RELEASE_CODE_OPTION 40
 #define VERSION_MAJOR_OPTION 41
 #define VERSION_MINOR_OPTION 42
+#define RETENTION_TIME_OPTION 43
+#define SIZE_ARRAY_OPTION 44
+#define PERSISTENT_OPTION 45
+#define CREATE_OPTION 46
+#define RECEIVE_CALLBACK_OPTION 47
+#define EMPTY_OPTION 48
 
 int
 saftest_driver_client_main(int argc, char **argv,
@@ -811,6 +861,17 @@ saftest_driver_client_main(int argc, char **argv,
     int next_option = 0;
     ais_test_msg_request_t *request;
     int client_fd;
+    int                 retention_time_flag = 0;
+    SaTimeT             retention_time;
+    int                 size_array_flag = 0;
+    SaSizeT             sizes[SA_MSG_MESSAGE_LOWEST_PRIORITY+1];
+    char             	size_array_buffer[BUF_SIZE];
+    char               *size_array_token = NULL;
+    int                 size_array_ndx = 0;
+    int                 persistent_flag = 0;
+    int                 create_flag = 0;
+    int                 receive_callback_flag = 0;
+    int                 empty_flag = 0;
 
     const struct option long_options[] = {
         { "help",     0, NULL, HELP_OPTION},
@@ -841,6 +902,12 @@ saftest_driver_client_main(int argc, char **argv,
         { "version-release-code", 1, NULL, VERSION_RELEASE_CODE_OPTION},
         { "version-major-code", 1, NULL, VERSION_MAJOR_OPTION},
         { "version-minor-code", 1, NULL, VERSION_MINOR_OPTION},
+        { "retention-time", 1, NULL, RETENTION_TIME_OPTION},
+        { "size-array", 1, NULL, SIZE_ARRAY_OPTION},
+        { "persistent", 0, NULL, PERSISTENT_OPTION},
+        { "create", 0, NULL, CREATE_OPTION},
+        { "receive-callback", 0, NULL, RECEIVE_CALLBACK_OPTION},
+        { "empty", 0, NULL, EMPTY_OPTION},
         { NULL,       0, NULL, 0   }   /* Required at end of array.  */
     };
 
@@ -1035,6 +1102,52 @@ saftest_driver_client_main(int argc, char **argv,
                 invocation_flag++;
                 invocation = atoi(optarg);
                 break;
+            case RETENTION_TIME_OPTION:
+                if (retention_time_flag) {
+                    usage();
+                }
+                retention_time_flag++;
+                retention_time = atoi(optarg);
+                break;
+            case SIZE_ARRAY_OPTION:
+                if (size_array_flag) {
+                    usage();
+                }
+                size_array_flag++;
+                strcpy(size_array_buffer, optarg);
+                for (size_array_ndx = 0, 
+                     size_array_token = strtok(size_array_buffer, ","); 
+                     NULL != size_array_token;
+                     size_array_ndx++, 
+                     size_array_token = strtok(NULL, ",")) {
+                    assert(size_array_ndx <= SA_MSG_MESSAGE_LOWEST_PRIORITY);
+                    sizes[size_array_ndx] = atoi(size_array_token); 
+                }
+                break;
+            case PERSISTENT_OPTION:
+                if (persistent_flag) {
+                    usage();
+                }
+                persistent_flag++;
+                break;
+            case CREATE_OPTION:
+                if (create_flag) {
+                    usage();
+                }
+                create_flag++;
+                break;
+            case RECEIVE_CALLBACK_OPTION:
+                if (receive_callback_flag) {
+                    usage();
+                }
+                receive_callback_flag++;
+                break;
+            case EMPTY_OPTION:
+                if (empty_flag) {
+                    usage();
+                }
+                empty_flag++;
+                break;
             case -1:
                 /* No more options */
                 break;
@@ -1123,7 +1236,9 @@ saftest_driver_client_main(int argc, char **argv,
             }
             status = 
                 ais_test_client_handle_queue_open_request(
-                    client_fd, request, msg_resource_id, queue_name);
+                    client_fd, request, msg_resource_id, queue_name,
+                    retention_time, sizes, persistent_flag,
+                    create_flag, receive_callback_flag, empty_flag);
             break;
         default:
             ais_test_abort("Client received request with unknown op %s\n",

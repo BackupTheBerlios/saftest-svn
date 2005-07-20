@@ -1,12 +1,12 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 require 'test/unit'
 
 lckDir = "%s/AIS-lck-%s" % \
-         [ENV['AIS_TEST_ROOT'], 
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'], 
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << lckDir
 
 class SelectionObjectGetInvalidHandleCase < Test::Unit::TestCase
@@ -18,7 +18,7 @@ class SelectionObjectGetInvalidHandleCase < Test::Unit::TestCase
         driver.start()
         resourceID = driver.createTestResource()
         driver.selectObjectGet(resourceID, false,
-                               AISTestUtils::AISTestUtils.SA_AIS_ERR_BAD_HANDLE)
+                               SAFTestUtils::SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
         driver.stop()
     end
 end

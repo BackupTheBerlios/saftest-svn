@@ -1,6 +1,6 @@
-module AISSys
+module SAFSys
 
-class AISSys
+class SAFSys
     require 'socket'
 
     def initialize()
@@ -12,8 +12,8 @@ class AISSys
         # This is stored in the configuration file.
         user = 'root'
         password = ''
-        remoteCmd = "export AIS_ROOT=%s; %s 2>&1; echo \"+EXITCODE+:$?\"" %
-            [ENV['AIS_ROOT'], cmd]
+        remoteCmd = "export SAF_ROOT=%s; %s 2>&1; echo \"+EXITCODE+:$?\"" %
+            [ENV['SAF_ROOT'], cmd]
         if node != nil
             result = "ssh %s@%s '%s'" % [user, node, remoteCmd]
             return result
@@ -64,6 +64,6 @@ class AISSys
         end
     end
 
-end # class AISSys
+end # class SAFSys
 
-end # module AISSys
+end # module SAFSys

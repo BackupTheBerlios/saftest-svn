@@ -1,14 +1,14 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 
 lckDir = "%s/AIS-lck-%s" % \
-         [ENV['AIS_TEST_ROOT'],
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'],
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << lckDir
 
-require 'AISTestSuite'
+require 'SAFTestSuite'
 require 'test/unit/testsuite'
 
 require 'lifecycle/saLckInitialize/initialize'
@@ -54,7 +54,7 @@ require 'operations/saLckResourceUnlock/unlockInvalidLockID'
 require 'operations/saLckResourceUnlock/unlockExclusiveAsyncLock'
 require 'operations/saLckResourceUnlock/unlockProtectedReadAsyncLock'
 
-class LCKTestSuite < AISTestSuite::AISTestSuite
+class LCKTestSuite < SAFTestSuite::SAFTestSuite
     def initialize()
         @suites = []
 

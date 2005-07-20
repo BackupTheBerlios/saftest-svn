@@ -1,13 +1,13 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
-require 'AISImplementation'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
+require 'SAFImplementation'
 require 'test/unit'
 
 clmDir = "%s/AIS-clm-%s" % \
-         [ENV['AIS_TEST_ROOT'], 
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'], 
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << clmDir
 
 class ClusterTrackCurrentCase < Test::Unit::TestCase
@@ -19,18 +19,18 @@ class ClusterTrackCurrentCase < Test::Unit::TestCase
         driver.start()
         resourceID = driver.createTestResource()
         driver.init(resourceID, true, true, "SA_DISPATCH_ONE",
-                    AISTestUtils::AISTestUtils.SA_AIS_OK)
+                    SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.selectObjectGet(resourceID, false,
-                               AISTestUtils::AISTestUtils.SA_AIS_OK)
+                               SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.clusterTrack(resourceID, true, false, false, false,
                             true, true, 0,
-                            AISTestUtils::AISTestUtils.SA_AIS_OK)
+                            SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         impl = driver.getImplementation()
-        tmpDir = '%s/results/tmp' % [ENV['AIS_TEST_ROOT']]
+        tmpDir = '%s/results/tmp' % [ENV['SAFTEST_ROOT']]
         driver.runCommand("mkdir -p %s" % [tmpDir])
         xmlFile = '%s/cluster.xml' % [tmpDir]
         driver.displayLastNotificationBuffer(resourceID, xmlFile, 
-                                             AISTestUtils::AISTestUtils.SA_AIS_OK)
+                                             SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         impl = driver.getImplementation()
         cluster1 = impl.getClusterFromCommand()
         cluster2 = impl.getClusterFromFile(xmlFile)
@@ -49,7 +49,7 @@ class ClusterTrackCurrentCase < Test::Unit::TestCase
         end
                                              
 
-        driver.finalize(resourceID, AISTestUtils::AISTestUtils.SA_AIS_OK)
+        driver.finalize(resourceID, SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.stop()
     end
 end

@@ -1,11 +1,11 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 
 def usage(msg=nil)
     print msg + "\n" if msg
-    print "ais_test.rb [--verbose] \n"
+    print "saftest.rb [--verbose] \n"
     print "            run [--directory <directory>]\n"
     print "            clean\n"
     exit 1
@@ -28,7 +28,7 @@ class Log
 end # class
 
 require 'test/unit/ui/console/testrunner'
-class AISTestConsoleRunner < Test::Unit::UI::Console::TestRunner
+class SAFTestConsoleRunner < Test::Unit::UI::Console::TestRunner
     def test_started(name)
         output_single("BEGIN %s\n" % [name])
     end
@@ -38,9 +38,9 @@ class AISTestConsoleRunner < Test::Unit::UI::Console::TestRunner
     end
 end # class
 
-class AISTestBundle
+class SAFTestBundle
     require 'test/unit/testsuite'
-    require 'AISTestSuite'
+    require 'SAFTestSuite'
 
     @@suite = Test::Unit::TestSuite.new()
 
@@ -49,7 +49,7 @@ class AISTestBundle
     end
 
     def loadSuites()
-        ObjectSpace.each_object(AISTestSuite::AISTestSuite) do |obj|
+        ObjectSpace.each_object(SAFTestSuite::SAFTestSuite) do |obj|
             $log.print("Object is \"%s\"" % [obj.to_s])
             @@suite << obj.suite
         end
@@ -61,15 +61,15 @@ class AISTestBundle
     end
 
     def run()
-        #Test::Unit::UI::Console::TestRunner.run(AISTestBundle, 
+        #Test::Unit::UI::Console::TestRunner.run(SAFTestBundle, 
                                                 #Test::Unit::UI::VERBOSE)
-        AISTestConsoleRunner.run(AISTestBundle, Test::Unit::UI::VERBOSE)
+        SAFTestConsoleRunner.run(SAFTestBundle, Test::Unit::UI::VERBOSE)
     end
 end # class 
 
 # globals
 $log = Log.new()
-$utils = AISTestUtils::AISTestUtils.new()
+$utils = SAFTestUtils::SAFTestUtils.new()
 op = nil
 
 while (true)
@@ -89,16 +89,16 @@ while (true)
 end
 
 if op == 'run'
-    bundle = AISTestBundle.new
+    bundle = SAFTestBundle.new
 
-    cmd = 'mkdir -p %s/results/tmp' % [ENV['AIS_TEST_ROOT']]
-    $utils.runAndCheckCommand(cmd, AISTestUtils::AISTestUtils::EXPECT_SUCCESS, 
+    cmd = 'mkdir -p %s/results/tmp' % [ENV['SAFTEST_ROOT']]
+    $utils.runAndCheckCommand(cmd, SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS, 
                               "Error running %s" % [cmd])
-    cmd = 'mkdir -p %s/results/run' % [ENV['AIS_TEST_ROOT']]
-    $utils.runAndCheckCommand(cmd, AISTestUtils::AISTestUtils::EXPECT_SUCCESS, 
+    cmd = 'mkdir -p %s/results/run' % [ENV['SAFTEST_ROOT']]
+    $utils.runAndCheckCommand(cmd, SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS, 
                               "Error running %s" % [cmd])
-    cmd = 'mkdir -p %s/results/log' % [ENV['AIS_TEST_ROOT']]
-    $utils.runAndCheckCommand(cmd, AISTestUtils::AISTestUtils::EXPECT_SUCCESS, 
+    cmd = 'mkdir -p %s/results/log' % [ENV['SAFTEST_ROOT']]
+    $utils.runAndCheckCommand(cmd, SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS, 
                               "Error running %s" % [cmd])
     while (true)
         arg = ARGV.shift
@@ -111,11 +111,11 @@ if op == 'run'
     end
     bundle.loadSuites()
     bundle.run()
-    #engine = AISTestEngine.new(bundle)
+    #engine = SAFTestEngine.new(bundle)
     #engine.run()
 elsif op == 'clean'
-    cmd = 'rm -rf %s/results' % [ENV['AIS_TEST_ROOT']]
-    $utils.runAndCheckCommand(cmd, AISTestUtils::AISTestUtils::EXPECT_SUCCESS, 
+    cmd = 'rm -rf %s/results' % [ENV['SAFTEST_ROOT']]
+    $utils.runAndCheckCommand(cmd, SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS, 
                                 "Error running %s" % [cmd])
 else
     usage("unknown operation: %s" % [op])

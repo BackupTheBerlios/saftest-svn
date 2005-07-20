@@ -1,8 +1,8 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-$: << "%s/implementation/serviceguard" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+$: << "%s/implementation/serviceguard" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 require 'SGImplementation'
 
 module SGImplementation

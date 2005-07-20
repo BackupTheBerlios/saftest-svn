@@ -1,12 +1,12 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 require 'test/unit'
 
 lckDir = "%s/AIS-lck-%s" % \
-         [ENV['AIS_TEST_ROOT'], 
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'], 
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << lckDir
 
 class InitializeInvalidVersionCase < Test::Unit::TestCase
@@ -20,7 +20,7 @@ class InitializeInvalidVersionCase < Test::Unit::TestCase
         driver.initWithOptions(resourceID, "SA_DISPATCH_ALL",
                                0, 0, 0,
                                false, false, false,
-                               AISTestUtils::AISTestUtils.SA_AIS_ERR_VERSION)
+                               SAFTestUtils::SAFTestUtils.SA_AIS_ERR_VERSION)
 
         driver.stop()
     end

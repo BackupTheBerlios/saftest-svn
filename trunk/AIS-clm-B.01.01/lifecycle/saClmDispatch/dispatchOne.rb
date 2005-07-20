@@ -1,12 +1,12 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 require 'test/unit'
 
 clmDir = "%s/AIS-clm-%s" % \
-         [ENV['AIS_TEST_ROOT'], 
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'], 
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << clmDir
 
 class DispatchOneCase < Test::Unit::TestCase
@@ -18,12 +18,12 @@ class DispatchOneCase < Test::Unit::TestCase
         driver.start()
         resourceID = driver.createTestResource()
         driver.init(resourceID, true, false, "SA_DISPATCH_ONE",
-                    AISTestUtils::AISTestUtils.SA_AIS_OK)
+                    SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.selectObjectGet(resourceID, false,
-                               AISTestUtils::AISTestUtils.SA_AIS_OK)
+                               SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.clusterNodeGetCBCount(resourceID, 0)
         driver.clusterNodeGetAsync(resourceID, 1, "SA_CLM_LOCAL_NODE_ID",
-                         AISTestUtils::AISTestUtils.SA_AIS_OK)
+                         SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.clusterNodeGetCBCount(resourceID, 1)
         driver.stop()
     end

@@ -1,12 +1,12 @@
-module AISTestDriver
+module SAFTestDriver
 
-require 'AISTestUtils'
-require 'AISImplementation'
+require 'SAFTestUtils'
+require 'SAFImplementation'
 
-class AISTestDriver < AISTestUtils::AISTestUtils
+class SAFTestDriver < SAFTestUtils::SAFTestUtils
     def initialize(node, driverLibs, instanceId)
         super()
-        @driverPath = ENV['AIS_TEST_ROOT'] + '/driver/saf_driver'
+        @driverPath = ENV['SAFTEST_ROOT'] + '/driver/saf_driver'
         @driverLibs = driverLibs
         @instanceId = instanceId
         @name = '%s_%d' % [getName(), @instanceId]
@@ -19,8 +19,8 @@ class AISTestDriver < AISTestUtils::AISTestUtils
         else
             @nodeName = nil
         end
-        commands_file = ENV['AIS_TEST_ROOT'] + '/conf/cluster_commands.conf'
-        @implementation = AISImplementation::AISImplementation.new(commands_file)
+        commands_file = ENV['SAFTEST_ROOT'] + '/conf/cluster_commands.conf'
+        @implementation = SAFImplementation::SAFImplementation.new(commands_file)
     end
 
     def killAllDrivers()
@@ -28,7 +28,7 @@ class AISTestDriver < AISTestUtils::AISTestUtils
     end
 
     def getName()
-        raise 'Subclass must override'
+        rsafe 'Subclass must override'
     end
 
     def getDriverPath()
@@ -85,7 +85,7 @@ class AISTestDriver < AISTestUtils::AISTestUtils
         array = captureCommand(cmd)
         ret, lines = array[0], array[1]
         if ret != 0
-            raise "%s failed on node %s with status %d" % \
+            rsafe "%s failed on node %s with status %d" % \
                   [cmd, @node.getName(), ret]
         end
         lines.each do |line|
@@ -95,7 +95,7 @@ class AISTestDriver < AISTestUtils::AISTestUtils
             end
         end
         if nil == @pid
-            raise "Unable to find a pid for driver %s" % [@name]
+            rsafe "Unable to find a pid for driver %s" % [@name]
         end
     end
 
@@ -104,6 +104,6 @@ class AISTestDriver < AISTestUtils::AISTestUtils
                            "Unable to kill driver %s with pid %s" % [@name, @pid])
     end
 
-end # class AISSys
+end # class SAFSys
 
-end # module AISSys
+end # module SAFSys

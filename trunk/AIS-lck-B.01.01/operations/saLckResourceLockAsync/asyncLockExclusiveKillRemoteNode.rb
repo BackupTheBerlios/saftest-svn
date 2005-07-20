@@ -1,12 +1,12 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 require 'test/unit'
 
 lckDir = "%s/AIS-lck-%s" % \
-         [ENV['AIS_TEST_ROOT'], 
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'], 
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << lckDir
 
 # This test case acquires a lock on a remote node, then attempts to 
@@ -41,36 +41,36 @@ class AsyncLockEXKillRemoteNodeCase < Test::Unit::TestCase
             driver2.start()
             resource2ID = driver2.createTestResource()
             driver2.init(resource2ID, "SA_DISPATCH_ALL",
-                        AISTestUtils::AISTestUtils.SA_AIS_OK)
+                        SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver2.selectObjectGet(resource2ID, false,
-                                   AISTestUtils::AISTestUtils.SA_AIS_OK)
+                                   SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver2.resourceOpen(resource2ID, @@LOCK_NAME,
-                                AISTestUtils::AISTestUtils.SA_AIS_OK)
+                                SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver2.lockSync(resource2ID, 'EX', 0,
                              false, false, true, false, false,
                              'SA_LCK_LOCK_GRANTED',
-                             AISTestUtils::AISTestUtils.SA_AIS_OK)
+                             SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver2.lockGetWaitCount(resource2ID, 0, 0)
                 
             driver1.killAllDrivers()
             driver1.start()
             resource1ID = driver1.createTestResource()
             driver1.init(resource1ID, "SA_DISPATCH_ALL",
-                        AISTestUtils::AISTestUtils.SA_AIS_OK)
+                        SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver1.selectObjectGet(resource1ID, false,
-                                   AISTestUtils::AISTestUtils.SA_AIS_OK)
+                                   SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver1.resourceOpen(resource1ID, @@LOCK_NAME,
-                                AISTestUtils::AISTestUtils.SA_AIS_OK)
+                                SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver1.lockAsync(resource1ID, 'EX', @@INVOCATION, @@WAITER_SIGNAL,
                               false, false, false, false,
-                             AISTestUtils::AISTestUtils.SA_AIS_OK)
+                             SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             sleep(3)
             driver2.lockGetWaitCount(resource2ID, @@WAITER_SIGNAL, 1)
             impl.stopNode(upNode.getName())
             sleep(3)
             driver1.lockGetAsyncLockStatus(resource1ID, @@INVOCATION,
                                            'SA_LCK_LOCK_GRANTED',
-                                           AISTestUtils::AISTestUtils.SA_AIS_OK)
+                                           SAFTestUtils::SAFTestUtils.SA_AIS_OK)
 
             driver1.stop()
             # Don't need to stop driver 2.  It should exit on its own

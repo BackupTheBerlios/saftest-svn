@@ -1,15 +1,15 @@
 module MSGTestDriver
 
-require 'AISTestDriver'
-require 'AISTestUtils'
+require 'SAFTestDriver'
+require 'SAFTestUtils'
 
-class MSGTestDriver < AISTestDriver::AISTestDriver
+class MSGTestDriver < SAFTestDriver::SAFTestDriver
     @@nextInstanceID = 1
 
     def initialize(node)
         driverLib = "%s/AIS-msg-%s/driver/msg_driver.so" % \
-                    [ENV['AIS_TEST_ROOT'],
-                     AISTestUtils::AISTestUtils.getAISLibVersion()]
+                    [ENV['SAFTEST_ROOT'],
+                     SAFTestUtils::SAFTestUtils.getAISLibVersion()]
         instanceID = @@nextInstanceID
         @@nextInstanceID += 1
         super(node, driverLib, instanceID)
@@ -91,6 +91,30 @@ class MSGTestDriver < AISTestDriver::AISTestDriver
         cmd = "--o SELECT_OBJ_GET --resource-id %s" % [resourceID]
         if nullSelectionObject
             cmd += " --null-selection-object"
+        end
+        runDriver(cmd, expectedReturn)
+    end
+
+    def queueOpen(resourceID, queue_name, persistent, sizeArray, retentionTime,
+                  create, receiveCallback, empty, expectedReturn)
+        cmd = "--o QUEUE_OPEN --resource-id %s --queue-name %s --retention-time %d --size-array " % [resourceID, queue_name, retentionTime]
+        sizeArray.each do |size|
+            cmd += "%d," % [size]
+        end    
+        if persistent
+            if 0 != retentionTime
+                raise "Retention Time only used for non-persistent queues"
+            end
+            cmd += " --persistent"
+        end
+        if create
+            cmd += " --create"
+        end
+        if receiveCallback
+            cmd += " --receive-callback"
+        end
+        if empty
+            cmd += " --empty"
         end
         runDriver(cmd, expectedReturn)
     end

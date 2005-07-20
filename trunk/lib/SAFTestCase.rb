@@ -1,20 +1,20 @@
-module AISTestCase
+module SAFTestCase
 
-SA_AIS_OK=1
-SA_AIS_ERR_LIBRARY=2
+SA_SAF_OK=1
+SA_SAF_ERR_LIBRARY=2
 
 #if ! ENV.has_key?('SB_ROOT') then
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 
 require 'test/unit'
 
-class AISTestCase < Test::Unit::TestCase
+class SAFTestCase < Test::Unit::TestCase
     def setup()
-        require 'AISSys'
-        require 'AISTestUtils'
+        require 'SAFSys'
+        require 'SAFTestUtils'
 
-        @utils = AISTestUtils::AISTestUtils.new()
+        @utils = SAFTestUtils::SAFTestUtils.new()
 
         # make sure all output goes to stdout
         # we do this so sb can easily use one pipe to capture all output

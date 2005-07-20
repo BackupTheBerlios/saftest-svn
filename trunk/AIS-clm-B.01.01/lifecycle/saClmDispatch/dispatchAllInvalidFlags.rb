@@ -1,12 +1,12 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['AIS_TEST_ROOT']]
-require 'AISTestUtils'
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestUtils'
 require 'test/unit'
 
 clmDir = "%s/AIS-clm-%s" % \
-         [ENV['AIS_TEST_ROOT'], 
-          AISTestUtils::AISTestUtils.getAISLibVersion()]
+         [ENV['SAFTEST_ROOT'], 
+          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
 $: << clmDir
 
 class DispatchAllInvalidFlagsCase < Test::Unit::TestCase
@@ -19,11 +19,11 @@ class DispatchAllInvalidFlagsCase < Test::Unit::TestCase
 
         resourceID = driver.createTestResource()
         driver.init(resourceID, false, false, "SA_DISPATCH_ALL",
-                    AISTestUtils::AISTestUtils.SA_AIS_OK)
+                    SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.selectObjectGet(resourceID, false,
-                               AISTestUtils::AISTestUtils.SA_AIS_OK)
+                               SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         driver.dispatch(resourceID, "SA_DISPATCH_INVALID", 
-                        AISTestUtils::AISTestUtils.SA_AIS_ERR_INVALID_PARAM)
+                        SAFTestUtils::SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
         driver.stop()
     end
 end

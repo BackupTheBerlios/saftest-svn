@@ -8,6 +8,7 @@
  **********************************************************************/
 
 #include "saftest_common.h"
+#include "saftest_comm.h"
 
 /**********************************************************************
  *
@@ -20,7 +21,7 @@ typedef void (*saftest_driver_init_func_t)(
 
 typedef void (*saftest_driver_handle_client_message_func_t)(
     int client_connection_fd,
-    void *message);
+    saftest_msg_t *message);
 
 typedef void (*saftest_driver_add_fds_func_t)(
     int *max_fd,
@@ -33,8 +34,7 @@ typedef void (*saftest_driver_check_fds_func_t)(
     fd_set *write_fd_set,
     fd_set *except_fd_set);
 
-typedef int (*saftest_driver_client_main_func_t)(
-    int argc, char *argv[], void *first_request, int first_request_length);
+typedef int (*saftest_driver_client_main_func_t)(int argc, char *argv[]);
 
 /**********************************************************************
  *

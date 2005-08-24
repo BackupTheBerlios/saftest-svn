@@ -10,13 +10,13 @@
 #include "saftest_common.h"
 
 extern void
-ais_test_log_set_fp(FILE *fp);
+saftest_log_set_fp(FILE *fp);
 
 extern void
-ais_test_log(const char *format, ...);
+saftest_log(const char *format, ...);
 
 extern void
-ais_test_abort(const char *format, ...);
+saftest_abort(const char *format, ...);
 
 extern void
 err_exit(const char *format, ...);

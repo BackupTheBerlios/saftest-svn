@@ -12,7 +12,7 @@ block_signals()
     sigdelset(&sigset, SIGSEGV);
     sigdelset(&sigset, SIGINT);
     if (sigprocmask(SIG_SETMASK, &sigset, NULL) != 0) {
-        ais_test_abort("Error blocking signals\n");
+        saftest_abort("Error blocking signals\n");
     }
 }
 
@@ -23,7 +23,7 @@ unblock_signals()
 
     sigemptyset(&sigset);
     if (sigprocmask(SIG_SETMASK, &sigset, NULL) != 0) {
-        ais_test_abort("Error unblocking signals\n");
+        saftest_abort("Error unblocking signals\n");
     }
 }
 
@@ -53,13 +53,13 @@ write_pid_file(const char *pid_file)
 
     fp = fopen(pid_file, "w");
     if (fp == NULL) {
-        ais_test_log("Failed to open %s: %s\n",
+        saftest_log("Failed to open %s: %s\n",
                            pid_file, strerror(errno));
         return(-1);
     }
     chmod_status = chmod(pid_file, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (chmod_status != 0) {
-        ais_test_log("Failed to change permissions on %s: %s\n",
+        saftest_log("Failed to change permissions on %s: %s\n",
                            pid_file, strerror(errno));
         return(-1);
     }
@@ -147,7 +147,7 @@ setup_log_file(const char *log_file)
         err_exit("Unable to open log file %s\n",
                 log_file);
     }
-    ais_test_log_set_fp(fp);
+    saftest_log_set_fp(fp);
     return(fp);
 }
 

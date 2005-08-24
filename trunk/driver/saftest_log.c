@@ -3,13 +3,13 @@
 static FILE *daemon_log_fp = NULL;
 
 void
-ais_test_log_set_fp(FILE *fp)
+saftest_log_set_fp(FILE *fp)
 {
     daemon_log_fp = fp;
 }
 
 void
-ais_test_log(const char *format, ...)
+saftest_log(const char *format, ...)
 {
     va_list ap;
     va_list aq;
@@ -36,7 +36,7 @@ ais_test_log(const char *format, ...)
 }
 
 void
-ais_test_abort(const char *format, ...)
+saftest_abort(const char *format, ...)
 {
     va_list ap;
     va_list aq;

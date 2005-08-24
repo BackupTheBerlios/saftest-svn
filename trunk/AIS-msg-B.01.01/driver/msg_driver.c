@@ -20,66 +20,127 @@
  *
  **********************************************************************/
 
-enum ais_test_msg_request_op {
-    AIS_TEST_MSG_REQUEST_INVALID=0,
-    AIS_TEST_MSG_REQUEST_CREATE_TEST_RESOURCE,
-    AIS_TEST_MSG_REQUEST_MSG_INITALIZE,
-    AIS_TEST_MSG_REQUEST_MSG_SELECTION_OBJECT_GET,
-    AIS_TEST_MSG_REQUEST_DISPATCH,
-    AIS_TEST_MSG_REQUEST_MSG_FINALIZE,
-    AIS_TEST_MSG_REQUEST_MSG_QUEUE_OPEN,
+typedef SaAisErrorT (*saftest_client_message_handler)(
+                                              int fd,
+                                              saftest_msg_t *request);
+struct saftest_msg_map_table_entry;
+typedef void (*saftest_daemon_message_handler)(
+    struct saftest_msg_map_table_entry *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply);
+
+typedef struct saftest_msg_map_table_entry {
+    const char *request_op;
+    const char *reply_op;
+    saftest_client_message_handler client_handler;
+    saftest_daemon_message_handler daemon_handler;
+} saftest_msg_map_table_entry_t;
+
+void 
+saftest_daemon_handle_create_test_res_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply);
+
+void 
+saftest_daemon_handle_init_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply);
+
+void
+saftest_daemon_handle_selection_object_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply);
+
+void 
+saftest_daemon_handle_dispatch_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply);
+
+void 
+saftest_daemon_handle_resource_finalize_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply);
+
+void 
+saftest_daemon_handle_queue_open_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply);
+
+void 
+saftest_daemon_handle_message_send_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply);
+
+void 
+saftest_daemon_handle_message_get_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply);
+
+SaAisErrorT
+saftest_client_handle_create_test_res_request(
+    int fd,
+    saftest_msg_t *request);
+
+SaAisErrorT
+saftest_client_generic_handle_request(
+    int fd,
+    saftest_msg_t *request);
+
+SaAisErrorT
+saftest_client_handle_message_get_request(
+    int fd,
+    saftest_msg_t *request);
+
+saftest_msg_map_table_entry_t msg_map_table[] = {
+    {"CREATE_TEST_RESOURCE_REQ",
+     "CREATE_TEST_RESOURCE_REPLY",
+     saftest_client_handle_create_test_res_request,
+     saftest_daemon_handle_create_test_res_request},
+    {"MSG_INITIALIZE_REQ",
+     "MSG_INITIALIZE_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_init_request},
+    {"SELECTION_OBJECT_GET_REQ",
+     "SELECTION_OBJECT_GET_REQ",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_selection_object_request},
+    {"DISPATCH_REQ",
+     "DISPATCH_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_dispatch_request},
+    {"FINALIZE_REQ",
+     "FINALIZE_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_resource_finalize_request},
+    {"QUEUE_OPEN_REQ",
+     "QUEUE_OPEN_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_queue_open_request},
+    {"MESSAGE_SEND_REQ",
+     "MESSAGE_SEND_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_message_send_request},
+    {"MESSAGE_GET_REQ",
+     "MESSAGE_GET_REPLY",
+     saftest_client_handle_message_get_request,
+     saftest_daemon_handle_message_get_request},
+    {0, 0, 0},
 };
-typedef enum ais_test_msg_request_op ais_test_msg_request_op_t;
-
-/*
- * op - Used for all requests
- * requestor_pid - Used for all requests
- * release_code, major_version, minor_version - Used by MSG_INITIALIZE
- * queue_open_cb_flag - Used by MSG_INITIALIZE
- * queue_group_track_cb_flag - Used by MSG_INITIALIZE
- * message_delivered_cb_flag - Used by MSG_INITIALIZE
- * message_received_cb_flag - Used by MSG_INITIALIZE
- * msg_name - Used by RESOURCE_OPEN, RESOURCE_OPEN_ASYNC
- * msg_resource_id - Used by RESOURCE_OPEN, RESOURCE_OPEN_ASYNC,
- *                    RESOURCE_CLOSE, MSG_SYNC, MSG_ASYNC, UNMSG
- * msg_mode - Used by MSG_SYNC, MSG_ASYNC
- */
-
-typedef struct ais_test_msg_request {
-    ais_test_msg_request_op_t op;
-    pid_t requestor_pid;
-    SaVersionT sa_version;
-    int msg_resource_id;
-    int queue_open_cb_flag;
-    int queue_group_track_cb_flag;
-    int message_delivered_cb_flag;
-    int message_received_cb_flag;
-    SaDispatchFlagsT dispatch_flags;
-    int null_msg_handle_flag;
-    int null_callbacks_flag;
-    int null_version_flag;
-    int null_selection_object_flag;
-    char queue_name[BUF_SIZE];
-    SaMsgQueueCreationAttributesT queue_creation_attributes;
-    SaMsgQueueOpenFlagsT queue_open_flags;
-} ais_test_msg_request_t;
-
-/*
- * status - always valid
- * msg_resource_id - Only valid when request op was 
- *                    AIS_TEST_MSG_REQUEST_MSG_INITALIZE
- */
-typedef struct ais_test_msg_reply {
-    SaAisErrorT status;
-    int msg_resource_id;
-} ais_test_msg_reply_t;
 
 typedef struct msg_resource {
     int msg_resource_id;
     pthread_t thread_id;
 
     SaVersionT version;
-    SaNameT queue_name;
+    SaNameT entity_name;
     SaNameT queue_group_name;
     SaTimeT timeout;
     SaDispatchFlagsT dispatch_flags;
@@ -103,76 +164,10 @@ usage()
 
     printf("\n");
 
-    printf("Client Usage: msg_driver --o CREATE_TEST_RES\n");
+    printf("Client Usage: msg_driver --o <op name>\n");
     printf("                         --socket-file <socket path>\n");
     printf("                         --run-dir <run path>\n");
-    printf("\n");
-    printf("Client Usage: msg_driver --o INIT\n");
-    printf("                         --socket-file <socket path>\n");
-    printf("                         --run-dir <run path>\n");
-    printf("                         --dispatch-flags \n");
-    printf("                           <SA_MSG_DISPATCH_BLOCKING |\n");
-    printf("                            SA_MSG_DISPATCH_ONE |\n");
-    printf("                            SA_MSG_DISPATCH_ALL>  \n");
-    printf("                        [--set-queue-open-cb]\n");
-    printf("                        [--set-queue-group-track-cb]\n");
-    printf("                        [--set-message-delivered-cb]\n");
-    printf("                        [--set-message-received-cb]\n");
-    printf("                        [--version-release-code <code #>]\n");
-    printf("                        [--version-major <code #>]\n");
-    printf("                        [--version-minor <code #>]\n");
-    printf("                        [--null-msg-handle]\n");
-    printf("                        [--null-callbacks]\n");
-    printf("                        [--null-version]\n");
-    printf("\n");
-    printf("Client Usage: msg_driver --o SELECT_OBJ_GET\n");
-    printf("                         --socket-file <socket path>\n");
-    printf("                         --run-dir <run path>\n");
-    printf("                         --resource-id <resource id>\n");
-    printf("                        [--null-selection-object]\n");
-    printf("\n");
-    printf("Client Usage: msg_driver --o RES_OPEN\n");
-    printf("                         --socket-file <socket path>\n");
-    printf("                         --run-dir <run path>\n");
-    printf("                         --resource-id <resource id>\n");
-    printf("                         --msg-name <Lock Name>\n");
-    printf("                        [--timeout <timeout>]\n");
-    printf("\n");
-    printf("Client Usage: msg_driver --o RES_OPEN_ASYNC\n");
-    printf("                         --socket-file <socket path>\n");
-    printf("                         --run-dir <run path>\n");
-    printf("                         --resource-id <resource id>\n");
-    printf("                         --msg-name <Lock Name>\n");
-    printf("\n");
-    printf("Client Usage: msg_driver --o RES_CLOSE\n");
-    printf("                         --socket-file <socket path>\n");
-    printf("                         --run-dir <run path>\n");
-    printf("                         --resource-id <resource id>\n");
-    printf("\n");
-    printf("Client Usage: msg_driver --o FINALIZE\n");
-    printf("                         --socket-file <socket path>\n");
-    printf("                         --run-dir <run path>\n");
-    printf("                         --resource-id <resource id>\n");
-    printf("\n");
-    printf("Client Usage: msg_driver --o DISPATCH\n");
-    printf("                         --socket-file <socket path>\n");
-    printf("                         --run-dir <run path>\n");
-    printf("                         --resource-id <resource id>\n");
-    printf("                         --dispatch-flags \n");
-    printf("                           <SA_MSG_DISPATCH_BLOCKING |\n");
-    printf("                            SA_MSG_DISPATCH_ONE |\n");
-    printf("                            SA_MSG_DISPATCH_ALL>  \n");
-    printf("\n");
-    printf("Client Usage: msg_driver --o QUEUE_OPEN\n");
-    printf("                         --socket-file <socket path>\n");
-    printf("                         --run-dir <run path>\n");
-    printf("                         --resource-id <resource id>\n");
-    printf("                         --retention-time <time>\n");
-    printf("                         --size-array <sizes CDL>\n");
-    printf("                         [--persistent]\n");
-    printf("                         [--create]\n");
-    printf("                         [--receive-callback]\n");
-    printf("                         [--empty]\n");
+    printf("                         [[--key <key> --value <value>] ... ]\n");
     printf("\n");
 	exit(255);
 }
@@ -182,35 +177,24 @@ const char *get_library_id()
     return "MSG";
 }
 
-int get_library_message_size()
-{
-    return sizeof(ais_test_msg_request_t);
-}
-
 void saftest_daemon_init(FILE *log_fp)
 {
     assert(NULL != log_fp);
-    ais_test_log_set_fp(log_fp);
+    saftest_log_set_fp(log_fp);
 }
 
-static ais_test_msg_request_op_t
-ais_test_map_string_to_op(const char *str)
+static saftest_msg_map_table_entry_t *
+saftest_get_map_table_entry(const char *request_op_str)
 {
-    if (0 == strcmp(str, "CREATE_TEST_RES")) {
-        return AIS_TEST_MSG_REQUEST_CREATE_TEST_RESOURCE;
-    } else if (0 == strcmp(str, "INIT")) {
-        return AIS_TEST_MSG_REQUEST_MSG_INITALIZE;
-    } else if (0 == strcmp(str, "SELECT_OBJ_GET")) {
-        return AIS_TEST_MSG_REQUEST_MSG_SELECTION_OBJECT_GET;
-    } else if (0 == strcmp(str, "DISPATCH")) {
-        return AIS_TEST_MSG_REQUEST_DISPATCH;
-    } else if (0 == strcmp(str, "FINALIZE")) {
-        return AIS_TEST_MSG_REQUEST_MSG_FINALIZE;
-    } else if (0 == strcmp(str, "QUEUE_OPEN")) {
-        return AIS_TEST_MSG_REQUEST_MSG_QUEUE_OPEN;
+    int ndx = 0;
+
+    for (ndx = 0; NULL != msg_map_table[ndx].request_op; ndx++) {
+        if (0 == strcmp(msg_map_table[ndx].request_op, request_op_str)) {
+            return(&(msg_map_table[ndx]));
+        }
     }
-    ais_test_abort("Unknown op string %s\n", str);
-    return AIS_TEST_MSG_REQUEST_INVALID;
+    saftest_abort("Unknown op string %s\n", request_op_str);
+    return(NULL);
 }
 
 int
@@ -235,14 +219,14 @@ add_msg_resource()
 
     msg_list = g_list_append(msg_list, res);
     res->msg_resource_id = get_next_msg_resource_id();
-    ais_test_log("Added a msg resource with id %d\n", res->msg_resource_id);
+    saftest_log("Added a msg resource with id %d\n", res->msg_resource_id);
     return(res);
 }
 
 void
 delete_msg_resource(msg_resource_t *res)
 {
-    ais_test_log("Deleting msg resource with id %d\n", res->msg_resource_id);
+    saftest_log("Deleting msg resource with id %d\n", res->msg_resource_id);
     msg_list = g_list_remove(msg_list, res);
     free(res);
 }
@@ -265,98 +249,154 @@ lookup_msg_resource(int msg_resource_id)
 }
 
 void
-ais_test_daemon_queue_open_callback(SaInvocationT invocation,
+saftest_daemon_queue_open_callback(SaInvocationT invocation,
                            SaMsgQueueHandleT queueHandle,
                            SaAisErrorT error)
 {
-    ais_test_abort("Define me\n");
+    saftest_abort("Define me\n");
 }
 
 void
-ais_test_daemon_queue_group_track_callback(
+saftest_daemon_queue_group_track_callback(
     const SaNameT *queueGroupName,
     const SaMsgQueueGroupNotificationBufferT *notificationBuffer,
     SaUint32T numberOfMembers,
     SaAisErrorT error)
 {
-    ais_test_abort("Define me\n");
+    saftest_abort("Define me\n");
 }
 
 void
-ais_test_daemon_message_delivered_callback(SaInvocationT invocation,
+saftest_daemon_message_delivered_callback(SaInvocationT invocation,
                                            SaAisErrorT error)
 {
-    ais_test_abort("Define me\n");
+    saftest_abort("Define me\n");
 }
 
 void
-ais_test_daemon_message_received_callback(SaInvocationT invocation)
+saftest_daemon_message_received_callback(SaInvocationT invocation)
 {
-    ais_test_abort("Define me\n");
+    saftest_abort("Define me\n");
 }
 
 static void *
-ais_test_daemon_dispatch_thread(void *arg)
+saftest_daemon_dispatch_thread(void *arg)
 {
     msg_resource_t *msg_res = (msg_resource_t *)arg;
     SaAisErrorT err;
     
     err = saMsgDispatch(msg_res->msg_handle, SA_DISPATCH_BLOCKING);
     if (err != SA_AIS_OK) {
-        ais_test_abort("Error %s calling "
+        saftest_abort("Error %s calling "
                        "saMsgDispatch(SA_DISPATCH_BLOCKING)\n",
                        get_error_string(err));
     }
     return(NULL);
 }
 
-void 
-ais_test_daemon_handle_create_test_res_request(
-    ais_test_msg_request_t *request,
-    ais_test_msg_reply_t *reply)
+static SaDispatchFlagsT
+saftest_daemon_get_dispatch_flags(const char *dispatch_flags_str)
 {
-    msg_resource_t *msg_res;
-    
-    ais_test_log("Received a create test resource request from pid %d.\n",
-                 request->requestor_pid);
+    SaDispatchFlagsT flags;
 
-    msg_res = add_msg_resource();
-
-    reply->msg_resource_id = msg_res->msg_resource_id;
-    reply->status = SA_AIS_OK;
+    if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_ONE")) {
+        flags = SA_DISPATCH_ONE;
+    } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_ALL")) {
+        flags = SA_DISPATCH_ALL;
+    } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_BLOCKING")) {
+        flags = SA_DISPATCH_BLOCKING;
+    } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_INVALID")) {
+        flags = -1;
+    } else {
+        saftest_abort("Unknown dispatch flags string %s\n", 
+                      dispatch_flags_str);
+    }
+    return(flags);
 }
 
 void 
-ais_test_daemon_handle_init_request(ais_test_msg_request_t *request,
-                                    ais_test_msg_reply_t *reply)
+saftest_daemon_handle_create_test_res_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
+{
+    msg_resource_t *msg_res;
+    
+    saftest_log("Received a create test resource request\n");
+
+    msg_res = add_msg_resource();
+
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, 
+                                        SA_AIS_OK);
+    saftest_msg_set_ubit32_value((*reply), "MSG_RESOURCE_ID",
+                                 msg_res->msg_resource_id);
+}
+
+void 
+saftest_daemon_handle_init_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
 {
     msg_resource_t *msg_res;
     int err;
     SaMsgHandleT *handle = NULL;
     SaMsgCallbacksT *callbacks = NULL;
     SaVersionT *version = NULL;
-    
-    ais_test_log("Received an init request from pid %d for id %d "
-                 "release code=%d, majorVersion=%d, minorVersion=%d\n",
-                 request->requestor_pid,
-                 request->msg_resource_id,
-                 request->sa_version.releaseCode,
-                 request->sa_version.majorVersion,
-                 request->sa_version.minorVersion);
+    SaAisErrorT status;
+    char *releaseCodeStr;
+    char releaseCode;
 
-    msg_res = lookup_msg_resource(request->msg_resource_id);
+    releaseCodeStr = saftest_msg_get_str_value(request,
+                                               "VERSION_RELEASE_CODE");    
+    releaseCode = releaseCodeStr[0];
+    saftest_log("Received an init request from for id %d "
+                 "release code=%c, majorVersion=%d, minorVersion=%d\n",
+                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"),
+                 releaseCode,
+                 saftest_msg_get_ubit32_value(request, "VERSION_MAJOR"),
+                 saftest_msg_get_ubit32_value(request, "VERSION_MINOR"));
+
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     if (NULL == msg_res) {
-        ais_test_abort("Unknown resource id %d\n",
-                       request->msg_resource_id);
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     }
 
-    if (0 == request->null_msg_handle_flag) {
+    if (0 == strcmp("FALSE", 
+                    saftest_msg_get_str_value(request, "NULL_MSG_HANDLE"))) {
         handle = &msg_res->msg_handle;
     }
-    if (0 == request->null_callbacks_flag) {
+    if (0 == strcmp("FALSE", 
+                    saftest_msg_get_str_value(request, "NULL_CALLBACKS"))) {
         callbacks = &msg_res->msg_callbacks;
+        if (0 == strcmp("TRUE", 
+                        saftest_msg_get_str_value(request, "QUEUE_OPEN_CB"))) {
+            msg_res->msg_callbacks.saMsgQueueOpenCallback = 
+                saftest_daemon_queue_open_callback;
+        }
+        if (0 == strcmp("TRUE", 
+                        saftest_msg_get_str_value(request, 
+                                                  "QUEUE_GROUP_TRACK_CB"))) {
+            msg_res->msg_callbacks.saMsgQueueGroupTrackCallback = 
+                saftest_daemon_queue_group_track_callback;
+        }
+        if (0 == strcmp("TRUE",
+                        saftest_msg_get_str_value(request, 
+                                                  "MESSAGE_DELIVERED_CB"))) {
+            msg_res->msg_callbacks.saMsgMessageDeliveredCallback =
+                saftest_daemon_message_delivered_callback;
+        }
+        if (0 == strcmp("TRUE",
+                        saftest_msg_get_str_value(request, 
+                                                  "MESSAGE_RECEIEVED_CB"))) {
+            msg_res->msg_callbacks.saMsgMessageReceivedCallback =
+                saftest_daemon_message_received_callback;
+        }
     }
-    if (0 == request->null_version_flag) {
+    if (0 == strcmp("FALSE", 
+                    saftest_msg_get_str_value(request, "NULL_VERSION"))) {
         version = &msg_res->version;
     }
 
@@ -365,38 +405,27 @@ ais_test_daemon_handle_init_request(ais_test_msg_request_t *request,
     msg_res->msg_callbacks.saMsgMessageDeliveredCallback = NULL;
     msg_res->msg_callbacks.saMsgMessageReceivedCallback = NULL;
 
-    if (request->queue_open_cb_flag) {
-        msg_res->msg_callbacks.saMsgQueueOpenCallback = 
-            ais_test_daemon_queue_open_callback;
-    }
-    if (request->queue_group_track_cb_flag) {
-        msg_res->msg_callbacks.saMsgQueueGroupTrackCallback = 
-            ais_test_daemon_queue_group_track_callback;
-    }
-    if (request->message_delivered_cb_flag) {
-        msg_res->msg_callbacks.saMsgMessageDeliveredCallback =
-            ais_test_daemon_message_delivered_callback;
-    }
-    if (request->message_received_cb_flag) {
-        msg_res->msg_callbacks.saMsgMessageReceivedCallback =
-            ais_test_daemon_message_received_callback;
-    }
+    msg_res->version.releaseCode = releaseCode;
+    msg_res->version.majorVersion =
+        (SaUint8T) saftest_msg_get_ubit32_value(request, 
+                                                "VERSION_MAJOR");
+    msg_res->version.minorVersion =
+        (SaUint8T) saftest_msg_get_ubit32_value(request, 
+                                                "VERSION_MINOR");
+    msg_res->dispatch_flags = 
+        saftest_daemon_get_dispatch_flags(
+                   saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
 
-    msg_res->version = request->sa_version;
-    msg_res->dispatch_flags = request->dispatch_flags;
-
-    ais_test_log("Before calling saMsgInitialize\n");
-    reply->status = saMsgInitialize(handle, callbacks, version);
-    ais_test_log("After calling saMsgInitialize\n");
-    ais_test_log("status is %d\n", reply->status);
-    if (SA_AIS_OK == reply->status) {
-        if (request->dispatch_flags == SA_DISPATCH_BLOCKING) {
-            ais_test_log("Starting new dispatch thread\n");
+    status = saMsgInitialize(handle, callbacks, version);
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
+    if (SA_AIS_OK == status) {
+        if (msg_res->dispatch_flags == SA_DISPATCH_BLOCKING) {
+            saftest_log("Starting new dispatch thread\n");
             err = pthread_create(&msg_res->thread_id, NULL, 
-                                 ais_test_daemon_dispatch_thread,
+                                 saftest_daemon_dispatch_thread,
                                  (void*)msg_res);
             if (err) {
-                ais_test_abort("Error creating new thread: (%d) %s\n", 
+                saftest_abort("Error creating new thread: (%d) %s\n", 
                                errno, strerror(errno));
             }
         }
@@ -404,136 +433,254 @@ ais_test_daemon_handle_init_request(ais_test_msg_request_t *request,
 }
 
 void 
-ais_test_daemon_handle_selection_object_request(ais_test_msg_request_t *request,
-                                                ais_test_msg_reply_t *reply)
+saftest_daemon_handle_selection_object_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
 {
     msg_resource_t *msg_res = NULL;
     SaSelectionObjectT *selection_object = NULL;
+    SaAisErrorT status;
 
-    ais_test_log("Received a select object get request for id %d\n",
-                 request->msg_resource_id);
-    msg_res = lookup_msg_resource(request->msg_resource_id);
-    if (0 == request->null_selection_object_flag) {
+    saftest_log("Received a select object get request for id %d\n",
+                saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    if (NULL == msg_res) {
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    }
+    if (0 == strcmp("FALSE",
+                    saftest_msg_get_str_value(request, 
+                                              "NULL_SELECTION_OBJECT"))) {
         selection_object = &msg_res->selection_object;
     }
-    if (NULL == msg_res) {
-        ais_test_abort("Unknown resource id %d\n",
-                       request->msg_resource_id);
-    }
-    reply->status = saMsgSelectionObjectGet(msg_res->msg_handle, 
-                                            selection_object);
-    if (0 == request->null_selection_object_flag) {
-        ais_test_log("New Lock Selection Object on fd %d\n",
-                     selection_object);
-    }
+    status = saMsgSelectionObjectGet(msg_res->msg_handle, selection_object);
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
 }
 
 void 
-ais_test_daemon_handle_dispatch_request(ais_test_msg_request_t *request,
-                                        ais_test_msg_reply_t *reply)
+saftest_daemon_handle_dispatch_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
 {
     msg_resource_t *msg_res = NULL;
+    SaAisErrorT status;
+    SaDispatchFlagsT dispatch_flags;
 
-    ais_test_log("Received a dispatch request for id %d\n",
-                 request->msg_resource_id);
-    msg_res = lookup_msg_resource(request->msg_resource_id);
+    saftest_log("Received a dispatch request for id %d\n",
+                saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     if (NULL == msg_res) {
-        ais_test_abort("Unknown resource id %d\n",
-                       request->msg_resource_id);
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     }
-    reply->status = saMsgDispatch(msg_res->msg_handle, 
-                                  request->dispatch_flags);
+    dispatch_flags = 
+        saftest_daemon_get_dispatch_flags(
+                   saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
+    status = saMsgDispatch(msg_res->msg_handle, dispatch_flags);
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
 }
 
 void 
-ais_test_daemon_handle_finalize_request(ais_test_msg_request_t *request,
-                                        ais_test_msg_reply_t *reply)
+saftest_daemon_handle_resource_finalize_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
 {
     msg_resource_t *msg_res = NULL;
+    SaAisErrorT status;
 
-    ais_test_log("Received a finalize request for id %d\n",
-                 request->msg_resource_id);
-    msg_res = lookup_msg_resource(request->msg_resource_id);
+    saftest_log("Received a finalize request for id %d\n",
+                saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     if (NULL == msg_res) {
-        ais_test_abort("Unknown resource id %d\n",
-                       request->msg_resource_id);
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     }
-    reply->status = saMsgFinalize(msg_res->msg_handle);
+    status = saMsgFinalize(msg_res->msg_handle);
     msg_res->selection_object = 0;
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
 }
 
 void 
-ais_test_daemon_handle_queue_open_request(ais_test_msg_request_t *request,
-                                          ais_test_msg_reply_t *reply)
+saftest_daemon_handle_queue_open_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
 {
     msg_resource_t *msg_res = NULL;
-    SaNameT queue_name;
+    SaAisErrorT status;
+    SaNameT entity_name;
+    SaMsgQueueCreationAttributesT creation_attrs;
+    SaMsgQueueOpenFlagsT open_flags;
+    char             	size_array_key_name[BUF_SIZE];
+    int                 size_array_ndx = 0;
 
-    ais_test_log("Received a queue open request for id %d queue name %s\n",
-                request->msg_resource_id, request->queue_name);
-    msg_res = lookup_msg_resource(request->msg_resource_id);
+    saftest_log("Received a queue open request for id %d queue name %s\n",
+                saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"),
+                saftest_msg_get_str_value(request, "QUEUE_NAME"));
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     if (NULL == msg_res) {
-        ais_test_abort("Unknown resource id %d\n",
-                    request->msg_resource_id);
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     }
-    queue_name.length = strlen(request->queue_name)+1;
-    strncpy(queue_name.value, request->queue_name, queue_name.length);
+    entity_name.length = 
+        strlen(saftest_msg_get_str_value(request, "QUEUE_NAME"))+1;
+    strncpy(entity_name.value, 
+            saftest_msg_get_str_value(request, "QUEUE_NAME"),
+            entity_name.length);
 
-    reply->status = saMsgQueueOpen(msg_res->msg_handle, 
-                                   &queue_name,
-                                   &(request->queue_creation_attributes),
-                                   request->queue_open_flags,
-                                   0, &(msg_res->queue_handle)); 
+    memset(&creation_attrs, 0, sizeof(creation_attrs));
+    if (0 == strcmp("TRUE", saftest_msg_get_str_value(request, "PERSISTENT"))) {
+        creation_attrs.creationFlags |= SA_MSG_QUEUE_PERSISTENT;
+    }
+    for (size_array_ndx = 0; size_array_ndx <= SA_MSG_MESSAGE_LOWEST_PRIORITY;  
+         size_array_ndx++) {
+        sprintf(size_array_key_name, "SIZE_ARRAY_%d", size_array_ndx);
+        creation_attrs.size[size_array_ndx] = 
+            saftest_msg_get_ubit64_value(request, size_array_key_name);
+    }
+    creation_attrs.retentionTime = 
+        saftest_msg_get_ubit64_value(request, "RETENTION_TIME");
+    if (0 == strcmp("TRUE", saftest_msg_get_str_value(request, "CREATE"))) {
+        open_flags |= SA_MSG_QUEUE_CREATE;
+    }
+    if (0 == strcmp("TRUE",  
+                    saftest_msg_get_str_value(request, "RECEIVE_CALLBACK"))) {
+        open_flags |= SA_MSG_QUEUE_RECEIVE_CALLBACK;
+    }
+    if (0 == strcmp("TRUE", saftest_msg_get_str_value(request, "EMPTY"))) {
+        open_flags |= SA_MSG_QUEUE_EMPTY;
+    }
+    
+    status = saMsgQueueOpen(msg_res->msg_handle, &entity_name,
+                            &creation_attrs, open_flags,
+                            0, &(msg_res->queue_handle)); 
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
+}
+
+void 
+saftest_daemon_handle_message_send_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
+{
+    msg_resource_t *msg_res = NULL;
+    SaAisErrorT status;
+    SaNameT entity_name;
+    SaNameT sender_name;
+    SaMsgMessageT message;
+    SaTimeT timeout = 0;
+
+    saftest_log("Received a message send request for id %d entity name %s\n",
+                saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"),
+                saftest_msg_get_str_value(request, "ENTITY_NAME"));
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    if (NULL == msg_res) {
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    }
+    entity_name.length = 
+        strlen(saftest_msg_get_str_value(request, "ENTITY_NAME"))+1;
+    strncpy(entity_name.value, 
+            saftest_msg_get_str_value(request, "ENTITY_NAME"),
+            entity_name.length);
+    sender_name.length = 
+        strlen(saftest_msg_get_str_value(request, "SENDER_NAME"))+1;
+    strncpy(sender_name.value, 
+            saftest_msg_get_str_value(request, "SENDER_NAME"),
+            sender_name.length);
+
+    memset(&message, 0, sizeof(message));
+    message.type = saftest_msg_get_ubit32_value(request, "MSG_TYPE");
+    message.version = saftest_msg_get_ubit32_value(request, "MSG_VERSION");
+    message.size = strlen(saftest_msg_get_str_value(request, "MSG_STRING"));
+    message.data = saftest_msg_get_str_value(request, "MSG_STRING");
+    message.senderName = &sender_name;
+    message.priority = saftest_msg_get_ubit32_value(request, "MSG_PRIORITY");
+    status = saMsgMessageSend(msg_res->msg_handle, &entity_name, 
+                              &message, timeout);
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
+}
+
+void 
+saftest_daemon_handle_message_get_request(
+    saftest_msg_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
+{
+    msg_resource_t *msg_res = NULL;
+    SaNameT entity_name;
+    SaNameT sender_name;
+    SaMsgMessageT message;
+    SaMsgSenderIdT sender_id = 0;
+    SaTimeT send_time = 0;
+    SaTimeT timeout = 0;
+    SaAisErrorT status;
+    char msg_string[SAFTEST_STRING_LENGTH+1];
+    char sender_name_str[SAFTEST_STRING_LENGTH+1];
+
+    saftest_log("Received a message get request for id %d entity name %s\n",
+                saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"),
+                saftest_msg_get_str_value(request, "ENTITY_NAME"));
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    if (NULL == msg_res) {
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    }
+
+    memset(&message, 0, sizeof(message));
+    memset(msg_string, 0, sizeof(msg_string));
+    memset(sender_name_str, 0, sizeof(sender_name_str));
+    entity_name.length = 
+        strlen(saftest_msg_get_str_value(request, "ENTITY_NAME"))+1;
+    strncpy(entity_name.value, 
+            saftest_msg_get_str_value(request, "ENTITY_NAME"),
+            entity_name.length);
+    message.senderName = &sender_name;
+
+    status = saMsgMessageGet(msg_res->msg_handle, 
+                             &message, &send_time, &sender_id, timeout);
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
+    if (SA_AIS_OK == status) {
+        saftest_msg_set_ubit32_value(*reply, "MSG_TYPE", message.type);
+        saftest_msg_set_ubit32_value(*reply, "MSG_VERSION", message.version);
+        saftest_msg_set_ubit32_value(*reply, "MSG_PRIORITY", message.priority);
+        saftest_msg_set_ubit32_value(*reply, "MSG_SIZE", message.size);
+        memcpy(msg_string, message.data, message.size);
+        saftest_msg_set_str_value(*reply, "MSG_STRING", msg_string);
+        strncpy(sender_name_str, message.senderName->value,
+                message.senderName->length);
+        saftest_msg_set_str_value(*reply, "SENDER_NAME", sender_name_str);
+    }
 }
 
 void
-ais_test_daemon_handle_incoming_client_message(int client_connection_fd,
-                                               void *void_request)
+saftest_daemon_handle_incoming_client_message(int client_connection_fd,
+                                              saftest_msg_t *request)
 {
-    ais_test_msg_request_t *request = (ais_test_msg_request_t *)void_request;
-    ais_test_msg_reply_t *reply;
+    saftest_msg_t *reply;
+    saftest_msg_map_table_entry_t *entry;
 
     if (NULL == request) {
-        ais_test_abort("Invalid (NULL) request\n");
+        saftest_abort("Invalid (NULL) request\n");
     }
 
-    reply = (ais_test_msg_reply_t *)malloc(sizeof(ais_test_msg_reply_t));
-    memset(reply, 0, sizeof(ais_test_msg_reply_t));
+    entry = saftest_get_map_table_entry(saftest_msg_get_msg_type(request));
+    entry->daemon_handler(entry, request, &reply);
 
-    switch(request->op) {
-        case AIS_TEST_MSG_REQUEST_CREATE_TEST_RESOURCE:
-            ais_test_daemon_handle_create_test_res_request(request, reply);
-            break;
-        case AIS_TEST_MSG_REQUEST_MSG_INITALIZE:
-            ais_test_daemon_handle_init_request(request, reply);
-            break;
-        case AIS_TEST_MSG_REQUEST_MSG_SELECTION_OBJECT_GET:
-            ais_test_daemon_handle_selection_object_request(request, reply);
-            break;
-        case AIS_TEST_MSG_REQUEST_DISPATCH:
-            ais_test_daemon_handle_dispatch_request(request, reply);
-            break;
-        case AIS_TEST_MSG_REQUEST_MSG_FINALIZE:
-            ais_test_daemon_handle_finalize_request(request, reply);
-            break;
-        case AIS_TEST_MSG_REQUEST_MSG_QUEUE_OPEN:
-            ais_test_daemon_handle_queue_open_request(request, reply);
-            break;
-        default:
-            ais_test_abort("Daemon received request with unknown op %d\n",
-                           request->op);
-    }
-    free(request);
-
-    ais_test_log("Before calling send_reply\n");
-    ais_test_send_reply(client_connection_fd, reply,
-                        sizeof(ais_test_msg_reply_t));
-    ais_test_log("After calling send_reply\n");
-    free(reply);
+    saftest_send_reply(client_connection_fd, reply);
 }
 
 void
-ais_test_daemon_handle_incoming_msg_message(gpointer data, gpointer user_data)
+saftest_daemon_handle_incoming_msg_message(gpointer data, gpointer user_data)
 {
     msg_resource_t *msg_res = data;
     fd_set *fd_mask = (fd_set *)user_data;
@@ -547,17 +694,17 @@ ais_test_daemon_handle_incoming_msg_message(gpointer data, gpointer user_data)
         return;
     }
 
-    ais_test_log("Incoming request on msg selection fd %d\n",
+    saftest_log("Incoming request on msg selection fd %d\n",
                  msg_res->selection_object);
     err = saMsgDispatch(msg_res->msg_handle, msg_res->dispatch_flags);
     if (SA_AIS_OK != err) {
-        ais_test_log("Error %s performing saMsgDispatch\n",
+        saftest_log("Error %s performing saMsgDispatch\n",
                      get_error_string(err));
     }
 }
 
-void ais_test_daemon_add_msg_resource_to_fdset(gpointer data, 
-                                               gpointer user_data)
+void saftest_daemon_add_msg_resource_to_fdset(gpointer data, 
+                                              gpointer user_data)
 {
     msg_resource_t *msg_res;
     fd_set_key_t *set_key = (fd_set_key_t *)user_data;
@@ -581,7 +728,7 @@ void ais_test_daemon_add_msg_resource_to_fdset(gpointer data,
     return;
 }
 
-void ais_test_daemon_add_fds(
+void saftest_daemon_add_fds(
     int *max_fd,
     fd_set *read_fd_set,
     fd_set *write_fd_set,
@@ -592,191 +739,90 @@ void ais_test_daemon_add_fds(
     set_key.set = read_fd_set;
     set_key.largest_fd = *max_fd;
 
-    g_list_foreach(msg_list, ais_test_daemon_add_msg_resource_to_fdset,
+    g_list_foreach(msg_list, saftest_daemon_add_msg_resource_to_fdset,
                    &set_key);
     *max_fd = set_key.largest_fd;
 }
 
 void
-ais_test_daemon_check_fds(
+saftest_daemon_check_fds(
     fd_set *read_fd_set,
     fd_set *write_fd_set,
     fd_set *except_fd_set)
 {
     g_list_foreach(msg_list,
-                   ais_test_daemon_handle_incoming_msg_message,
+                   saftest_daemon_handle_incoming_msg_message,
                    read_fd_set);
 }
 
 SaAisErrorT
-ais_test_client_handle_create_test_res_request(
+saftest_client_handle_create_test_res_request(
     int fd,
-    ais_test_msg_request_t *request)
+    saftest_msg_t *request)
 {
-    ais_test_msg_reply_t *reply;
+    saftest_msg_t *reply = NULL;
     SaAisErrorT status;
  
-    reply = ais_test_send_request(fd, request,
-                                  sizeof(ais_test_msg_request_t),
-                                  sizeof(ais_test_msg_reply_t));
+    saftest_send_request(fd, get_library_id(), request, &reply);
     if (NULL == reply) {
-        ais_test_abort("Received no reply from the daemon\n");
+        saftest_abort("Received no reply from the daemon\n");
     }
 
-    status = reply->status;
+    status = saftest_reply_msg_get_status(reply);
     if (SA_AIS_OK == status) {
-        ais_test_log("Resource ID=%d\n", reply->msg_resource_id);
+        saftest_log("Resource ID=%d\n", 
+                    saftest_msg_get_ubit32_value(reply, "MSG_RESOURCE_ID"));
     }
+    free(reply);
+
+    return(status);
+}
+
+SaAisErrorT
+saftest_client_generic_handle_request(
+    int fd,
+    saftest_msg_t *request)
+{
+    saftest_msg_t *reply;
+    SaAisErrorT status;
+ 
+    saftest_send_request(fd, get_library_id(), request, &reply);
+    if (NULL == reply) {
+        saftest_abort("Received no reply from the daemon\n");
+    }
+    status = saftest_reply_msg_get_status(reply);
     free(reply);
     return(status);
 }
 
 SaAisErrorT
-ais_test_client_handle_init_request(int fd,
-                                    ais_test_msg_request_t *request,
-                                    int msg_resource_id,
-                                    SaVersionT *sa_version,
-                                    int queue_open_cb_flag,
-                                    int queue_group_track_cb_flag,
-                                    int message_delivered_cb_flag,
-                                    int message_received_cb_flag,
-                                    SaDispatchFlagsT dispatch_flags,
-                                    int null_msg_handle_flag,
-                                    int null_callbacks_flag,
-                                    int null_version_flag)
-{
-    ais_test_msg_reply_t *reply;
-    SaAisErrorT status;
-
-    request->msg_resource_id = msg_resource_id;
-    request->sa_version = *sa_version;
-    request->queue_open_cb_flag = queue_open_cb_flag;
-    request->queue_group_track_cb_flag = queue_group_track_cb_flag;
-    request->message_delivered_cb_flag = message_delivered_cb_flag;
-    request->message_received_cb_flag = message_received_cb_flag;
-    request->dispatch_flags = dispatch_flags;
-    request->null_msg_handle_flag = null_msg_handle_flag;
-    request->null_callbacks_flag = null_callbacks_flag;
-    request->null_version_flag = null_version_flag;
-    reply = ais_test_send_request(fd, request,
-                                  sizeof(ais_test_msg_request_t),
-                                  sizeof(ais_test_msg_reply_t));
-    if (NULL == reply) {
-        ais_test_abort("Received no reply from the daemon\n");
-    }
-    status = reply->status;
-    free(reply);
-    return(status);
-}
-
-int
-ais_test_client_handle_selection_object_request(int fd,
-                                             ais_test_msg_request_t *request,
-                                             int msg_resource_id,
-                                             int null_selection_object_flag)
-{
-    ais_test_msg_reply_t *reply;
-    SaAisErrorT status;
- 
-    request->msg_resource_id = msg_resource_id;
-    request->null_selection_object_flag = null_selection_object_flag;
-    reply = ais_test_send_request(fd, request,
-                                  sizeof(ais_test_msg_request_t),
-                                  sizeof(ais_test_msg_reply_t));
-    if (NULL == reply) {
-        ais_test_abort("Received no reply from the daemon\n");
-    }
-
-    status = reply->status;
-    free(reply);
-    return(status);
-}
-
-int
-ais_test_client_handle_dispatch_request(int fd,
-                                        ais_test_msg_request_t *request,
-                                        int msg_resource_id,
-                                        SaDispatchFlagsT dispatch_flags)
-{
-    ais_test_msg_reply_t *reply;
-    SaAisErrorT status;
- 
-    request->msg_resource_id = msg_resource_id;
-    request->dispatch_flags = dispatch_flags;
-    reply = ais_test_send_request(fd, request,
-                                  sizeof(ais_test_msg_request_t),
-                                  sizeof(ais_test_msg_reply_t));
-    if (NULL == reply) {
-        ais_test_abort("Received no reply from the daemon\n");
-    }
-    status = reply->status;
-    free(reply);
-    return(status);
-}
-
-int
-ais_test_client_handle_resource_finalize_request(
+saftest_client_handle_message_get_request(
     int fd,
-    ais_test_msg_request_t *request, 
-    int msg_resource_id)
+    saftest_msg_t *request)
 {
-    ais_test_msg_reply_t *reply;
+    saftest_msg_t *reply;
     SaAisErrorT status;
  
-    request->msg_resource_id = msg_resource_id;
-    reply = ais_test_send_request(fd, request,
-                                  sizeof(ais_test_msg_request_t),
-                                  sizeof(ais_test_msg_reply_t));
+    saftest_send_request(fd, get_library_id(), request, &reply);
     if (NULL == reply) {
-        ais_test_abort("Received no reply from the daemon\n");
+        saftest_abort("Received no reply from the daemon\n");
     }
-
-    status = reply->status;
+    status = saftest_reply_msg_get_status(reply);
     free(reply);
-    return(status);
-}
-
-int
-ais_test_client_handle_queue_open_request(int fd,
-                                          ais_test_msg_request_t *request,
-                                          int msg_resource_id,
-                                          const char *queue_name,
-                                          SaTimeT retention_time,
-                                          SaSizeT *sizes,
-                                          int persistent, int create, 
-                                          int receive_callback, int empty)
-{
-    ais_test_msg_reply_t *reply;
-    SaAisErrorT status;
- 
-    request->msg_resource_id = msg_resource_id;
-    strcpy(request->queue_name, queue_name);
-    if (persistent) {
-        request->queue_creation_attributes.creationFlags 
-            |= SA_MSG_QUEUE_PERSISTENT;
+    if (SA_AIS_OK == status) {
+        saftest_log("Message Type=%d\n", 
+                    saftest_msg_get_ubit32_value(reply, "MSG_TYPE"));
+        saftest_log("Message Version=%d\n",
+                    saftest_msg_get_ubit32_value(reply, "MSG_VERSION"));
+        saftest_log("Message Size=%d\n",
+                    saftest_msg_get_ubit32_value(reply, "MSG_SIZE"));
+        saftest_log("Message Priority=%d\n",
+                    saftest_msg_get_ubit32_value(reply, "MSG_PRIORITY"));
+        saftest_log("Sender Name=%s\n",
+                    saftest_msg_get_str_value(reply, "SENDER_NAME"));
+        saftest_log("Message String=%s\n",
+                    saftest_msg_get_str_value(reply, "MSG_STRING"));
     }
-    memcpy(request->queue_creation_attributes.size, sizes, 
-           sizeof(request->queue_creation_attributes.size));
-    request->queue_creation_attributes.retentionTime = retention_time;
-    if (create) {
-        request->queue_open_flags |= SA_MSG_QUEUE_CREATE;
-    }
-    if (receive_callback) {
-        request->queue_open_flags |= SA_MSG_QUEUE_RECEIVE_CALLBACK;
-    }
-    if (empty) {
-        request->queue_open_flags |= SA_MSG_QUEUE_EMPTY;
-    }
-    
-    reply = ais_test_send_request(fd, request,
-                                  sizeof(ais_test_msg_request_t),
-                                  sizeof(ais_test_msg_reply_t));
-    if (NULL == reply) {
-        ais_test_abort("Received no reply from the daemon\n");
-    }
-
-    status = reply->status;
-    free(reply);
     return(status);
 }
 
@@ -788,36 +834,11 @@ ais_test_client_handle_queue_open_request(int fd,
 #define LOG_FILE_OPTION 6
 #define PID_FILE_OPTION 7
 #define OP_NAME_OPTION 8
-#define QUEUE_NAME_OPTION 9
-#define TIMEOUT_OPTION 10 
-#define SET_QUEUE_OPEN_CB_OPTION 11
-#define SET_QUEUE_GROUP_TRACK_CB_OPTION 12
-#define SET_MESSAGE_DELIVERED_CB_OPTION 13
-#define SET_MESSAGE_RECEIVED_CB_OPTION 14
-#define MSG_RESOURCE_ID_OPTION 15
-#define VERBOSE_OPTION 18
-#define EXPECTED_MSG_STATUS_OPTION 19
-#define DISPATCH_FLAGS_OPTION 20 
-#define NULL_MSG_HANDLE_OPTION 24
-#define NULL_CALLBACKS_OPTION 25
-#define NULL_VERSION_OPTION 26
-#define NULL_MSG_ID_OPTION 27
-#define NULL_MSG_STATUS_OPTION 28
-#define NULL_SELECTION_OBJECT_OPTION 29
-#define INVOCATION_OPTION 30
-#define VERSION_RELEASE_CODE_OPTION 40
-#define VERSION_MAJOR_OPTION 41
-#define VERSION_MINOR_OPTION 42
-#define RETENTION_TIME_OPTION 43
-#define SIZE_ARRAY_OPTION 44
-#define PERSISTENT_OPTION 45
-#define CREATE_OPTION 46
-#define RECEIVE_CALLBACK_OPTION 47
-#define EMPTY_OPTION 48
+#define KEY_OPTION 9
+#define VALUE_OPTION 10
 
 int
-saftest_driver_client_main(int argc, char **argv,
-                           void *first_request, int first_request_length)
+saftest_driver_client_main(int argc, char **argv)
 {
     SaAisErrorT         status = 255;
     int                 daemon_flag = 0;
@@ -827,51 +848,17 @@ saftest_driver_client_main(int argc, char **argv,
     int                 log_file_flag = 0;
     int                 pid_file_flag = 0;
     int                 op_name_flag = 0;
-    int     	        queue_name_flag = 0;
-    int                 timeout_flag = 0;
-    int                 queue_open_cb_flag = 0;
-    int                 queue_group_track_cb_flag = 0;
-    int                 message_delivered_cb_flag = 0;
-    int                 message_received_cb_flag = 0;
-    int                 msg_resource_id_flag = 0;
-    int     	        verbose_flag = 0;
-    int     	        dispatch_type_flag = 0;
-    int     	        null_msg_handle_flag = 0;
-    int     	        null_callbacks_flag = 0;
-    int     	        null_version_flag = 0;
-    int     	        null_msg_id_flag = 0;
-    int     	        null_msg_status_flag = 0;
-    int     	        null_selection_object_flag = 0;
-    int                 invocation_flag = 0;
-    int                 version_release_code_flag = 0;
-    int                 version_major_flag = 0;
-    int                 version_minor_flag = 0;
     char                run_path[BUF_SIZE];
     char                pid_file[BUF_SIZE];
     char                log_file[BUF_SIZE];
     char                socket_file[BUF_SIZE];
     char             	op_name[BUF_SIZE];
-    char             	queue_name[SA_MAX_NAME_LENGTH+1];
-    ais_test_msg_request_op_t op;
-    int                 timeout = 0;
-    int                 msg_resource_id = 0;
-    SaVersionT           sa_version;
-    SaDispatchFlagsT    dispatch_flags = 0;
-    SaInvocationT       invocation = 0;
-    int next_option = 0;
-    ais_test_msg_request_t *request;
-    int client_fd;
-    int                 retention_time_flag = 0;
-    SaTimeT             retention_time;
-    int                 size_array_flag = 0;
-    SaSizeT             sizes[SA_MSG_MESSAGE_LOWEST_PRIORITY+1];
-    char             	size_array_buffer[BUF_SIZE];
-    char               *size_array_token = NULL;
-    int                 size_array_ndx = 0;
-    int                 persistent_flag = 0;
-    int                 create_flag = 0;
-    int                 receive_callback_flag = 0;
-    int                 empty_flag = 0;
+    char                key[SAFTEST_STRING_LENGTH+1];
+    char                value[SAFTEST_STRING_LENGTH+1];
+    saftest_msg_map_table_entry_t *entry;
+    int                 next_option = 0;
+    int                 client_fd;
+    saftest_msg_t      *request = NULL;
 
     const struct option long_options[] = {
         { "help",     0, NULL, HELP_OPTION},
@@ -882,39 +869,10 @@ saftest_driver_client_main(int argc, char **argv,
         { "log-file", 1, NULL, LOG_FILE_OPTION},
         { "pid-file", 1, NULL, PID_FILE_OPTION},
         { "op", 1, NULL, OP_NAME_OPTION},
-        { "set-queue-open-cb", 0, NULL, SET_QUEUE_OPEN_CB_OPTION},
-        { "set-queue-group-track-cb", 0, NULL, SET_QUEUE_GROUP_TRACK_CB_OPTION},
-        { "set-message-delivered-cb", 0, NULL, SET_MESSAGE_DELIVERED_CB_OPTION},
-        { "set-message-received-cb", 0, NULL, SET_MESSAGE_RECEIVED_CB_OPTION},
-        { "resource-id", 1, NULL, MSG_RESOURCE_ID_OPTION},
-        { "queue-name", 1, NULL, QUEUE_NAME_OPTION},
-        { "invocation", 1, NULL, INVOCATION_OPTION},
-        { "timeout", 1, NULL, TIMEOUT_OPTION},
-        { "verbose", 0, NULL, VERBOSE_OPTION},
-        { "expected-status", 1, NULL, EXPECTED_MSG_STATUS_OPTION},
-        { "dispatch-flags", 1, NULL, DISPATCH_FLAGS_OPTION},
-        { "null-msg-handle", 0, NULL, NULL_MSG_HANDLE_OPTION},
-        { "null-callbacks", 0, NULL, NULL_CALLBACKS_OPTION},
-        { "null-version", 0, NULL, NULL_VERSION_OPTION},
-        { "null-msg-id", 0, NULL, NULL_MSG_ID_OPTION},
-        { "null-msg-status", 0, NULL, NULL_MSG_STATUS_OPTION},
-        { "null-selection-object", 0, NULL, NULL_SELECTION_OBJECT_OPTION},
-        { "version-release-code", 1, NULL, VERSION_RELEASE_CODE_OPTION},
-        { "version-major-code", 1, NULL, VERSION_MAJOR_OPTION},
-        { "version-minor-code", 1, NULL, VERSION_MINOR_OPTION},
-        { "retention-time", 1, NULL, RETENTION_TIME_OPTION},
-        { "size-array", 1, NULL, SIZE_ARRAY_OPTION},
-        { "persistent", 0, NULL, PERSISTENT_OPTION},
-        { "create", 0, NULL, CREATE_OPTION},
-        { "receive-callback", 0, NULL, RECEIVE_CALLBACK_OPTION},
-        { "empty", 0, NULL, EMPTY_OPTION},
+        { "key", 1, NULL, KEY_OPTION},
+        { "value", 1, NULL, VALUE_OPTION},
         { NULL,       0, NULL, 0   }   /* Required at end of array.  */
     };
-
-    memset(queue_name, 0, sizeof(queue_name));
-    sa_version.releaseCode = AIS_B_RELEASE_CODE;
-    sa_version.majorVersion = AIS_B_VERSION_MAJOR;
-    sa_version.minorVersion = AIS_B_VERSION_MINOR;
 
     do {
         opterr = 0;
@@ -969,184 +927,15 @@ saftest_driver_client_main(int argc, char **argv,
                 }
                 op_name_flag++;
                 strcpy(op_name, optarg);
+                request = saftest_request_msg_create(op_name);
                 break;
-            case QUEUE_NAME_OPTION:
-                if (queue_name_flag) {
-                    usage();
-                }
-                queue_name_flag++;
-                strcpy(queue_name, optarg);
+            case KEY_OPTION:
+                strcpy(key, optarg);
                 break;
-            case TIMEOUT_OPTION:
-                if (timeout_flag) {
-                    usage();
-                }
-                timeout_flag++;
-                timeout = atoi(optarg);
-                break;
-            case SET_QUEUE_OPEN_CB_OPTION:
-                if (queue_open_cb_flag) {
-                    usage();
-                }
-                queue_open_cb_flag++;
-                break;
-            case SET_QUEUE_GROUP_TRACK_CB_OPTION:
-                if (queue_group_track_cb_flag) {
-                    usage();
-                }
-                queue_group_track_cb_flag++;
-                break;
-            case SET_MESSAGE_DELIVERED_CB_OPTION:
-                if (message_delivered_cb_flag) {
-                    usage();
-                }
-                message_delivered_cb_flag++;
-                break;
-            case SET_MESSAGE_RECEIVED_CB_OPTION:
-                if (message_received_cb_flag) {
-                    usage();
-                }
-                message_received_cb_flag++;
-                break;
-            case MSG_RESOURCE_ID_OPTION:
-                if (msg_resource_id_flag) {
-                    usage();
-                }
-                msg_resource_id_flag++;
-                msg_resource_id = atoi(optarg);
-                break;
-            case VERBOSE_OPTION:
-                if (verbose_flag) {
-                    usage();
-                }
-                verbose_flag++;
-                break;
-            case DISPATCH_FLAGS_OPTION:
-                if (dispatch_type_flag) {
-                    usage();
-                }
-                dispatch_type_flag++;
-                if (0 == strcmp(optarg, "SA_DISPATCH_ONE")) {
-                    dispatch_flags = SA_DISPATCH_ONE;
-                } else if (0 == strcmp(optarg, "SA_DISPATCH_ALL")) {
-                    dispatch_flags = SA_DISPATCH_ALL;
-                } else if (0 == strcmp(optarg, "SA_DISPATCH_BLOCKING")) {
-                    dispatch_flags = SA_DISPATCH_BLOCKING;
-                } else if (0 == strcmp(optarg, "SA_DISPATCH_INVALID")) {
-                    dispatch_flags = -1;
-                } else {
-                    usage();
-                }
-                break;
-            case NULL_MSG_HANDLE_OPTION:
-                if (null_msg_handle_flag) {
-                    usage();
-                }
-                null_msg_handle_flag++;
-                break;
-            case NULL_CALLBACKS_OPTION:
-                if (null_callbacks_flag) {
-                    usage();
-                }
-                null_callbacks_flag++;
-                break;
-            case NULL_VERSION_OPTION:
-                if (null_version_flag) {
-                    usage();
-                }
-                null_version_flag++;
-                break;
-            case NULL_MSG_ID_OPTION:
-                if (null_msg_id_flag) {
-                    usage();
-                }
-                null_msg_id_flag++;
-                break;
-            case NULL_MSG_STATUS_OPTION:
-                if (null_msg_status_flag) {
-                    usage();
-                }
-                null_msg_status_flag++;
-                break;
-            case NULL_SELECTION_OBJECT_OPTION:
-                if (null_selection_object_flag) {
-                    usage();
-                }
-                null_selection_object_flag++;
-                break;
-            case VERSION_RELEASE_CODE_OPTION:
-                if (version_release_code_flag) {
-                    usage();
-                }
-                version_release_code_flag++;
-                sa_version.releaseCode = atoi(optarg);
-                break;
-            case VERSION_MAJOR_OPTION:
-                if (version_major_flag) {
-                    usage();
-                }
-                version_major_flag++;
-                sa_version.majorVersion = atoi(optarg);
-                break;
-            case VERSION_MINOR_OPTION:
-                if (version_minor_flag) {
-                    usage();
-                }
-                version_minor_flag++;
-                sa_version.minorVersion = atoi(optarg);
-                break;
-            case INVOCATION_OPTION:
-                if (invocation_flag) {
-                    usage();
-                }
-                invocation_flag++;
-                invocation = atoi(optarg);
-                break;
-            case RETENTION_TIME_OPTION:
-                if (retention_time_flag) {
-                    usage();
-                }
-                retention_time_flag++;
-                retention_time = atoi(optarg);
-                break;
-            case SIZE_ARRAY_OPTION:
-                if (size_array_flag) {
-                    usage();
-                }
-                size_array_flag++;
-                strcpy(size_array_buffer, optarg);
-                for (size_array_ndx = 0, 
-                     size_array_token = strtok(size_array_buffer, ","); 
-                     NULL != size_array_token;
-                     size_array_ndx++, 
-                     size_array_token = strtok(NULL, ",")) {
-                    assert(size_array_ndx <= SA_MSG_MESSAGE_LOWEST_PRIORITY);
-                    sizes[size_array_ndx] = atoi(size_array_token); 
-                }
-                break;
-            case PERSISTENT_OPTION:
-                if (persistent_flag) {
-                    usage();
-                }
-                persistent_flag++;
-                break;
-            case CREATE_OPTION:
-                if (create_flag) {
-                    usage();
-                }
-                create_flag++;
-                break;
-            case RECEIVE_CALLBACK_OPTION:
-                if (receive_callback_flag) {
-                    usage();
-                }
-                receive_callback_flag++;
-                break;
-            case EMPTY_OPTION:
-                if (empty_flag) {
-                    usage();
-                }
-                empty_flag++;
+            case VALUE_OPTION:
+                strcpy(value, optarg);
+                assert(NULL != request);
+                saftest_msg_set_str_value(request, key, value);
                 break;
             case -1:
                 /* No more options */
@@ -1168,87 +957,12 @@ saftest_driver_client_main(int argc, char **argv,
         usage();
     }
 
-    ais_test_uds_connect(&client_fd, socket_file);
-    ais_test_send_request(client_fd, first_request, first_request_length, 0);
+    saftest_uds_connect(&client_fd, socket_file);
 
-    op = ais_test_map_string_to_op(op_name);
+    entry = saftest_get_map_table_entry(op_name);
 
-    request = (ais_test_msg_request_t *)
-              malloc(sizeof(ais_test_msg_request_t));
-    memset(request, 0, sizeof(ais_test_msg_request_t));
-    request->op = op;
-    request->requestor_pid = getpid();
-    switch(op) {
-        case AIS_TEST_MSG_REQUEST_CREATE_TEST_RESOURCE:
-            status = 
-                ais_test_client_handle_create_test_res_request(
-                    client_fd, request);
-            break;
-        case AIS_TEST_MSG_REQUEST_MSG_INITALIZE:
-            if (!msg_resource_id_flag || !dispatch_type_flag) {
-                usage();
-            }
-            status = 
-                ais_test_client_handle_init_request(client_fd, 
-                                                    request,
-                                                    msg_resource_id,
-                                                    &sa_version,
-                                                    queue_open_cb_flag,
-                                                    queue_group_track_cb_flag,
-                                                    message_delivered_cb_flag,
-                                                    message_received_cb_flag,
-                                                    dispatch_flags,
-                                                    null_msg_handle_flag,
-                                                    null_callbacks_flag,
-                                                    null_version_flag);
-            break;
-        case AIS_TEST_MSG_REQUEST_MSG_SELECTION_OBJECT_GET:
-            if (!msg_resource_id_flag) {
-                usage();
-            }
-            status = 
-                ais_test_client_handle_selection_object_request(
-                    client_fd, request, msg_resource_id,
-                    null_selection_object_flag);
-            break;
-        case AIS_TEST_MSG_REQUEST_DISPATCH:
-            /*
-             * Can specify either a specific handle or a msg_resource_id
-             */
-            if (!msg_resource_id_flag || !dispatch_type_flag) {
-                usage();
-            }
-            status = 
-                ais_test_client_handle_dispatch_request(
-                    client_fd, request, msg_resource_id, dispatch_flags);
-            break;
-        case AIS_TEST_MSG_REQUEST_MSG_FINALIZE:
-            if (!msg_resource_id_flag) {
-                usage();
-            }
-            status = 
-                ais_test_client_handle_resource_finalize_request(
-                    client_fd, request, msg_resource_id);
-            break;
-        case AIS_TEST_MSG_REQUEST_MSG_QUEUE_OPEN:
-            if (!msg_resource_id_flag || !queue_name_flag) {
-                usage();
-            }
-            status = 
-                ais_test_client_handle_queue_open_request(
-                    client_fd, request, msg_resource_id, queue_name,
-                    retention_time, sizes, persistent_flag,
-                    create_flag, receive_callback_flag, empty_flag);
-            break;
-        default:
-            ais_test_abort("Client received request with unknown op %s\n",
-                           op_name);
-    }
+    status = entry->client_handler(client_fd, request);
     free(request);
-    if (verbose_flag) {
-        ais_test_log("Exit status for %s request is %s\n",
-                    op_name, get_error_string(status));
-    }
 
     exit(status);
 }

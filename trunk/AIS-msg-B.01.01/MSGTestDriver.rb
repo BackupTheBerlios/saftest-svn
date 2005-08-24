@@ -20,8 +20,8 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
     end
 
     def createTestResource()
-        cmd = "%s --run-dir %s --o CREATE_TEST_RES --socket-file %s --load-libs %s" % \
-              [getDriverPath(), getRunDir(), getSocketFile(), getDriverLibs()]
+        cmd = "%s --run-dir %s --o CREATE_TEST_RESOURCE_REQ --load-libs %s --socket-file %s" % \
+              [getDriverPath(), getRunDir(), getDriverLibs(), getSocketFile()]
         array = captureCommand(cmd)
         ret = array[0]
         lines = array[1]
@@ -38,13 +38,19 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
         return resourceID
     end
 
-    def runDriver(cmd, expectedReturn)
+    def runDriver(cmd, kvp_hash, expectedReturn)
         newCmd = "%s --run-dir %s --socket-file %s --load-libs %s %s" % \
                  [getDriverPath(), getRunDir(), getSocketFile(),
                   getDriverLibs(), cmd]
+        kvp_hash.each do |key, value|
+            newCmd = "%s --key \"%s\" --value \"%s\"" % [newCmd, key, value]
+        end
         array = captureCommand(newCmd)
         ret = array[0]
         lines = array[1]
+        lines.each do |line|
+            print line
+        end
         if expectedReturn != ret
             raise "Expected return %s, got %s.  Lines = \"%s\"" % \
                    [mapErrorCodeToString(expectedReturn), 
@@ -53,70 +59,127 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
     end
 
     def init(resourceID, dispatchFlags, expectedReturn)
-        cmd = "--o INIT --resource-id %s --set-queue-open-cb --set-queue-group-track-cb --set-message-delivered-cb --set-message-received-cb --dispatch-flags %s" % [resourceID, dispatchFlags]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
+                    'QUEUE_OPEN_CB' => 'TRUE',
+                    'QUEUE_GROUP_TRACK_CB' => 'TRUE',
+                    'MESSAGE_DELIVERED_CB' => 'TRUE',
+                    'MESSAGE_RECEIEVED_CB' => 'TRUE',
+                    'VERSION_RELEASE_CODE' => 'B',
+                    'VERSION_MAJOR' => '1',
+                    'VERSION_MINOR' => '1',
+                    'DISPATCH_FLAGS' => dispatchFlags,
+                    'NULL_MSG_HANDLE' => 'FALSE',
+                    'NULL_CALLBACKS' => 'FALSE',
+                    'NULL_VERSION' => 'FALSE'}
+        cmd = "--o MSG_INITIALIZE_REQ"
+        runDriver("--o MSG_INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def initWithOptions(resourceID, dispatchFlags, 
                         releaseCode, majorVersion, minorVersion,
-                        nullLckHandle, nullCallbacks, nullVersion,
+                        nullMsgHandle, nullCallbacks, nullVersion,
                         expectedReturn)
-        cmd = "--o INIT --resource-id %s --dispatch-flags %s --version-release-code %d --version-major %d --version-minor %d" % \
-              [resourceID, dispatchFlags, 
-               releaseCode, majorVersion, minorVersion]
-        if nullLckHandle
-            cmd += " --null-msg-handle"
-        end
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
+                    'VERSION_RELEASE_CODE' => releaseCode,
+                    'VERSION_MAJOR' => majorVersion,
+                    'VERSION_MINOR' => minorVersion,
+                    'DISPATCH_FLAGS' => dispatchFlags}
+
         if nullCallbacks
-            cmd += " --null-callbacks"
+            kvp_hash['NULL_CALLBACKS'] = 'TRUE'
+        else
+            kvp_hash['NULL_CALLBACKS'] = 'FALSE'
+            kvp_hash['QUEUE_OPEN_CB'] = 'TRUE'
+            kvp_hash['QUEUE_GROUP_TRACK_CB'] = 'TRUE'
+            kvp_hash['MESSAGE_DELIVERED_CB'] = 'TRUE'
+            kvp_hash['MESSAGE_RECEIEVED_CB'] = 'TRUE'
         end
+
+        if nullMsgHandle
+            kvp_hash['NULL_MSG_HANDLE'] = 'TRUE'
+        else
+            kvp_hash['NULL_MSG_HANDLE'] = 'FALSE'
+        end
+
         if nullVersion
-            cmd += " --null-version"
+            kvp_hash['NULL_VERSION'] = 'TRUE'
+        else
+            kvp_hash['NULL_VERSION'] = 'FALSE'
         end
-        runDriver(cmd, expectedReturn)
+
+        runDriver("--o MSG_INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def dispatch(resourceID, dispatchFlags, expectedReturn)
-        cmd = "--o DISPATCH --resource-id %s --dispatch-flags %s" % \
-              [resourceID, dispatchFlags]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
+                    'DISPATCH_FLAGS' => dispatchFlags}
+        runDriver("--o DISPATCH_REQ", kvp_hash, expectedReturn)
     end
 
     def finalize(resourceID, expectedReturn)
-        cmd = "--o FINALIZE --resource-id %s" % [resourceID]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s}
+        runDriver("--o FINALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def selectObjectGet(resourceID, nullSelectionObject, expectedReturn)
-        cmd = "--o SELECT_OBJ_GET --resource-id %s" % [resourceID]
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
+                    'NULL_SELECTION_OBJECT' => 'FALSE'}
         if nullSelectionObject
-            cmd += " --null-selection-object"
+            kvp_hash['NULL_SELECTION_OBJECT'] = 'TRUE'
         end
-        runDriver(cmd, expectedReturn)
+        runDriver("--o SELECTION_OBJECT_GET_REQ", kvp_hash, expectedReturn)
     end
 
-    def queueOpen(resourceID, queue_name, persistent, sizeArray, retentionTime,
+    def queueOpen(resourceID, queueName, persistent, sizeArray, retentionTime,
                   create, receiveCallback, empty, expectedReturn)
-        cmd = "--o QUEUE_OPEN --resource-id %s --queue-name %s --retention-time %d --size-array " % [resourceID, queue_name, retentionTime]
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
+                    'QUEUE_NAME' => queueName,
+                    'PERSISTENT' => 'FALSE',
+                    'CREATE' => 'FALSE',
+                    'EMPTY' => 'FALSE',
+                    'RECEIVE_CALLBACK' => 'FALSE',
+                    'RETENTION_TIME' => retentionTime.to_s}
+        sizeNdx = 0
         sizeArray.each do |size|
-            cmd += "%d," % [size]
+            kvp_hash["SIZE_ARRAY_%d" % [sizeNdx]] = size
+            sizeNdx += 1
         end    
         if persistent
             if 0 != retentionTime
                 raise "Retention Time only used for non-persistent queues"
             end
-            cmd += " --persistent"
+            kvp_hash['PERSISTENT'] = 'TRUE'
         end
         if create
-            cmd += " --create"
+            kvp_hash['CREATE'] = 'TRUE'
         end
         if receiveCallback
-            cmd += " --receive-callback"
+            kvp_hash['RECEIVE_CALLBACK'] = 'TRUE'
         end
         if empty
-            cmd += " --empty"
+            kvp_hash['EMPTY'] = 'TRUE'
         end
-        runDriver(cmd, expectedReturn)
+        runDriver("--o QUEUE_OPEN_REQ", kvp_hash, expectedReturn)
+    end
+
+    def messageSend(resourceID, entityName, senderName, msgType, msgVersion,
+                    msgPriority, msgString, expectedReturn)
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
+                    'ENTITY_NAME' => entityName,
+                    'SENDER_NAME' => senderName,
+                    'MSG_TYPE' => msgType.to_s,
+                    'MSG_VERSION' => msgVersion.to_s,
+                    'MSG_PRIORITY' => msgPriority.to_s,
+                    'MSG_STRING' => msgString}
+        runDriver("--o MESSAGE_SEND_REQ", kvp_hash, expectedReturn)
+    end
+
+    def messageGet(resourceID, entityName, expectedSenderName, 
+                   expectedMsgType, expectedMsgVersion,
+                   expectedMsgPriority, expectedMsgString, expectedReturn)
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
+                    'ENTITY_NAME' => entityName}
+        runDriver("--o MESSAGE_GET_REQ", kvp_hash, expectedReturn)
     end
 
 end # class

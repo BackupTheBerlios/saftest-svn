@@ -197,6 +197,18 @@ class SAFTestUtils
     @@SA_AIS_MAJOR_VERSION="01"
     @@SA_AIS_MINOR_VERSION="01"
 
+    def SAFTestUtils.SA_AIS_RELEASE_CODE()
+        return @@SA_AIS_RELEASE_CODE
+    end
+
+    def SAFTestUtils.SA_AIS_MAJOR_VERSION()
+        return @@SA_AIS_MAJOR_VERSION
+    end
+
+    def SAFTestUtils.SA_AIS_MINOR_VERSION()
+        return @@SA_AIS_MINOR_VERSION
+    end
+
     def SAFTestUtils.SA_AIS_RELEASE_CODE_INTEGER()
         return @@SA_AIS_RELEASE_CODE[0].to_i
     end

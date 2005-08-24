@@ -18,7 +18,7 @@ class InitializeInvalidVersionCase < Test::Unit::TestCase
         driver.start()
         resourceID = driver.createTestResource()
         driver.initWithOptions(resourceID, "SA_DISPATCH_ALL",
-                               0, 0, 0,
+                               '0', '0', '0',
                                false, false, false,
                                SAFTestUtils::SAFTestUtils.SA_AIS_ERR_VERSION)
 

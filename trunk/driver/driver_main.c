@@ -7,7 +7,6 @@ typedef struct shared_library {
     void *handle;
     char path[BUF_SIZE+1];
     char library_id[BUF_SIZE+1];
-    int library_message_size;
     int loaded;
     saftest_driver_handle_client_message_func_t daemon_handle_message_func;
     saftest_driver_init_func_t daemon_init_func;
@@ -21,18 +20,7 @@ typedef struct shared_library {
  */
 typedef struct client_resource {
     int client_connection_fd;
-    char library_id[BUF_SIZE+1];
 } client_resource_t;
-
-typedef enum ais_test_request_op {
-    AIS_TEST_REQUEST_INVALID=0,
-    AIS_TEST_REQUEST_INIT,
-} ais_test_request_op_t;
-
-typedef struct ais_test_request {
-    ais_test_request_op_t op;
-    char library_id[BUF_SIZE];
-} ais_test_request_t;
 
 GList *shlib_list = NULL;
 GList *client_list = NULL;
@@ -59,7 +47,7 @@ usage()
     printf("                        [--no-daemonize]\n");
 
     printf("\n");
-    ais_test_abort("blah\n");
+    saftest_abort("blah\n");
     exit(255);
 }
 
@@ -74,7 +62,6 @@ add_shared_library()
 
     shlib_list = g_list_append(shlib_list, shlib);
     return(shlib);
-
 }
 
 shared_library_t *
@@ -104,7 +91,6 @@ load_shared_library(gpointer data, gpointer user_data)
     char          *error_str;
     int           load_opt;
     const char * (*get_library_id_fn)(void);
-    int          (*get_library_message_size_fn)(void);
     char *error;
 
     if (NULL == data) {
@@ -142,8 +128,8 @@ load_shared_library(gpointer data, gpointer user_data)
         err_exit("%s not a shared library\n", s->path);
     }
 
-    load_opt = RTLD_LAZY;
-    /*load_opt = RTLD_NOW;*/
+    /*load_opt = RTLD_LAZY;*/
+    load_opt = RTLD_NOW;
 
     s->handle = dlopen(s->path, load_opt);
     error_str = dlerror();
@@ -161,20 +147,8 @@ load_shared_library(gpointer data, gpointer user_data)
     }
     strcpy(s->library_id, get_library_id_fn());
 /*
-    ais_test_log("Shared library \"%s\" is for Library ID %s\n", 
+    saftest_log("Shared library \"%s\" is for Library ID %s\n", 
                  s->path, s->library_id);
-*/
-
-    dlerror(); /* Clear existing errors */
-    get_library_message_size_fn = dlsym(s->handle, "get_library_message_size");
-    if ((error = dlerror()) != NULL)  {
-        err_exit ("Failed to lookup get_library_message_size symbol: %s\n", 
-                  error);
-    }
-    s->library_message_size = get_library_message_size_fn();
-/*
-    ais_test_log("Shared library \"%s\" has message size %d\n", 
-                 s->path, s->library_message_size);
 */
 
     dlerror(); /* Clear existing errors */
@@ -187,30 +161,25 @@ load_shared_library(gpointer data, gpointer user_data)
         s->daemon_init_func(daemon_log_fp);
     }
 
-/*
-    ais_test_log("Shared library \"%s\" has message size %d\n", 
-                 s->path, s->library_message_size);
-*/
-
     dlerror(); /* Clear existing errors */
     s->daemon_handle_message_func = 
-        dlsym(s->handle, "ais_test_daemon_handle_incoming_client_message");
+        dlsym(s->handle, "saftest_daemon_handle_incoming_client_message");
     if ((error = dlerror()) != NULL)  {
         err_exit ("Failed to lookup handle_message symbol: %s\n", 
                   error);
     }
 
     dlerror(); /* Clear existing errors */
-    s->daemon_add_fds_func = dlsym(s->handle, "ais_test_daemon_add_fds");
+    s->daemon_add_fds_func = dlsym(s->handle, "saftest_daemon_add_fds");
     if ((error = dlerror()) != NULL)  {
-        err_exit ("Failed to lookup ais_test_daemon_add_fds symbol: %s\n", 
+        err_exit ("Failed to lookup saftest_daemon_add_fds symbol: %s\n", 
                   error);
     }
 
     dlerror(); /* Clear existing errors */
-    s->daemon_check_fds_func = dlsym(s->handle, "ais_test_daemon_check_fds");
+    s->daemon_check_fds_func = dlsym(s->handle, "saftest_daemon_check_fds");
     if ((error = dlerror()) != NULL)  {
-        err_exit ("Failed to lookup ais_test_daemon_check_fds symbol: %s\n", 
+        err_exit ("Failed to lookup saftest_daemon_check_fds symbol: %s\n", 
                   error);
     }
 
@@ -233,7 +202,7 @@ load_shared_libraries(char *libs_string)
         if (NULL == token) {
             usage();
         }
-        printf("token is %s\n", token);
+        /*printf("token is %s\n", token);*/
         shlib = add_shared_library();
         strcpy(shlib->path, token);
         token = strtok(NULL, ",");
@@ -280,15 +249,14 @@ lookup_client_resource(int fd)
 }
 
 void
-ais_test_daemon_handle_incoming_client_message(gpointer data, gpointer
+saftest_daemon_handle_incoming_client_message(gpointer data, gpointer
 user_data)
 {
-    void *request;
+    saftest_msg_t *request;
     client_resource_t *res = data;
     fd_set *fd_mask = (fd_set *)user_data;
     shared_library_t *shlib = NULL;
  
-
     if (NULL == data) {
         return;
     }
@@ -297,14 +265,10 @@ user_data)
         return;
     }
 
-    shlib = lookup_shared_library(res->library_id);
-    ais_test_log("Incoming request for library_id %s on client fd %d\n",
-                 shlib->library_id, res->client_connection_fd);
-    request = ais_test_recv_request(res->client_connection_fd,
-                                    shlib->library_message_size);
+    request = saftest_recv_request(res->client_connection_fd);
     if (NULL == request) {
         /*
-        ais_test_log("Failed to recv request from client on fd %d."
+        saftest_log("Failed to recv request from client on fd %d."
                      "Closing connection.\n",
                      res->client_connection_fd);
         */
@@ -312,12 +276,18 @@ user_data)
         delete_client_resource(res);
         return;
     }
+    saftest_log("Incoming request for library_id %s on client fd %d\n",
+                saftest_msg_get_destination_library_id(request), 
+                res->client_connection_fd);
+    shlib = 
+        lookup_shared_library(saftest_msg_get_destination_library_id(request));
+    assert(NULL!= shlib);
     shlib->daemon_handle_message_func(res->client_connection_fd,
                                       request);
 }
 
 void
-ais_test_daemon_handle_shlib_add_fds(gpointer data, gpointer user_data)
+saftest_daemon_handle_shlib_add_fds(gpointer data, gpointer user_data)
 {
     shared_library_t *shlib = data;
     fd_set_key_t *set_key = (fd_set_key_t *)user_data;
@@ -330,7 +300,7 @@ ais_test_daemon_handle_shlib_add_fds(gpointer data, gpointer user_data)
                                NULL, NULL);
 }
 
-void ais_test_daemon_add_client_to_fdset(gpointer data, gpointer user_data)
+void saftest_daemon_add_client_to_fdset(gpointer data, gpointer user_data)
 {
     client_resource_t *res;
     fd_set_key_t *set_key = (fd_set_key_t *)user_data;
@@ -349,7 +319,7 @@ void ais_test_daemon_add_client_to_fdset(gpointer data, gpointer user_data)
     return;
 }
 
-void ais_test_daemon_add_fds(
+void saftest_daemon_add_fds(
     int *max_fd,
     fd_set *read_fd_set,
     fd_set *write_fd_set,
@@ -360,16 +330,16 @@ void ais_test_daemon_add_fds(
     set_key.set = read_fd_set;
     set_key.largest_fd = *max_fd;
 
-    g_list_foreach(client_list, ais_test_daemon_add_client_to_fdset,
+    g_list_foreach(client_list, saftest_daemon_add_client_to_fdset,
                    &set_key);
     g_list_foreach(shlib_list,
-                   ais_test_daemon_handle_shlib_add_fds,
+                   saftest_daemon_handle_shlib_add_fds,
                    &set_key);
     *max_fd = set_key.largest_fd;
 }
 
 void
-ais_test_daemon_handle_shlib_check_fds(gpointer data, gpointer user_data)
+saftest_daemon_handle_shlib_check_fds(gpointer data, gpointer user_data)
 {
     shared_library_t *shlib = data;
     fd_set *fd_mask = (fd_set *)user_data;
@@ -382,21 +352,21 @@ ais_test_daemon_handle_shlib_check_fds(gpointer data, gpointer user_data)
 }
 
 static void
-ais_test_daemon_check_fds(
+saftest_daemon_check_fds(
     fd_set *read_fd_set,
     fd_set *write_fd_set,
     fd_set *except_fd_set)
 {
     g_list_foreach(client_list,
-                   ais_test_daemon_handle_incoming_client_message,
+                   saftest_daemon_handle_incoming_client_message,
                    read_fd_set);
     g_list_foreach(shlib_list,
-                   ais_test_daemon_handle_shlib_check_fds,
+                   saftest_daemon_handle_shlib_check_fds,
                    read_fd_set);
 }
 
 static void 
-ais_test_daemon_fillout_read_fdset(
+saftest_daemon_fillout_read_fdset(
     int *max_fd,
     fd_set *read_fd_set)
 
@@ -405,55 +375,50 @@ ais_test_daemon_fillout_read_fdset(
     FD_SET(daemon_listen_fd, read_fd_set);
 
     *max_fd = daemon_listen_fd;
-    ais_test_daemon_add_fds(max_fd, read_fd_set, NULL, NULL);
+    saftest_daemon_add_fds(max_fd, read_fd_set, NULL, NULL);
 }
 
 void
-ais_test_daemon_handle_accept(int daemon_listen_fd)
+saftest_daemon_handle_accept(int daemon_listen_fd)
 {
     client_resource_t *res = NULL;
-    ais_test_request_t *request;
 
     res = add_client_resource();
 
-    ais_test_uds_accept(daemon_listen_fd, &(res->client_connection_fd));
-    request = (ais_test_request_t *)
-              ais_test_recv_request(res->client_connection_fd,
-                                    sizeof(ais_test_request_t));
-    strcpy(res->library_id, request->library_id);
-    ais_test_log("Client Connection FD %d using library id %s\n",
-                 res->client_connection_fd, res->library_id);
+    saftest_uds_accept(daemon_listen_fd, &(res->client_connection_fd));
+    saftest_log("Accepted Client Connection on FD %d\n",
+                res->client_connection_fd);
 }
 
 static void
-ais_test_daemon_select_loop(const char *socket_file)
+saftest_daemon_select_loop(const char *socket_file)
 {
     fd_set read_fd_set;
     int max_fd;
     int ret;
 
-    ais_test_uds_listen(&daemon_listen_fd, socket_file);
+    saftest_uds_listen(&daemon_listen_fd, socket_file);
 
-    ais_test_log("Begin select loop\n");
+    saftest_log("Begin select loop\n");
 
     while (1) {
-        ais_test_daemon_fillout_read_fdset(&max_fd, &read_fd_set);
+        saftest_daemon_fillout_read_fdset(&max_fd, &read_fd_set);
 
         unblock_signals();
         ret = select(max_fd+1, &read_fd_set, NULL, NULL, NULL);
         block_signals();
 
         if (-1 == ret) {
-            ais_test_log("Error %d (%s) from select()\n",
+            saftest_log("Error %d (%s) from select()\n",
                          errno, strerror(errno));
             clear_pid_file(daemon_pid_file);
             err_exit("Exiting from select error\n");
         }
         if (0 != ret) {
             if (FD_ISSET(daemon_listen_fd, &read_fd_set)) {
-                ais_test_daemon_handle_accept(daemon_listen_fd);
+                saftest_daemon_handle_accept(daemon_listen_fd);
             } else {
-                ais_test_daemon_check_fds(&read_fd_set, NULL, NULL);
+                saftest_daemon_check_fds(&read_fd_set, NULL, NULL);
             }
         } else {
             /* This is where we would put a timeout handler if we had one */
@@ -488,7 +453,6 @@ main(int argc, char *argv[], char *envp[])
     char                run_path[BUF_SIZE];
     char                log_file[BUF_SIZE];
     char                socket_file[BUF_SIZE];
-    ais_test_request_t *first_request = NULL;
     int next_option = 0;
     int is_daemon = 0;
     shared_library_t *shlib;
@@ -611,7 +575,7 @@ main(int argc, char *argv[], char *envp[])
         daemon_log_fp = setup_log_file(log_file);
         load_shared_libraries(libs_string);
 
-        ais_test_daemon_select_loop(socket_file);
+        saftest_daemon_select_loop(socket_file);
     } else {
         saftest_driver_client_init(run_path);
         load_shared_libraries(libs_string);
@@ -622,15 +586,7 @@ main(int argc, char *argv[], char *envp[])
         element = g_list_first(shlib_list);
         shlib = (shared_library_t *)element->data;
 
-        first_request = (ais_test_request_t *)
-              malloc(sizeof(ais_test_request_t));
-        memset(first_request, 0, sizeof(ais_test_request_t));
-        first_request->op = AIS_TEST_REQUEST_INIT;
-        strcpy(first_request->library_id, shlib->library_id);
-
-        return(shlib->client_main(argc_copy, argv_copy, 
-                                  (void *)first_request,
-                                  sizeof(ais_test_request_t)));
+        return(shlib->client_main(argc_copy, argv_copy));
     }
 
     return(0);

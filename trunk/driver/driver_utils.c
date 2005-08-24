@@ -162,4 +162,3 @@ saftest_driver_client_init(const char *run_path)
 {
     saftest_driver_init(run_path);
 }
-

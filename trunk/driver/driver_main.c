@@ -8,11 +8,10 @@ typedef struct shared_library {
     char path[BUF_SIZE+1];
     char library_id[BUF_SIZE+1];
     int loaded;
-    saftest_driver_handle_client_message_func_t daemon_handle_message_func;
     saftest_driver_init_func_t daemon_init_func;
     saftest_driver_add_fds_func_t daemon_add_fds_func;
     saftest_driver_check_fds_func_t daemon_check_fds_func;
-    saftest_driver_client_main_func_t client_main;
+    saftest_get_map_table_func_t get_map_table_func;
 } shared_library_t;
 
 /*
@@ -34,6 +33,12 @@ static FILE *daemon_log_fp = NULL;
  */
 extern int
 saftest_driver_main(int argc, char *argv[], char *envp[]);
+
+void
+saftest_daemon_handle_message(shared_library_t *shlib,
+                              int client_connection_fd,
+                              saftest_msg_t *request);
+
 
 void
 usage()
@@ -146,12 +151,8 @@ load_shared_library(gpointer data, gpointer user_data)
         err_exit ("Failed to lookup get_library_id symbol: %s\n", error);
     }
     strcpy(s->library_id, get_library_id_fn());
-/*
-    saftest_log("Shared library \"%s\" is for Library ID %s\n", 
-                 s->path, s->library_id);
-*/
 
-    dlerror(); /* Clear existing errors */
+    dlerror();
     s->daemon_init_func = dlsym(s->handle, "saftest_daemon_init");
     if ((error = dlerror()) != NULL)  {
         err_exit ("Failed to lookup saf_test_daemon_init symbol: %s\n", 
@@ -161,32 +162,25 @@ load_shared_library(gpointer data, gpointer user_data)
         s->daemon_init_func(daemon_log_fp);
     }
 
-    dlerror(); /* Clear existing errors */
-    s->daemon_handle_message_func = 
-        dlsym(s->handle, "saftest_daemon_handle_incoming_client_message");
-    if ((error = dlerror()) != NULL)  {
-        err_exit ("Failed to lookup handle_message symbol: %s\n", 
-                  error);
-    }
-
-    dlerror(); /* Clear existing errors */
+    dlerror();
     s->daemon_add_fds_func = dlsym(s->handle, "saftest_daemon_add_fds");
     if ((error = dlerror()) != NULL)  {
         err_exit ("Failed to lookup saftest_daemon_add_fds symbol: %s\n", 
                   error);
     }
 
-    dlerror(); /* Clear existing errors */
+    dlerror();
     s->daemon_check_fds_func = dlsym(s->handle, "saftest_daemon_check_fds");
     if ((error = dlerror()) != NULL)  {
         err_exit ("Failed to lookup saftest_daemon_check_fds symbol: %s\n", 
                   error);
     }
 
-    dlerror(); /* Clear existing errors */
-    s->client_main = dlsym(s->handle, "saftest_driver_client_main");
+    dlerror();
+    /* This function is defined by the SAFTEST_MAP_TABLE_END macro */
+    s->get_map_table_func = dlsym(s->handle, "saftest_driver_get_map_table");
     if ((error = dlerror()) != NULL)  {
-        err_exit ("Failed to lookup saftest_driver_client_main symbol: %s\n", 
+        err_exit ("Failed to lookup saftest_driver_get_map_table symbol: %s\n", 
                   error);
     }
 }
@@ -249,8 +243,8 @@ lookup_client_resource(int fd)
 }
 
 void
-saftest_daemon_handle_incoming_client_message(gpointer data, gpointer
-user_data)
+saftest_daemon_handle_incoming_client_message(
+    gpointer data, gpointer user_data)
 {
     saftest_msg_t *request;
     client_resource_t *res = data;
@@ -282,8 +276,7 @@ user_data)
     shlib = 
         lookup_shared_library(saftest_msg_get_destination_library_id(request));
     assert(NULL!= shlib);
-    shlib->daemon_handle_message_func(res->client_connection_fd,
-                                      request);
+    saftest_daemon_handle_message(shlib, res->client_connection_fd, request);
 }
 
 void
@@ -426,14 +419,185 @@ saftest_daemon_select_loop(const char *socket_file)
     }
 }
 
+static saftest_map_table_entry_t *
+saftest_get_map_table_entry(saftest_map_table_entry_t *first_entry,
+                            const char *request_op)
+{
+    int ndx = 0;
+
+    for (ndx = 0; NULL != first_entry[ndx].request_op; ndx++) {
+        if (0 == strcmp(first_entry[ndx].request_op, request_op)) {
+            return &(first_entry[ndx]);
+        }
+    }
+    return(NULL);
+}
+
+void
+saftest_daemon_handle_message(shared_library_t *shlib,
+                              int client_connection_fd,
+                              saftest_msg_t *request)
+{
+    saftest_msg_t *reply;
+    saftest_map_table_entry_t *entry;
+
+    if (NULL == request) {
+        saftest_abort("Invalid (NULL) request\n");
+    }
+
+    entry = saftest_get_map_table_entry(shlib->get_map_table_func(),
+                                        saftest_msg_get_msg_type(request));
+    entry->daemon_handler(entry, request, &reply);
+
+    saftest_send_reply(client_connection_fd, reply);
+}
+
 #define HELP_OPTION 1
 #define DAEMON_OPTION 2
-#define NO_DAEMONIZE_OPTION 3
-#define SOCKET_FILE_OPTION 4
-#define RUN_DIR_OPTION 5
-#define LOG_FILE_OPTION 6
-#define PID_FILE_OPTION 7
-#define LOAD_LIBS_OPTION 8
+#define LOAD_LIBS_OPTION 3
+#define NO_DAEMONIZE_OPTION 4
+#define SOCKET_FILE_OPTION 5
+#define RUN_DIR_OPTION 6
+#define LOG_FILE_OPTION 7
+#define PID_FILE_OPTION 8
+#define OP_NAME_OPTION 9
+#define KEY_OPTION 10
+#define VALUE_OPTION 11
+
+int
+saftest_driver_client_main(shared_library_t *shlib, int argc, char **argv)
+{
+    SaAisErrorT         status = 255;
+    int                 daemon_flag = 0;
+    int                 no_daemonize_flag = 0;
+    int                 socket_file_flag = 0;
+    int                 run_dir_flag = 0;
+    int                 log_file_flag = 0;
+    int                 pid_file_flag = 0;
+    int                 op_name_flag = 0;
+    char                run_path[BUF_SIZE];
+    char                pid_file[BUF_SIZE];
+    char                log_file[BUF_SIZE];
+    char                socket_file[BUF_SIZE];
+    char                op_name[BUF_SIZE];
+    char                key[SAFTEST_STRING_LENGTH+1];
+    char                value[SAFTEST_STRING_LENGTH+1];
+    saftest_map_table_entry_t *entry;
+    int                 next_option = 0;
+    int                 client_fd;
+    saftest_msg_t      *request = NULL;
+
+    const struct option long_options[] = {
+        { "help",     0, NULL, HELP_OPTION},
+        { "daemon",   0, NULL, DAEMON_OPTION},
+        { "no-daemonize", 0, NULL, NO_DAEMONIZE_OPTION},
+        { "socket-file", 1, NULL, SOCKET_FILE_OPTION},
+        { "run-dir", 1, NULL, RUN_DIR_OPTION},
+        { "log-file", 1, NULL, LOG_FILE_OPTION},
+        { "pid-file", 1, NULL, PID_FILE_OPTION},
+        { "op", 1, NULL, OP_NAME_OPTION},
+        { "key", 1, NULL, KEY_OPTION},
+        { "value", 1, NULL, VALUE_OPTION},
+        { NULL,       0, NULL, 0   }   /* Required at end of array.  */
+    };
+
+    do {
+        opterr = 0;
+        next_option = getopt_long (argc, argv, "", long_options, NULL);
+        switch (next_option) {
+            case HELP_OPTION:
+                usage();
+                break;
+            case DAEMON_OPTION:
+                if (daemon_flag) {
+                    usage();
+                }
+                daemon_flag++;
+                break;
+            case NO_DAEMONIZE_OPTION:
+                if (no_daemonize_flag) {
+                    usage();
+                }
+                no_daemonize_flag++;
+                break;
+            case SOCKET_FILE_OPTION:
+                if (socket_file_flag) {
+                    usage();
+                }
+                socket_file_flag++;
+                strcpy(socket_file, optarg);
+                break;
+            case RUN_DIR_OPTION:
+                if (run_dir_flag) {
+                    usage();
+                }
+                run_dir_flag++;
+                strcpy(run_path, optarg);
+                break;
+            case LOG_FILE_OPTION:
+                if (log_file_flag) {
+                    usage();
+                }
+                log_file_flag++;
+                strcpy(log_file, optarg);
+                break;
+            case PID_FILE_OPTION:
+                if (pid_file_flag) {
+                    usage();
+                }
+                pid_file_flag++;
+                strcpy(pid_file, optarg);
+                break;
+            case OP_NAME_OPTION:
+                if (op_name_flag) {
+                    usage();
+                }
+                op_name_flag++;
+                strcpy(op_name, optarg);
+                request = saftest_request_msg_create(op_name);
+                break;
+            case KEY_OPTION:
+                strcpy(key, optarg);
+                break;
+            case VALUE_OPTION:
+                strcpy(value, optarg);
+                assert(NULL != request);
+                saftest_msg_set_str_value(request, key, value);
+                break;
+            case -1:
+                /* No more options */
+                break;
+            default:
+                usage();
+        } /* switch (c) */
+    } while (-1 != next_option);
+
+    /*
+     * A run path must always be specified
+     */
+    if (!run_dir_flag) {
+        usage();
+    }
+
+    /* We must be a client that wants to talk to a daemon */
+    if (!op_name_flag || !socket_file_flag) {
+        usage();
+    }
+
+    saftest_uds_connect(&client_fd, socket_file);
+
+    entry = saftest_get_map_table_entry(shlib->get_map_table_func(),
+                                        op_name);
+    if (NULL == entry) {
+        saftest_abort("Unable to find %s map table entry for op %s\n",
+                      shlib->library_id, op_name);
+    }
+
+    status = entry->client_handler(client_fd, request);
+    free(request);
+
+    exit(status);
+}
 
 int
 main(int argc, char *argv[], char *envp[])
@@ -586,7 +750,7 @@ main(int argc, char *argv[], char *envp[])
         element = g_list_first(shlib_list);
         shlib = (shared_library_t *)element->data;
 
-        return(shlib->client_main(argc_copy, argv_copy));
+        return(saftest_driver_client_main(shlib, argc_copy, argv_copy));
     }
 
     return(0);

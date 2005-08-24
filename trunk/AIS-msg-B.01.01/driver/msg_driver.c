@@ -4,6 +4,7 @@
  *
  **********************************************************************/
 #include "saftest_driver_lib_utils.h"
+#include "saftest_driver.h"
 #include "saftest_log.h"
 #include "saftest_comm.h"
 #include "saMsg.h"
@@ -19,121 +20,6 @@
  *	G L O B A L S
  *
  **********************************************************************/
-
-typedef SaAisErrorT (*saftest_client_message_handler)(
-                                              int fd,
-                                              saftest_msg_t *request);
-struct saftest_msg_map_table_entry;
-typedef void (*saftest_daemon_message_handler)(
-    struct saftest_msg_map_table_entry *map_entry,
-    saftest_msg_t *request,
-    saftest_msg_t **reply);
-
-typedef struct saftest_msg_map_table_entry {
-    const char *request_op;
-    const char *reply_op;
-    saftest_client_message_handler client_handler;
-    saftest_daemon_message_handler daemon_handler;
-} saftest_msg_map_table_entry_t;
-
-void 
-saftest_daemon_handle_create_test_res_request(
-    saftest_msg_map_table_entry_t *map_entry,
-    saftest_msg_t *request,
-    saftest_msg_t **reply);
-
-void 
-saftest_daemon_handle_init_request(
-    saftest_msg_map_table_entry_t *map_entry,
-    saftest_msg_t *request,
-    saftest_msg_t **reply);
-
-void
-saftest_daemon_handle_selection_object_request(
-    saftest_msg_map_table_entry_t *map_entry,
-    saftest_msg_t *request,
-    saftest_msg_t **reply);
-
-void 
-saftest_daemon_handle_dispatch_request(
-    saftest_msg_map_table_entry_t *map_entry,
-    saftest_msg_t *request,
-    saftest_msg_t **reply);
-
-void 
-saftest_daemon_handle_resource_finalize_request(
-    saftest_msg_map_table_entry_t *map_entry,
-    saftest_msg_t *request,
-    saftest_msg_t **reply);
-
-void 
-saftest_daemon_handle_queue_open_request(
-    saftest_msg_map_table_entry_t *map_entry,
-    saftest_msg_t *request,
-    saftest_msg_t **reply);
-
-void 
-saftest_daemon_handle_message_send_request(
-    saftest_msg_map_table_entry_t *map_entry,
-    saftest_msg_t *request,
-    saftest_msg_t **reply);
-
-void 
-saftest_daemon_handle_message_get_request(
-    saftest_msg_map_table_entry_t *map_entry,
-    saftest_msg_t *request,
-    saftest_msg_t **reply);
-
-SaAisErrorT
-saftest_client_handle_create_test_res_request(
-    int fd,
-    saftest_msg_t *request);
-
-SaAisErrorT
-saftest_client_generic_handle_request(
-    int fd,
-    saftest_msg_t *request);
-
-SaAisErrorT
-saftest_client_handle_message_get_request(
-    int fd,
-    saftest_msg_t *request);
-
-saftest_msg_map_table_entry_t msg_map_table[] = {
-    {"CREATE_TEST_RESOURCE_REQ",
-     "CREATE_TEST_RESOURCE_REPLY",
-     saftest_client_handle_create_test_res_request,
-     saftest_daemon_handle_create_test_res_request},
-    {"MSG_INITIALIZE_REQ",
-     "MSG_INITIALIZE_REPLY",
-     saftest_client_generic_handle_request,
-     saftest_daemon_handle_init_request},
-    {"SELECTION_OBJECT_GET_REQ",
-     "SELECTION_OBJECT_GET_REQ",
-     saftest_client_generic_handle_request,
-     saftest_daemon_handle_selection_object_request},
-    {"DISPATCH_REQ",
-     "DISPATCH_REPLY",
-     saftest_client_generic_handle_request,
-     saftest_daemon_handle_dispatch_request},
-    {"FINALIZE_REQ",
-     "FINALIZE_REPLY",
-     saftest_client_generic_handle_request,
-     saftest_daemon_handle_resource_finalize_request},
-    {"QUEUE_OPEN_REQ",
-     "QUEUE_OPEN_REPLY",
-     saftest_client_generic_handle_request,
-     saftest_daemon_handle_queue_open_request},
-    {"MESSAGE_SEND_REQ",
-     "MESSAGE_SEND_REPLY",
-     saftest_client_generic_handle_request,
-     saftest_daemon_handle_message_send_request},
-    {"MESSAGE_GET_REQ",
-     "MESSAGE_GET_REPLY",
-     saftest_client_handle_message_get_request,
-     saftest_daemon_handle_message_get_request},
-    {0, 0, 0},
-};
 
 typedef struct msg_resource {
     int msg_resource_id;
@@ -181,20 +67,6 @@ void saftest_daemon_init(FILE *log_fp)
 {
     assert(NULL != log_fp);
     saftest_log_set_fp(log_fp);
-}
-
-static saftest_msg_map_table_entry_t *
-saftest_get_map_table_entry(const char *request_op_str)
-{
-    int ndx = 0;
-
-    for (ndx = 0; NULL != msg_map_table[ndx].request_op; ndx++) {
-        if (0 == strcmp(msg_map_table[ndx].request_op, request_op_str)) {
-            return(&(msg_map_table[ndx]));
-        }
-    }
-    saftest_abort("Unknown op string %s\n", request_op_str);
-    return(NULL);
 }
 
 int
@@ -316,7 +188,7 @@ saftest_daemon_get_dispatch_flags(const char *dispatch_flags_str)
 
 void 
 saftest_daemon_handle_create_test_res_request(
-    saftest_msg_map_table_entry_t *map_entry,
+    saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
     saftest_msg_t **reply)
 {
@@ -334,7 +206,7 @@ saftest_daemon_handle_create_test_res_request(
 
 void 
 saftest_daemon_handle_init_request(
-    saftest_msg_map_table_entry_t *map_entry,
+    saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
     saftest_msg_t **reply)
 {
@@ -434,7 +306,7 @@ saftest_daemon_handle_init_request(
 
 void 
 saftest_daemon_handle_selection_object_request(
-    saftest_msg_map_table_entry_t *map_entry,
+    saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
     saftest_msg_t **reply)
 {
@@ -461,7 +333,7 @@ saftest_daemon_handle_selection_object_request(
 
 void 
 saftest_daemon_handle_dispatch_request(
-    saftest_msg_map_table_entry_t *map_entry,
+    saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
     saftest_msg_t **reply)
 {
@@ -486,7 +358,7 @@ saftest_daemon_handle_dispatch_request(
 
 void 
 saftest_daemon_handle_resource_finalize_request(
-    saftest_msg_map_table_entry_t *map_entry,
+    saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
     saftest_msg_t **reply)
 {
@@ -508,7 +380,7 @@ saftest_daemon_handle_resource_finalize_request(
 
 void 
 saftest_daemon_handle_queue_open_request(
-    saftest_msg_map_table_entry_t *map_entry,
+    saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
     saftest_msg_t **reply)
 {
@@ -566,7 +438,7 @@ saftest_daemon_handle_queue_open_request(
 
 void 
 saftest_daemon_handle_message_send_request(
-    saftest_msg_map_table_entry_t *map_entry,
+    saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
     saftest_msg_t **reply)
 {
@@ -611,7 +483,7 @@ saftest_daemon_handle_message_send_request(
 
 void 
 saftest_daemon_handle_message_get_request(
-    saftest_msg_map_table_entry_t *map_entry,
+    saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
     saftest_msg_t **reply)
 {
@@ -660,23 +532,6 @@ saftest_daemon_handle_message_get_request(
                 message.senderName->length);
         saftest_msg_set_str_value(*reply, "SENDER_NAME", sender_name_str);
     }
-}
-
-void
-saftest_daemon_handle_incoming_client_message(int client_connection_fd,
-                                              saftest_msg_t *request)
-{
-    saftest_msg_t *reply;
-    saftest_msg_map_table_entry_t *entry;
-
-    if (NULL == request) {
-        saftest_abort("Invalid (NULL) request\n");
-    }
-
-    entry = saftest_get_map_table_entry(saftest_msg_get_msg_type(request));
-    entry->daemon_handler(entry, request, &reply);
-
-    saftest_send_reply(client_connection_fd, reply);
 }
 
 void
@@ -779,23 +634,6 @@ saftest_client_handle_create_test_res_request(
 }
 
 SaAisErrorT
-saftest_client_generic_handle_request(
-    int fd,
-    saftest_msg_t *request)
-{
-    saftest_msg_t *reply;
-    SaAisErrorT status;
- 
-    saftest_send_request(fd, get_library_id(), request, &reply);
-    if (NULL == reply) {
-        saftest_abort("Received no reply from the daemon\n");
-    }
-    status = saftest_reply_msg_get_status(reply);
-    free(reply);
-    return(status);
-}
-
-SaAisErrorT
 saftest_client_handle_message_get_request(
     int fd,
     saftest_msg_t *request)
@@ -826,143 +664,44 @@ saftest_client_handle_message_get_request(
     return(status);
 }
 
-#define HELP_OPTION 1
-#define DAEMON_OPTION 2
-#define NO_DAEMONIZE_OPTION 3
-#define SOCKET_FILE_OPTION 4
-#define RUN_DIR_OPTION 5
-#define LOG_FILE_OPTION 6
-#define PID_FILE_OPTION 7
-#define OP_NAME_OPTION 8
-#define KEY_OPTION 9
-#define VALUE_OPTION 10
+SAFTEST_MAP_TABLE_BEGIN()
+SAFTEST_MAP_TABLE_ENTRY(
+    "CREATE_TEST_RESOURCE_REQ", "CREATE_TEST_RESOURCE_REPLY",
+    saftest_client_handle_create_test_res_request,
+    saftest_daemon_handle_create_test_res_request)
 
-int
-saftest_driver_client_main(int argc, char **argv)
-{
-    SaAisErrorT         status = 255;
-    int                 daemon_flag = 0;
-    int                 no_daemonize_flag = 0;
-    int                 socket_file_flag = 0;
-    int                 run_dir_flag = 0;
-    int                 log_file_flag = 0;
-    int                 pid_file_flag = 0;
-    int                 op_name_flag = 0;
-    char                run_path[BUF_SIZE];
-    char                pid_file[BUF_SIZE];
-    char                log_file[BUF_SIZE];
-    char                socket_file[BUF_SIZE];
-    char             	op_name[BUF_SIZE];
-    char                key[SAFTEST_STRING_LENGTH+1];
-    char                value[SAFTEST_STRING_LENGTH+1];
-    saftest_msg_map_table_entry_t *entry;
-    int                 next_option = 0;
-    int                 client_fd;
-    saftest_msg_t      *request = NULL;
+SAFTEST_MAP_TABLE_ENTRY(
+    "MSG_INITIALIZE_REQ", "MSG_INITIALIZE_REPLY",
+    saftest_client_generic_handle_request,
+    saftest_daemon_handle_init_request)
 
-    const struct option long_options[] = {
-        { "help",     0, NULL, HELP_OPTION},
-        { "daemon",   0, NULL, DAEMON_OPTION},
-        { "no-daemonize", 0, NULL, NO_DAEMONIZE_OPTION},
-        { "socket-file", 1, NULL, SOCKET_FILE_OPTION},
-        { "run-dir", 1, NULL, RUN_DIR_OPTION},
-        { "log-file", 1, NULL, LOG_FILE_OPTION},
-        { "pid-file", 1, NULL, PID_FILE_OPTION},
-        { "op", 1, NULL, OP_NAME_OPTION},
-        { "key", 1, NULL, KEY_OPTION},
-        { "value", 1, NULL, VALUE_OPTION},
-        { NULL,       0, NULL, 0   }   /* Required at end of array.  */
-    };
+SAFTEST_MAP_TABLE_ENTRY(
+    "SELECTION_OBJECT_GET_REQ", "SELECTION_OBJECT_GET_REQ",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_selection_object_request)
 
-    do {
-        opterr = 0;
-        next_option = getopt_long (argc, argv, "", long_options, NULL);
-        switch (next_option) {
-            case HELP_OPTION:
-                usage();
-                break;
-            case DAEMON_OPTION:
-                if (daemon_flag) {
-                    usage();
-                }
-                daemon_flag++;
-                break;
-            case NO_DAEMONIZE_OPTION:
-                if (no_daemonize_flag) {
-                    usage();
-                }
-                no_daemonize_flag++;
-                break;
-            case SOCKET_FILE_OPTION:
-                if (socket_file_flag) {
-                    usage();
-                }
-                socket_file_flag++;
-                strcpy(socket_file, optarg);
-                break;
-            case RUN_DIR_OPTION:
-                if (run_dir_flag) {
-                    usage();
-                }
-                run_dir_flag++;
-                strcpy(run_path, optarg);
-                break;
-            case LOG_FILE_OPTION:
-                if (log_file_flag) {
-                    usage();
-                }
-                log_file_flag++;
-                strcpy(log_file, optarg);
-                break;
-            case PID_FILE_OPTION:
-                if (pid_file_flag) {
-                    usage();
-                }
-                pid_file_flag++;
-                strcpy(pid_file, optarg);
-                break;
-            case OP_NAME_OPTION:
-                if (op_name_flag) {
-                    usage();
-                }
-                op_name_flag++;
-                strcpy(op_name, optarg);
-                request = saftest_request_msg_create(op_name);
-                break;
-            case KEY_OPTION:
-                strcpy(key, optarg);
-                break;
-            case VALUE_OPTION:
-                strcpy(value, optarg);
-                assert(NULL != request);
-                saftest_msg_set_str_value(request, key, value);
-                break;
-            case -1:
-                /* No more options */
-                break;
-            default:
-                usage();
-        } /* switch (c) */
-    } while (-1 != next_option);
+SAFTEST_MAP_TABLE_ENTRY(
+    "DISPATCH_REQ", "DISPATCH_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_dispatch_request)
 
-    /*
-     * A run path must always be specified
-     */
-    if (!run_dir_flag) {
-        usage();
-    }
+SAFTEST_MAP_TABLE_ENTRY(
+    "FINALIZE_REQ", "FINALIZE_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_resource_finalize_request)
 
-    /* We must be a client that wants to talk to a daemon */
-    if (!op_name_flag || !socket_file_flag) {
-        usage();
-    }
+SAFTEST_MAP_TABLE_ENTRY(
+    "QUEUE_OPEN_REQ", "QUEUE_OPEN_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_queue_open_request)
 
-    saftest_uds_connect(&client_fd, socket_file);
+SAFTEST_MAP_TABLE_ENTRY(
+    "MESSAGE_SEND_REQ", "MESSAGE_SEND_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_message_send_request)
 
-    entry = saftest_get_map_table_entry(op_name);
-
-    status = entry->client_handler(client_fd, request);
-    free(request);
-
-    exit(status);
-}
+SAFTEST_MAP_TABLE_ENTRY(
+    "MESSAGE_GET_REQ", "MESSAGE_GET_REPLY",
+     saftest_client_handle_message_get_request,
+     saftest_daemon_handle_message_get_request)
+SAFTEST_MAP_TABLE_END()

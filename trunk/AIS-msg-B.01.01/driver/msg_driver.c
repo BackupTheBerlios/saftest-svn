@@ -437,6 +437,28 @@ saftest_daemon_handle_queue_open_request(
 }
 
 void 
+saftest_daemon_handle_queue_close_request(
+    saftest_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
+{
+    msg_resource_t *msg_res = NULL;
+    SaAisErrorT status;
+
+    saftest_log("Received a queue close request for id %d\n",
+                saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    if (NULL == msg_res) {
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    }
+    status = saMsgQueueClose(msg_res->queue_handle);
+    msg_res->queue_handle = 0;
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
+}
+
+void 
 saftest_daemon_handle_message_send_request(
     saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
@@ -694,6 +716,11 @@ SAFTEST_MAP_TABLE_ENTRY(
     "QUEUE_OPEN_REQ", "QUEUE_OPEN_REPLY",
      saftest_client_generic_handle_request,
      saftest_daemon_handle_queue_open_request)
+
+SAFTEST_MAP_TABLE_ENTRY(
+    "QUEUE_CLOSE_REQ", "QUEUE_CLOSE_REPLY",
+     saftest_client_generic_handle_request,
+     saftest_daemon_handle_queue_close_request)
 
 SAFTEST_MAP_TABLE_ENTRY(
     "MESSAGE_SEND_REQ", "MESSAGE_SEND_REPLY",

@@ -162,6 +162,11 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
         runDriver("--o QUEUE_OPEN_REQ", kvp_hash, expectedReturn)
     end
 
+    def queueClose(resourceID, expectedReturn)
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s}
+        runDriver("--o QUEUE_CLOSE_REQ", kvp_hash, expectedReturn)
+    end
+
     def messageSend(resourceID, entityName, senderName, msgType, msgVersion,
                     msgPriority, msgString, expectedReturn)
         kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,

@@ -101,7 +101,7 @@ class SGCluster < SGBase
         ret = array[0]
         lines = array[1]
         lines.each do |line|
-            if line =~ /^node:([A-z0-9])+\|(.*)/ then
+            if line =~ /^node:([A-z0-9]+)\|(.*)/ then
                 nodeName, line = $1, $2
                 if @nodes.has_key?(nodeName)
                     node = @nodes[nodeName]

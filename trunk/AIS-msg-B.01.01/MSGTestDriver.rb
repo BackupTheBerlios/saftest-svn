@@ -187,6 +187,33 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
         runDriver("--o MESSAGE_GET_REQ", kvp_hash, expectedReturn)
     end
 
+    def messageSendReceive(resourceID, entityName, senderName, 
+                           msgType, msgVersion, msgPriority, msgString, 
+                           expectedMsgType, expectedMsgVersion,
+                           expectedMsgPriority, expectedMsgString, 
+                           expectedReturn)
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
+                    'ENTITY_NAME' => entityName,
+                    'SENDER_NAME' => senderName,
+                    'MSG_TYPE' => msgType.to_s,
+                    'MSG_VERSION' => msgVersion.to_s,
+                    'MSG_PRIORITY' => msgPriority.to_s,
+                    'MSG_STRING' => msgString}
+        runDriver("--o MESSAGE_SEND_RECEIVE_REQ", kvp_hash, expectedReturn)
+
+    def messageReply(resourceID, entityName, senderName, 
+                     msgType, msgVersion, msgPriority, replyString, 
+                     expectedReturn)
+        kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
+                    'ENTITY_NAME' => entityName,
+                    'SENDER_NAME' => senderName,
+                    'MSG_TYPE' => msgType.to_s,
+                    'MSG_VERSION' => msgVersion.to_s,
+                    'MSG_PRIORITY' => msgPriority.to_s,
+                    'REPLY_STRING' => replyString}
+        runDriver("--o MESSAGE_REPLY_REQ", kvp_hash, expectedReturn)
+    end
+
 end # class
 
 end # module

@@ -17,7 +17,8 @@ class QueueOpenTest1Case < Test::Unit::TestCase
     @@MSG_TYPE = 1
     @@MSG_VERSION = 1
     @@MSG_PRIORITY = 1
-    @@MSG_STRING = 'Hello World'
+    @@MSG_STRING_1 = 'Hello World'
+    @@MSG_STRING_2 = 'Goodbye Cruel World'
 
     def test_run()
         driver1 = MSGTestDriver::MSGTestDriver.new(nil)
@@ -47,23 +48,32 @@ class QueueOpenTest1Case < Test::Unit::TestCase
                                    SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver2.messageSend(resource2ID, @@QUEUE_NAME, @@SENDER_NAME,
                                 @@MSG_TYPE, @@MSG_VERSION, @@MSG_PRIORITY,
-                                @@MSG_STRING, 
+                                @@MSG_STRING_1, 
                                 SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+
             driver1.start()
             resource1ID = driver1.createTestResource()
             driver1.init(resource1ID, "SA_DISPATCH_ALL",
                         SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver1.selectObjectGet(resource1ID, false,
                                    SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+            driver1.messageSend(resource1ID, @@QUEUE_NAME, @@SENDER_NAME,
+                                @@MSG_TYPE, @@MSG_VERSION, @@MSG_PRIORITY,
+                                @@MSG_STRING_2, 
+                                SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+
             driver1.queueOpen(resource1ID, "queue1", false, @@SIZE_ARRAY, 0,
                              true, false, false,
                              SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-
             driver1.messageGet(resource1ID, @@QUEUE_NAME, @@SENDER_NAME,
                                @@MSG_TYPE, @@MSG_VERSION, @@MSG_PRIORITY,
-                               @@MSG_STRING, SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+                               @@MSG_STRING_1, SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+            driver1.messageGet(resource1ID, @@QUEUE_NAME, @@SENDER_NAME,
+                               @@MSG_TYPE, @@MSG_VERSION, @@MSG_PRIORITY,
+                               @@MSG_STRING_2, SAFTestUtils::SAFTestUtils.SA_AIS_OK)
             driver1.queueClose(resource1ID,
                                SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+
             driver1.stop()
             driver2.stop()
         end

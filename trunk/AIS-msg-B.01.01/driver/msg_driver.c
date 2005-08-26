@@ -34,6 +34,8 @@ typedef struct msg_resource {
     SaMsgQueueHandleT queue_handle;
     SaMsgCallbacksT msg_callbacks;
     SaSelectionObjectT selection_object;
+    SaMsgMessageT last_received_message;
+    SaMsgSenderIdT last_received_sender_id;
 } msg_resource_t;
 
 GList *msg_list = NULL;
@@ -504,6 +506,124 @@ saftest_daemon_handle_message_send_request(
 }
 
 void 
+saftest_daemon_handle_message_send_recieve_request(
+    saftest_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
+{
+    msg_resource_t *msg_res = NULL;
+    char reply_string[SAFTEST_STRING_LENGTH+1];
+    SaAisErrorT status;
+    SaNameT entity_name;
+    SaNameT sender_name;
+    SaMsgMessageT message;
+    SaTimeT timeout = 0;
+    SaMsgMessageT reply_message;
+    char sender_name_str[SAFTEST_STRING_LENGTH+1];
+
+    saftest_log("Received a message send and request for id %d "
+                "entity name %s\n",
+                saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"),
+                saftest_msg_get_str_value(request, "ENTITY_NAME"));
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    if (NULL == msg_res) {
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    }
+    memset(&(msg_res->last_received_message), 0, 
+           sizeof(msg_res->last_received_message));
+
+    entity_name.length = 
+        strlen(saftest_msg_get_str_value(request, "ENTITY_NAME"))+1;
+    strncpy(entity_name.value, 
+            saftest_msg_get_str_value(request, "ENTITY_NAME"),
+            entity_name.length);
+    sender_name.length = 
+        strlen(saftest_msg_get_str_value(request, "SENDER_NAME"))+1;
+    strncpy(sender_name.value, 
+            saftest_msg_get_str_value(request, "SENDER_NAME"),
+            sender_name.length);
+
+    memset(&message, 0, sizeof(message));
+    message.type = saftest_msg_get_ubit32_value(request, "MSG_TYPE");
+    message.version = saftest_msg_get_ubit32_value(request, "MSG_VERSION");
+    message.size = strlen(saftest_msg_get_str_value(request, "MSG_STRING"));
+    message.data = saftest_msg_get_str_value(request, "MSG_STRING");
+    message.senderName = &sender_name;
+    message.priority = saftest_msg_get_ubit32_value(request, "MSG_PRIORITY");
+    status = saMsgMessageSendReceive(msg_res->msg_handle, &entity_name, 
+                                     &message, &reply_message, NULL,
+                                     timeout);
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
+    if (SA_AIS_OK == status) {
+        saftest_msg_set_ubit32_value(*reply, "MSG_TYPE", message.type);
+        saftest_msg_set_ubit32_value(*reply, "MSG_VERSION", message.version);
+        saftest_msg_set_ubit32_value(*reply, "MSG_PRIORITY", message.priority);
+        saftest_msg_set_ubit32_value(*reply, "MSG_SIZE", message.size);
+        memcpy(reply_string, message.data, message.size);
+        saftest_msg_set_str_value(*reply, "REPLY_STRING", reply_string);
+        strncpy(sender_name_str, message.senderName->value,
+                message.senderName->length);
+        saftest_msg_set_str_value(*reply, "SENDER_NAME", sender_name_str);
+    }
+}
+
+void 
+saftest_daemon_handle_message_reply_request(
+    saftest_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
+{
+    msg_resource_t *msg_res = NULL;
+    SaAisErrorT status;
+    SaNameT sender_name;
+    SaMsgMessageT message;
+    SaTimeT timeout = 0;
+    SaMsgMessageT reply_message;
+    char msg_string[SAFTEST_STRING_LENGTH+1];
+    char sender_name_str[SAFTEST_STRING_LENGTH+1];
+
+    saftest_log("Received a message reply request for id %d\n ",
+                saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    msg_res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    if (NULL == msg_res) {
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    }
+
+    sender_name.length = 
+        strlen(saftest_msg_get_str_value(request, "SENDER_NAME"))+1;
+    strncpy(sender_name.value, 
+            saftest_msg_get_str_value(request, "SENDER_NAME"),
+            sender_name.length);
+
+    memset(&message, 0, sizeof(message));
+    message.type = saftest_msg_get_ubit32_value(request, "MSG_TYPE");
+    message.version = saftest_msg_get_ubit32_value(request, "MSG_VERSION");
+    message.size = strlen(saftest_msg_get_str_value(request, "REPLY_STRING"));
+    message.data = saftest_msg_get_str_value(request, "REPLY_STRING");
+    message.senderName = &sender_name;
+    message.priority = saftest_msg_get_ubit32_value(request, "MSG_PRIORITY");
+    status = saMsgMessageReply(msg_res->msg_handle,
+                               &reply_message,
+                               &msg_res->last_received_sender_id, timeout);
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
+    if (SA_AIS_OK == status) {
+        saftest_msg_set_ubit32_value(*reply, "MSG_TYPE", message.type);
+        saftest_msg_set_ubit32_value(*reply, "MSG_VERSION", message.version);
+        saftest_msg_set_ubit32_value(*reply, "MSG_PRIORITY", message.priority);
+        saftest_msg_set_ubit32_value(*reply, "MSG_SIZE", message.size);
+        memcpy(msg_string, message.data, message.size);
+        saftest_msg_set_str_value(*reply, "REPLY_STRING", msg_string);
+        strncpy(sender_name_str, message.senderName->value,
+                message.senderName->length);
+        saftest_msg_set_str_value(*reply, "SENDER_NAME", sender_name_str);
+    }
+}
+
+void 
 saftest_daemon_handle_message_get_request(
     saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
@@ -512,8 +632,6 @@ saftest_daemon_handle_message_get_request(
     msg_resource_t *msg_res = NULL;
     SaNameT entity_name;
     SaNameT sender_name;
-    SaMsgMessageT message;
-    SaMsgSenderIdT sender_id = 0;
     SaTimeT send_time = 0;
     SaTimeT timeout = 0;
     SaAisErrorT status;
@@ -530,7 +648,8 @@ saftest_daemon_handle_message_get_request(
                       saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     }
 
-    memset(&message, 0, sizeof(message));
+    memset(&(msg_res->last_received_message), 0, 
+           sizeof(msg_res->last_received_message));
     memset(msg_string, 0, sizeof(msg_string));
     memset(sender_name_str, 0, sizeof(sender_name_str));
     entity_name.length = 
@@ -538,20 +657,27 @@ saftest_daemon_handle_message_get_request(
     strncpy(entity_name.value, 
             saftest_msg_get_str_value(request, "ENTITY_NAME"),
             entity_name.length);
-    message.senderName = &sender_name;
+    msg_res->last_received_message.senderName = &sender_name;
 
     status = saMsgMessageGet(msg_res->msg_handle, 
-                             &message, &send_time, &sender_id, timeout);
+                             &msg_res->last_received_message, &send_time, 
+                             &msg_res->last_received_sender_id, timeout);
     (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
     if (SA_AIS_OK == status) {
-        saftest_msg_set_ubit32_value(*reply, "MSG_TYPE", message.type);
-        saftest_msg_set_ubit32_value(*reply, "MSG_VERSION", message.version);
-        saftest_msg_set_ubit32_value(*reply, "MSG_PRIORITY", message.priority);
-        saftest_msg_set_ubit32_value(*reply, "MSG_SIZE", message.size);
-        memcpy(msg_string, message.data, message.size);
+        saftest_msg_set_ubit32_value(*reply, "MSG_TYPE",
+                                     msg_res->last_received_message.type);
+        saftest_msg_set_ubit32_value(*reply, "MSG_VERSION",
+                                     msg_res->last_received_message.version);
+        saftest_msg_set_ubit32_value(*reply, "MSG_PRIORITY",
+                                     msg_res->last_received_message.priority);
+        saftest_msg_set_ubit32_value(*reply, "MSG_SIZE",
+                                     msg_res->last_received_message.size);
+        memcpy(msg_string, msg_res->last_received_message.data, 
+               msg_res->last_received_message.size);
         saftest_msg_set_str_value(*reply, "MSG_STRING", msg_string);
-        strncpy(sender_name_str, message.senderName->value,
-                message.senderName->length);
+        strncpy(sender_name_str, 
+                msg_res->last_received_message.senderName->value,
+                msg_res->last_received_message.senderName->length);
         saftest_msg_set_str_value(*reply, "SENDER_NAME", sender_name_str);
     }
 }
@@ -656,6 +782,69 @@ saftest_client_handle_create_test_res_request(
 }
 
 SaAisErrorT
+saftest_client_handle_message_send_recieve_request(
+    int fd,
+    saftest_msg_t *request)
+{
+    saftest_msg_t *reply;
+    SaAisErrorT status;
+ 
+    saftest_send_request(fd, get_library_id(), request, &reply);
+    if (NULL == reply) {
+        saftest_abort("Received no reply from the daemon\n");
+    }
+    status = saftest_reply_msg_get_status(reply);
+    free(reply);
+    if (SA_AIS_OK == status) {
+        saftest_log("Message Type=%d\n", 
+                    saftest_msg_get_ubit32_value(reply, "MSG_TYPE"));
+        saftest_log("Message Version=%d\n",
+                    saftest_msg_get_ubit32_value(reply, "MSG_VERSION"));
+        saftest_log("Message Size=%d\n",
+                    saftest_msg_get_ubit32_value(reply, "MSG_SIZE"));
+        saftest_log("Message Priority=%d\n",
+                    saftest_msg_get_ubit32_value(reply, "MSG_PRIORITY"));
+        saftest_log("Sender Name=%s\n",
+                    saftest_msg_get_str_value(reply, "SENDER_NAME"));
+        saftest_log("Message String=%s\n",
+                    saftest_msg_get_str_value(reply, "MSG_STRING"));
+    }
+    return(status);
+}
+
+SaAisErrorT
+saftest_client_handle_message_reply_request(
+    int fd,
+    saftest_msg_t *request)
+{
+    saftest_msg_t *reply;
+    SaAisErrorT status;
+ 
+    saftest_send_request(fd, get_library_id(), request, &reply);
+    if (NULL == reply) {
+        saftest_abort("Received no reply from the daemon\n");
+    }
+    status = saftest_reply_msg_get_status(reply);
+    free(reply);
+    if (SA_AIS_OK == status) {
+        saftest_log("Message Type=%d\n", 
+                    saftest_msg_get_ubit32_value(reply, "MSG_TYPE"));
+        saftest_log("Message Version=%d\n",
+                    saftest_msg_get_ubit32_value(reply, "MSG_VERSION"));
+        saftest_log("Message Size=%d\n",
+                    saftest_msg_get_ubit32_value(reply, "MSG_SIZE"));
+        saftest_log("Message Priority=%d\n",
+                    saftest_msg_get_ubit32_value(reply, "MSG_PRIORITY"));
+        saftest_log("Sender Name=%s\n",
+                    saftest_msg_get_str_value(reply, "SENDER_NAME"));
+        saftest_log("Message String=%s\n",
+                    saftest_msg_get_str_value(reply, "MSG_STRING"));
+    }
+    return(status);
+}
+
+
+SaAisErrorT
 saftest_client_handle_message_get_request(
     int fd,
     saftest_msg_t *request)
@@ -726,6 +915,16 @@ SAFTEST_MAP_TABLE_ENTRY(
     "MESSAGE_SEND_REQ", "MESSAGE_SEND_REPLY",
      saftest_client_generic_handle_request,
      saftest_daemon_handle_message_send_request)
+
+SAFTEST_MAP_TABLE_ENTRY(
+    "MESSAGE_SEND_RECEIVE_REQ", "MESSAGE_SEND_RECEIVE_REPLY",
+     saftest_client_handle_message_send_recieve_request,
+     saftest_daemon_handle_message_send_recieve_request)
+
+SAFTEST_MAP_TABLE_ENTRY(
+    "MESSAGE_REPLY_REQ", "MESSAGE_REPLY_REPLY",
+     saftest_client_handle_message_reply_request,
+     saftest_daemon_handle_message_reply_request)
 
 SAFTEST_MAP_TABLE_ENTRY(
     "MESSAGE_GET_REQ", "MESSAGE_GET_REPLY",

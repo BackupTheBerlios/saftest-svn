@@ -40,6 +40,12 @@ extern void
 saftest_msg_set_str_value(saftest_msg_t *msg,
                           const char *key, const char *value);
 extern void
+saftest_msg_set_ubit8_value(saftest_msg_t *msg,
+                            const char *key, ubit8 value);
+extern void
+saftest_msg_set_ubit16_value(saftest_msg_t *msg,
+                             const char *key, ubit16 value);
+extern void
 saftest_msg_set_ubit32_value(saftest_msg_t *msg,
                              const char *key, ubit32 value);
 extern void
@@ -53,6 +59,12 @@ saftest_reply_msg_get_status(saftest_msg_t *msg);
 
 extern char *
 saftest_msg_get_str_value(saftest_msg_t *msg, const char *key);
+
+extern ubit8
+saftest_msg_get_ubit8_value(saftest_msg_t *msg, const char *key);
+
+extern ubit16
+saftest_msg_get_ubit16_value(saftest_msg_t *msg, const char *key);
 
 extern ubit32
 saftest_msg_get_ubit32_value(saftest_msg_t *msg, const char *key);

@@ -1,4 +1,5 @@
 #include "saftest_common.h"
+#include "saftest_log.h"
 #include "saftest_driver_lib_utils.h"
 
 const char * get_error_string(SaAisErrorT error)
@@ -63,3 +64,22 @@ const char * get_error_string(SaAisErrorT error)
         }
 }
 
+SaDispatchFlagsT
+saftest_daemon_get_dispatch_flags(const char *dispatch_flags_str)
+{
+    SaDispatchFlagsT flags;
+
+    if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_ONE")) {
+        flags = SA_DISPATCH_ONE;
+    } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_ALL")) {
+        flags = SA_DISPATCH_ALL;
+    } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_BLOCKING")) {
+        flags = SA_DISPATCH_BLOCKING;
+    } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_INVALID")) {
+        flags = -1;
+    } else {
+        saftest_abort("Unknown dispatch flags string %s\n",
+                      dispatch_flags_str);
+    }
+    return(flags);
+}

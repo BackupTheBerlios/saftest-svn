@@ -20,9 +20,8 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
     end
 
     def createTestResource()
-        cmd = "%s --run-dir %s --o CREATE_TEST_RES --socket-file %s --load-libs %s" % \
-              [getDriverPath(), getRunDir(), getSocketFile(), getDriverLibs()]
-        array = captureCommand(cmd)
+        array = runDriver("CREATE_TEST_RESOURCE_REQ", {}, 
+                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         resourceID = nil
@@ -38,80 +37,94 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
         return resourceID
     end
 
-    def runDriver(cmd, expectedReturn)
-        newCmd = '%s --run-dir %s --socket-file %s --load-libs %s %s' % \
-                 [getDriverPath(), getRunDir(), getSocketFile(),
-                  getDriverLibs(), cmd]
-        array = captureCommand(newCmd)
-        ret = array[0]
-        lines = array[1]
-        if expectedReturn != ret
-            raise "Expected return %s, got %s.  Lines = \"%s\"" % \
-                   [mapErrorCodeToString(expectedReturn), 
-                    mapErrorCodeToString(ret), lines.to_s]
-        end
-    end
-
     def init(resourceID, setClusterNodeGetCB, setClusterTrackCB,
              dispatchFlags, expectedReturn)
-        cmd = "--o INIT --resource-id %s --dispatch-flags %s" \
-              % [resourceID, dispatchFlags]
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+                    'DISPATCH_FLAGS' => dispatchFlags,
+                    'CLUSTER_NODE_GET_CB' => 'FALSE',
+                    'CLUSTER_TRACK_CB' => 'FALSE',
+                    'VERSION_RELEASE_CODE' =>
+                        SAFTestUtils::SAFTestUtils.SA_AIS_RELEASE_CODE,
+                    'VERSION_MAJOR' =>
+                        SAFTestUtils::SAFTestUtils.SA_AIS_MAJOR_VERSION,
+                    'VERSION_MINOR' =>
+                        SAFTestUtils::SAFTestUtils.SA_AIS_MINOR_VERSION,
+                    'DISPATCH_FLAGS' => dispatchFlags,
+                    'NULL_CLM_HANDLE' => 'FALSE',
+                    'NULL_CALLBACKS' => 'FALSE',
+                    'NULL_VERSION' => 'FALSE'}
+
         if setClusterNodeGetCB
-            cmd += " --set-cluster-node-get-cb"
+            kvp_hash['CLUSTER_NODE_GET_CB'] = 'TRUE'
         end
         if setClusterTrackCB
-            cmd += " --set-cluster-track-cb"
+            kvp_hash['CLUSTER_TRACK_CB'] = 'TRUE'
         end
-
-        runDriver(cmd, expectedReturn)
+        runDriver("INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def initWithOptions(resourceID, dispatchFlags, 
                         releaseCode, majorVersion, minorVersion,
                         nullClmHandle, nullCallbacks, nullVersion,
                         expectedReturn)
-        cmd = "--o INIT --resource-id %s --dispatch-flags %s --version-release-code %d --version-major %d --version-minor %d" % \
-              [resourceID, 
-               dispatchFlags, releaseCode, majorVersion, minorVersion]
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+                    'VERSION_RELEASE_CODE' => releaseCode,
+                    'VERSION_MAJOR' => majorVersion,
+                    'VERSION_MINOR' => minorVersion,
+                    'NULL_CLM_HANDLE' => 'FALSE',
+                    'NULL_VERSION' => 'FALSE',
+                    'DISPATCH_FLAGS' => dispatchFlags}
+
         if nullClmHandle
-            cmd += " --null-clm-handle"
+            kvp_hash['NULL_CLM_HANDLE'] = 'TRUE'
         end
+
         if nullCallbacks
-            cmd += " --null-callbacks"
+            kvp_hash['NULL_CALLBACKS'] = 'TRUE'
+        else
+            kvp_hash['NULL_CALLBACKS'] = 'FALSE'
+            kvp_hash['CLUSTER_NODE_GET_CB'] = 'TRUE'
+            kvp_hash['CLUSTER_TRACK_CB'] = 'TRUE'
         end
+
         if nullVersion
-            cmd += " --null-version"
+            kvp_hash['NULL_VERSION'] = 'TRUE'
         end
-        runDriver(cmd, expectedReturn)
+
+        runDriver("INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def finalize(resourceID, expectedReturn)
-        cmd = "--o FINALIZE --resource-id %s" % [resourceID]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
+        runDriver("FINALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def selectObjectGet(resourceID, nullSelectionObject, expectedReturn)
-        cmd = "--o SELECT_OBJ_GET --resource-id %s" % [resourceID]
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+                    'NULL_SELECTION_OBJECT' => 'FALSE'}
         if nullSelectionObject
-            cmd += " --null-selection-object"
+            kvp_hash['NULL_SELECTION_OBJECT'] = 'TRUE'
         end
-        runDriver(cmd, expectedReturn)
+        runDriver("SELECTION_OBJECT_GET_REQ", kvp_hash, expectedReturn)
+
     end
 
     def dispatch(resourceID, dispatchFlags, expectedReturn)
-        cmd = "--o DISPATCH --resource-id %s --dispatch-flags %s" % \
-            [resourceID, dispatchFlags]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+                    'DISPATCH_FLAGS' => dispatchFlags}
+        runDriver("DISPATCH_REQ", kvp_hash, expectedReturn)
     end
 
     def clusterNodeGet(resourceID, nodeIDString, timeout, nullClusterNode,
                        expectedReturn)
-        cmd = "--o CLUSTER_NODE_GET --resource-id %s --node-id %s --timeout %d" % \
-              [resourceID, nodeIDString, timeout]
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+                    'NODE_ID' => nodeIDString,
+                    'NULL_CLUSTER_NODE' => 'FALSE',
+                    'TIMEOUT' => timeout}
         if nullClusterNode
-            cmd += " --null-cluster-node"
+            kvp_hash['NULL_CLUSTER_NODE'] = 'TRUE'
         end
-        runDriver(cmd, expectedReturn)
+        runDriver("CLUSTER_NODE_GET_REQ", kvp_hash, expectedReturn)
     end
 
     def generateInvocation()
@@ -123,17 +136,16 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
         if invocation <= 0
             raise "invocation must be greater than 0"
         end
-
-        cmd = "--o CLUSTER_NODE_GET_ASYNC --resource-id %s --invocation %d --node-id %s" % \
-              [resourceID, invocation, nodeIDString]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+                    'INVOCATION' => invocation,
+                    'NODE_ID' => nodeIDString}
+        runDriver("CLUSTER_NODE_GET_ASYNC_REQ", kvp_hash, expectedReturn)
     end
 
     def clusterNodeGetCBCount(resourceID, expectedCount)
-        cmd = "%s --run-dir %s --socket-file %s --load-libs %s --o CLUSTER_NODE_GET_CALLBACK_COUNT --resource-id %s" % \
-              [getDriverPath(), getRunDir(), getSocketFile(), getDriverLibs(),
-               resourceID]
-        array = captureCommand(cmd)
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
+        array = runDriver('CLUSTER_NODE_GET_CALLBACK_COUNT_REQ', kvp_hash,
+                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         cbCount = nil
@@ -152,10 +164,9 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
     end
 
     def clusterTrackCBCount(resourceID, expectedCount)
-        cmd = "%s --run-dir %s --socket-file %s --load-libs %s --o CLUSTER_TRACK_CALLBACK_COUNT --resource-id %s" % \
-              [getDriverPath(), getRunDir(), getSocketFile(), getDriverLibs(),
-               resourceID]
-        array = captureCommand(cmd)
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
+        array = runDriver('CLUSTER_TRACK_CALLBACK_COUNT_REQ', kvp_hash,
+                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         cbCount = nil
@@ -174,10 +185,9 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
     end
 
     def clusterNodeGetAsyncInvocation(resourceID, expectedInvocation)
-        cmd = "%s --run-dir %s --socket-file %s --load-libs %s --o CLUSTER_NODE_GET_ASYNC_INVOCATION --resource-id %s" % \
-              [getDriverPath(), getRunDir(), getSocketFile(), getDriverLibs(),
-               resourceID]
-        array = captureCommand(cmd)
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
+        array = runDriver('CLUSTER_NODE_GET_ASYNC_INVOCATION_REQ', kvp_hash,
+                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         invocation = nil
@@ -199,39 +209,46 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
                      track_changes_only, invalid_track_flags,
                      null_notification_buffer, null_cluster_notification,
                      number_of_items, expectedReturn)
-        cmd = "--o CLUSTER_TRACK --resource-id %s" % [resourceID]
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+                    'TRACK_CURRENT' => 'FALSE',
+                    'TRACK_CHANGES' => 'FALSE',
+                    'TRACK_CHANGES_ONLY' => 'FALSE',
+                    'INVALID_TRACK_FLAGS' => 'FALSE',
+                    'NULL_NOTIFICATION_BUFFER' => 'FALSE',
+                    'NULL_CLUSTER_NOTIFICATION' => 'FALSE',
+                    'NUMBER_OF_ITEMS' => number_of_items}
         if track_current
-            cmd += " --track-current"
+            kvp_hash['TRACK_CURRENT'] = 'TRUE'
         end
         if track_changes
-            cmd += " --track-changes"
+            kvp_hash['TRACK_CHANGES'] = 'TRUE'
         end
         if track_changes_only
-            cmd += " --track-changes-only"
+            kvp_hash['TRACK_CHANGES_ONLY'] = 'TRUE'
         end
         if invalid_track_flags
-            cmd += " --invalid-track-flags"
+            kvp_hash['INVALID_TRACK_FLAGS'] = 'TRUE'
         end
         if null_notification_buffer
-            cmd += " --null-notification-buffer"
+            kvp_hash['NULL_NOTIFICATION_BUFFER'] = 'TRUE'
         end
         if null_cluster_notification
-            cmd += " --null-cluster-notification"
+            kvp_hash['NULL_CLUSTER_NOTIFICATION'] = 'TRUE'
         end
-        if !null_notification_buffer and number_of_items >= 0
-            cmd += " --number-of-items %d" % [number_of_items]
-        end
-        runDriver(cmd, expectedReturn)
+        runDriver("CLUSTER_TRACK_REQ", kvp_hash, expectedReturn)
     end
 
     def clusterTrackStop(resourceID, expectedReturn)
-        cmd = "--o CLUSTER_TRACK_STOP --resource-id %s" % [resourceID]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
+        array = runDriver('CLUSTER_TRACK_STOP_REQ', kvp_hash,
+                          expectedReturn)
     end
 
     def displayLastNotificationBuffer(resourceID, xmlFile, expectedReturn)
-        cmd = "--o DISPLAY_LAST_NOTIFICATION_BUFFER --resource-id %s --xml-file %s" % [resourceID, xmlFile]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+                    'XML_FILE' => xmlFile}
+        array = runDriver('DISPLAY_LAST_NOTIFICATION_BUFFER_REQ', kvp_hash,
+                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
     end
 end # class
 

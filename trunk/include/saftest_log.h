@@ -19,6 +19,9 @@ extern void
 saftest_abort(const char *format, ...);
 
 extern void
+saftest_assert(int assertion, const char *format, ...);
+
+extern void
 err_exit(const char *format, ...);
 
 

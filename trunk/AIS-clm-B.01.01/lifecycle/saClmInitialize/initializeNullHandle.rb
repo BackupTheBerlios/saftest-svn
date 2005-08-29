@@ -19,9 +19,9 @@ class InitializeNullHandleCase < Test::Unit::TestCase
         resourceID = driver.createTestResource()
         driver.initWithOptions(
             resourceID, "SA_DISPATCH_ALL",
-            SAFTestUtils::SAFTestUtils.SA_AIS_RELEASE_CODE_INTEGER,
-            SAFTestUtils::SAFTestUtils.SA_AIS_MAJOR_VERSION_INTEGER,
-            SAFTestUtils::SAFTestUtils.SA_AIS_MINOR_VERSION_INTEGER,
+            SAFTestUtils::SAFTestUtils.SA_AIS_RELEASE_CODE,
+            SAFTestUtils::SAFTestUtils.SA_AIS_MAJOR_VERSION,
+            SAFTestUtils::SAFTestUtils.SA_AIS_MINOR_VERSION,
             true, false, false,
             SAFTestUtils::SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
 

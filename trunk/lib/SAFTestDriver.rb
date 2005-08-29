@@ -104,6 +104,49 @@ class SAFTestDriver < SAFTestUtils::SAFTestUtils
                            "Unable to kill driver %s with pid %s" % [@name, @pid])
     end
 
-end # class SAFSys
+    def runDriver(op, kvp_hash, expectedReturn)
+        cmd = "%s --run-dir %s --socket-file %s --load-libs %s --op %s" % \
+                 [getDriverPath(), getRunDir(), getSocketFile(),
+                  getDriverLibs(), op]
+        kvp_hash.each do |key, value|
+            cmd = "%s --key \"%s\" --value \"%s\"" % [cmd, key.to_s, value.to_s]
+        end
+        array = captureCommand(cmd)
+        ret = array[0]
+        lines = array[1]
+        if expectedReturn != ret
+            raise "Expected return %s, got %s.  Lines = \"%s\"" % \
+                   [mapErrorCodeToString(expectedReturn),
+                    mapErrorCodeToString(ret), lines.to_s]
+        end
+        lines.each do |line|
+            if iterator? then
+                yield line
+            else
+                #print line
+            end
+        end
+        return array
+    end
 
-end # module SAFSys
+    def createTestResource()
+        array = runDriver("CREATE_TEST_RESOURCE_REQ", {},
+                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+        ret = array[0]
+        lines = array[1]
+        resourceID = nil
+        lines.each do |line|
+            if line =~ /^Resource ID=(\d+)/
+                resourceID = $1
+            end
+        end
+        if nil == resourceID
+            raise "Couldn't find a Resource ID.  Lines = \"%s\"" % [lines.to_s]
+        end
+        log("new resourceID is %d" % [resourceID])
+        return resourceID
+    end
+
+end # class SAFTestDriver
+
+end # module SAFTestDriver

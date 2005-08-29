@@ -57,7 +57,14 @@ typedef struct fd_set_key {
 extern char    *optarg;
 extern int      optind;
 
+typedef unsigned char ubit8;
+typedef unsigned short ubit16;
 typedef unsigned int ubit32;
 typedef unsigned long long ubit64;
+
+#define UBIT8_MAX UCHAR_MAX
+#define UBIT16_MAX USHRT_MAX
+#define UBIT32_MAX UINT_MAX
+#define UBIT64_MAX ULLONG_MAX
 
 #endif /* SAFTEST_COMMON_H */

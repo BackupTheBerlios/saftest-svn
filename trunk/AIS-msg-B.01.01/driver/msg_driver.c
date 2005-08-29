@@ -122,6 +122,20 @@ lookup_msg_resource(int msg_resource_id)
     return(NULL);
 }
 
+msg_resource_t *
+lookup_msg_resource_from_request(saftest_msg_t *request)
+{
+    msg_resource_t *res;
+
+    res = lookup_msg_resource(
+                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    if (NULL == res) {
+        saftest_abort("Unknown resource id %d\n",
+                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
+    }
+    return(res);
+}
+
 void
 saftest_daemon_queue_open_callback(SaInvocationT invocation,
                            SaMsgQueueHandleT queueHandle,
@@ -166,26 +180,6 @@ saftest_daemon_dispatch_thread(void *arg)
                        get_error_string(err));
     }
     return(NULL);
-}
-
-static SaDispatchFlagsT
-saftest_daemon_get_dispatch_flags(const char *dispatch_flags_str)
-{
-    SaDispatchFlagsT flags;
-
-    if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_ONE")) {
-        flags = SA_DISPATCH_ONE;
-    } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_ALL")) {
-        flags = SA_DISPATCH_ALL;
-    } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_BLOCKING")) {
-        flags = SA_DISPATCH_BLOCKING;
-    } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_INVALID")) {
-        flags = -1;
-    } else {
-        saftest_abort("Unknown dispatch flags string %s\n", 
-                      dispatch_flags_str);
-    }
-    return(flags);
 }
 
 void 
@@ -238,6 +232,10 @@ saftest_daemon_handle_init_request(
                       saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
     }
 
+    msg_res->msg_callbacks.saMsgQueueOpenCallback = NULL;
+    msg_res->msg_callbacks.saMsgQueueGroupTrackCallback = NULL;
+    msg_res->msg_callbacks.saMsgMessageDeliveredCallback = NULL;
+    msg_res->msg_callbacks.saMsgMessageReceivedCallback = NULL;
     if (0 == strcmp("FALSE", 
                     saftest_msg_get_str_value(request, "NULL_MSG_HANDLE"))) {
         handle = &msg_res->msg_handle;
@@ -245,6 +243,7 @@ saftest_daemon_handle_init_request(
     if (0 == strcmp("FALSE", 
                     saftest_msg_get_str_value(request, "NULL_CALLBACKS"))) {
         callbacks = &msg_res->msg_callbacks;
+
         if (0 == strcmp("TRUE", 
                         saftest_msg_get_str_value(request, "QUEUE_OPEN_CB"))) {
             msg_res->msg_callbacks.saMsgQueueOpenCallback = 
@@ -272,20 +271,13 @@ saftest_daemon_handle_init_request(
     if (0 == strcmp("FALSE", 
                     saftest_msg_get_str_value(request, "NULL_VERSION"))) {
         version = &msg_res->version;
+        msg_res->version.releaseCode = releaseCode;
+        msg_res->version.majorVersion =
+            saftest_msg_get_ubit8_value(request, "VERSION_MAJOR");
+        msg_res->version.minorVersion =
+            saftest_msg_get_ubit8_value(request, "VERSION_MINOR");
     }
 
-    msg_res->msg_callbacks.saMsgQueueOpenCallback = NULL;
-    msg_res->msg_callbacks.saMsgQueueGroupTrackCallback = NULL;
-    msg_res->msg_callbacks.saMsgMessageDeliveredCallback = NULL;
-    msg_res->msg_callbacks.saMsgMessageReceivedCallback = NULL;
-
-    msg_res->version.releaseCode = releaseCode;
-    msg_res->version.majorVersion =
-        (SaUint8T) saftest_msg_get_ubit32_value(request, 
-                                                "VERSION_MAJOR");
-    msg_res->version.minorVersion =
-        (SaUint8T) saftest_msg_get_ubit32_value(request, 
-                                                "VERSION_MINOR");
     msg_res->dispatch_flags = 
         saftest_daemon_get_dispatch_flags(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
@@ -318,12 +310,8 @@ saftest_daemon_handle_selection_object_request(
 
     saftest_log("Received a select object get request for id %d\n",
                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    msg_res = lookup_msg_resource(
-                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    if (NULL == msg_res) {
-        saftest_abort("Unknown resource id %d\n",
-                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    }
+    msg_res = lookup_msg_resource_from_request(request);
+
     if (0 == strcmp("FALSE",
                     saftest_msg_get_str_value(request, 
                                               "NULL_SELECTION_OBJECT"))) {
@@ -345,12 +333,8 @@ saftest_daemon_handle_dispatch_request(
 
     saftest_log("Received a dispatch request for id %d\n",
                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    msg_res = lookup_msg_resource(
-                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    if (NULL == msg_res) {
-        saftest_abort("Unknown resource id %d\n",
-                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    }
+    msg_res = lookup_msg_resource_from_request(request);
+
     dispatch_flags = 
         saftest_daemon_get_dispatch_flags(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
@@ -369,12 +353,8 @@ saftest_daemon_handle_resource_finalize_request(
 
     saftest_log("Received a finalize request for id %d\n",
                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    msg_res = lookup_msg_resource(
-                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    if (NULL == msg_res) {
-        saftest_abort("Unknown resource id %d\n",
-                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    }
+    msg_res = lookup_msg_resource_from_request(request);
+
     status = saMsgFinalize(msg_res->msg_handle);
     msg_res->selection_object = 0;
     (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
@@ -397,12 +377,8 @@ saftest_daemon_handle_queue_open_request(
     saftest_log("Received a queue open request for id %d queue name %s\n",
                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"),
                 saftest_msg_get_str_value(request, "QUEUE_NAME"));
-    msg_res = lookup_msg_resource(
-                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    if (NULL == msg_res) {
-        saftest_abort("Unknown resource id %d\n",
-                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    }
+    msg_res = lookup_msg_resource_from_request(request);
+
     entity_name.length = 
         strlen(saftest_msg_get_str_value(request, "QUEUE_NAME"))+1;
     strncpy(entity_name.value, 
@@ -449,12 +425,8 @@ saftest_daemon_handle_queue_close_request(
 
     saftest_log("Received a queue close request for id %d\n",
                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    msg_res = lookup_msg_resource(
-                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    if (NULL == msg_res) {
-        saftest_abort("Unknown resource id %d\n",
-                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    }
+    msg_res = lookup_msg_resource_from_request(request);
+
     status = saMsgQueueClose(msg_res->queue_handle);
     msg_res->queue_handle = 0;
     (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
@@ -476,12 +448,8 @@ saftest_daemon_handle_message_send_request(
     saftest_log("Received a message send request for id %d entity name %s\n",
                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"),
                 saftest_msg_get_str_value(request, "ENTITY_NAME"));
-    msg_res = lookup_msg_resource(
-                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    if (NULL == msg_res) {
-        saftest_abort("Unknown resource id %d\n",
-                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    }
+    msg_res = lookup_msg_resource_from_request(request);
+
     entity_name.length = 
         strlen(saftest_msg_get_str_value(request, "ENTITY_NAME"))+1;
     strncpy(entity_name.value, 
@@ -525,12 +493,8 @@ saftest_daemon_handle_message_send_recieve_request(
                 "entity name %s\n",
                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"),
                 saftest_msg_get_str_value(request, "ENTITY_NAME"));
-    msg_res = lookup_msg_resource(
-                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    if (NULL == msg_res) {
-        saftest_abort("Unknown resource id %d\n",
-                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    }
+    msg_res = lookup_msg_resource_from_request(request);
+
     memset(&(msg_res->last_received_message), 0, 
            sizeof(msg_res->last_received_message));
 
@@ -586,12 +550,7 @@ saftest_daemon_handle_message_reply_request(
 
     saftest_log("Received a message reply request for id %d\n ",
                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    msg_res = lookup_msg_resource(
-                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    if (NULL == msg_res) {
-        saftest_abort("Unknown resource id %d\n",
-                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    }
+    msg_res = lookup_msg_resource_from_request(request);
 
     sender_name.length = 
         strlen(saftest_msg_get_str_value(request, "SENDER_NAME"))+1;
@@ -641,12 +600,7 @@ saftest_daemon_handle_message_get_request(
     saftest_log("Received a message get request for id %d entity name %s\n",
                 saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"),
                 saftest_msg_get_str_value(request, "ENTITY_NAME"));
-    msg_res = lookup_msg_resource(
-                  saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    if (NULL == msg_res) {
-        saftest_abort("Unknown resource id %d\n",
-                      saftest_msg_get_ubit32_value(request, "MSG_RESOURCE_ID"));
-    }
+    msg_res = lookup_msg_resource_from_request(request);
 
     memset(&(msg_res->last_received_message), 0, 
            sizeof(msg_res->last_received_message));
@@ -776,7 +730,7 @@ saftest_client_handle_create_test_res_request(
         saftest_log("Resource ID=%d\n", 
                     saftest_msg_get_ubit32_value(reply, "MSG_RESOURCE_ID"));
     }
-    free(reply);
+    saftest_msg_free(&reply);
 
     return(status);
 }
@@ -857,7 +811,7 @@ saftest_client_handle_message_get_request(
         saftest_abort("Received no reply from the daemon\n");
     }
     status = saftest_reply_msg_get_status(reply);
-    free(reply);
+    saftest_msg_free(&reply);
     if (SA_AIS_OK == status) {
         saftest_log("Message Type=%d\n", 
                     saftest_msg_get_ubit32_value(reply, "MSG_TYPE"));
@@ -882,7 +836,7 @@ SAFTEST_MAP_TABLE_ENTRY(
     saftest_daemon_handle_create_test_res_request)
 
 SAFTEST_MAP_TABLE_ENTRY(
-    "MSG_INITIALIZE_REQ", "MSG_INITIALIZE_REPLY",
+    "INITIALIZE_REQ", "INITIALIZE_REPLY",
     saftest_client_generic_handle_request,
     saftest_daemon_handle_init_request)
 

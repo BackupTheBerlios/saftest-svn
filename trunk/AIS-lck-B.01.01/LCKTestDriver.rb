@@ -19,153 +19,159 @@ class LCKTestDriver < SAFTestDriver::SAFTestDriver
         return 'lck_driver'
     end
 
-    def createTestResource()
-        cmd = "%s --run-dir %s --o CREATE_TEST_RES --socket-file %s --load-libs %s" % \
-              [getDriverPath(), getRunDir(), getSocketFile(), getDriverLibs()]
-        array = captureCommand(cmd)
-        ret = array[0]
-        lines = array[1]
-        resourceID = nil
-        lines.each do |line|
-            if line =~ /^Resource ID=(\d+)/
-                resourceID = $1
-            end
-        end
-        if nil == resourceID 
-            raise "Couldn't find a Resource ID"
-        end
-        log("new resourceID is %d" % [resourceID])
-        return resourceID
-    end
-
-    def runDriver(cmd, expectedReturn)
-        newCmd = "%s --run-dir %s --socket-file %s --load-libs %s %s" % \
-                 [getDriverPath(), getRunDir(), getSocketFile(),
-                  getDriverLibs(), cmd]
-        array = captureCommand(newCmd)
-        ret = array[0]
-        lines = array[1]
-        if expectedReturn != ret
-            raise "Expected return %s, got %s.  Lines = \"%s\"" % \
-                   [mapErrorCodeToString(expectedReturn), 
-                    mapErrorCodeToString(ret), lines.to_s]
-        end
-    end
-
     def init(resourceID, dispatchFlags, expectedReturn)
-        cmd = "--o INIT --resource-id %s --set-lock-grant-cb --set-resource-unlock-cb --set-lock-waiter-cb --dispatch-flags %s" % [resourceID, dispatchFlags]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID,
+                    'DISPATCH_FLAGS' => dispatchFlags,
+                    'LOCK_GRANT_CB' => 'FALSE',
+                    'RESOURCE_UNLOCK_CB' => 'FALSE',
+                    'LOCK_WAITER_CB' => 'FALSE',
+                    'VERSION_RELEASE_CODE' => 
+                        SAFTestUtils::SAFTestUtils.SA_AIS_RELEASE_CODE,
+                    'VERSION_MAJOR' => 
+                        SAFTestUtils::SAFTestUtils.SA_AIS_MAJOR_VERSION,
+                    'VERSION_MINOR' => 
+                        SAFTestUtils::SAFTestUtils.SA_AIS_MINOR_VERSION,
+                    'DISPATCH_FLAGS' => dispatchFlags,
+                    'NULL_LCK_HANDLE' => 'FALSE',
+                    'NULL_CALLBACKS' => 'FALSE',
+                    'NULL_VERSION' => 'FALSE'}
+        runDriver("INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def initWithOptions(resourceID, dispatchFlags, 
                         releaseCode, majorVersion, minorVersion,
                         nullLckHandle, nullCallbacks, nullVersion,
                         expectedReturn)
-        cmd = "--o INIT --resource-id %s --dispatch-flags %s --version-release-code %d --version-major %d --version-minor %d" % \
-              [resourceID, dispatchFlags, 
-               releaseCode, majorVersion, minorVersion]
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID,
+                    'DISPATCH_FLAGS' => dispatchFlags,
+                    'VERSION_RELEASE_CODE' => releaseCode,
+                    'VERSION_MAJOR' => majorVersion,
+                    'VERSION_MINOR' => minorVersion,
+                    'DISPATCH_FLAGS' => dispatchFlags,
+                    'NULL_CALLBACKS' => 'FALSE',
+                    'NULL_VERSION' => 'FALSE'}
+
         if nullLckHandle
-            cmd += " --null-lck-handle"
+            kvp_hash['NULL_LCK_HANDLE'] = 'TRUE'
+        else
+            kvp_hash['NULL_LCK_HANDLE'] = 'FALSE'
+            kvp_hash['LOCK_WAITER_CB'] = 'TRUE'
+            kvp_hash['RESOURCE_UNLOCK_CB'] = 'TRUE'
+            kvp_hash['LOCK_GRANT_CB'] = 'TRUE'
         end
+
         if nullCallbacks
-            cmd += " --null-callbacks"
+            kvp_hash['NULL_CALLBACKS'] = 'TRUE'
         end
         if nullVersion
-            cmd += " --null-version"
+            kvp_hash['NULL_VERSION'] = 'TRUE'
         end
-        runDriver(cmd, expectedReturn)
+        runDriver("INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def finalize(resourceID, expectedReturn)
-        cmd = "--o FINALIZE --resource-id %s" % [resourceID]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID}
+        runDriver("FINALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def selectObjectGet(resourceID, nullSelectionObject, expectedReturn)
-        cmd = "--o SELECT_OBJ_GET --resource-id %s" % [resourceID]
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID,
+                    'NULL_SELECTION_OBJECT' => 'FALSE'}
         if nullSelectionObject
-            cmd += " --null-selection-object"
+            kvp_hash['NULL_SELECTION_OBJECT'] = 'TRUE'
         end
-        runDriver(cmd, expectedReturn)
-    end
+        runDriver("SELECTION_OBJECT_GET_REQ", kvp_hash, expectedReturn)
 
-    def resourceOpen(resourceID, lockName, expectedReturn)
-        cmd = "--o RES_OPEN --resource-id %s --lock-name %s" \
-              % [resourceID, lockName]
-        runDriver(cmd, expectedReturn)
-    end
-
-    def resourceClose(resourceID, expectedReturn)
-        cmd = "--o RES_CLOSE --resource-id %d" % [resourceID]
-        runDriver(cmd, expectedReturn)
     end
 
     def dispatch(resourceID, dispatchFlags, expectedReturn)
-        cmd = "--o DISPATCH --resource-id %s --dispatch-flags %s" % \
-              [resourceID, dispatchFlags]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID,
+                    'DISPATCH_FLAGS' => dispatchFlags}
+        runDriver("DISPATCH_REQ", kvp_hash, expectedReturn)
+    end
+
+    def resourceOpen(resourceID, lockName, expectedReturn)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID,
+                    'LOCK_NAME' => lockName}
+        runDriver("LOCK_RESOURCE_OPEN_REQ", kvp_hash, expectedReturn)
+    end
+
+    def resourceClose(resourceID, expectedReturn)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID}
+        runDriver("LOCK_RESOURCE_CLOSE_REQ", kvp_hash, expectedReturn)
     end
 
     def lockSync(resourceID, lockMode, waiterSignal, nullLockID, nullStatus, 
                  noQueueFlag, orphanFlag, invalidFlag, 
                  expectedStatus, expectedReturn)
-        cmd = "--o LOCK_SYNC --resource-id %s --lock-mode %s --waiter-signal %d --expected-status %s" % \
-              [resourceID, lockMode, waiterSignal, expectedStatus]
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID,
+                    'LOCK_MODE' => lockMode,
+                    'WAITER_SIGNAL' => waiterSignal,
+                    'NULL_LOCK_ID' => 'FALSE',
+                    'NULL_LOCK_STATUS' => 'FALSE',
+                    'LOCK_FLAG_NO_QUEUE' => 'FALSE',
+                    'LOCK_FLAG_ORPHAN' => 'FALSE',
+                    'LOCK_FLAG_INVALID' => 'FALSE',
+                    'EXPECTED_STATUS' => expectedStatus}
         if (true == noQueueFlag)
-            cmd += " --lock-flag-no-queue"
+            kvp['LOCK_FLAG_NO_QUEUE'] = 'TRUE'
         end
         if (true == orphanFlag)
-            cmd += " --lock-flag-orphan"
+            kvp['LOCK_FLAG_ORPHAN'] = 'TRUE'
         end
         if (true == invalidFlag)
-            cmd += " --lock-flag-invalid"
+            kvp['LOCK_FLAG_INVALID'] = 'TRUE'
         end
         if (true == nullLockID)
-            cmd += " --null-lock-id"
+            kvp['NULL_LOCK_ID'] = 'TRUE'
         end
         if (true == nullStatus)
-            cmd += " --null-lock-status"
+            kvp['NULL_LOCK_STATUS'] = 'TRUE'
         end
-        runDriver(cmd, expectedReturn)
+        runDriver("LOCK_SYNC_REQ", kvp_hash, expectedReturn)
     end
 
     def lockAsync(resourceID, lockMode, invocation, waiterSignal, 
                   nullLockID, noQueueFlag, orphanFlag, invalidFlag, 
                   expectedReturn)
-        cmd = "--o LOCK_ASYNC --resource-id %s --lock-mode %s --invocation %d --waiter-signal %d" % \
-              [resourceID, lockMode, invocation, waiterSignal]
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID,
+                    'LOCK_MODE' => lockMode,
+                    'INVOCATION' => invocation,
+                    'WAITER_SIGNAL' => waiterSignal,
+                    'NULL_LOCK_ID' => 'FALSE',
+                    'LOCK_FLAG_NO_QUEUE' => 'FALSE',
+                    'LOCK_FLAG_ORPHAN' => 'FALSE',
+                    'LOCK_FLAG_INVALID' => 'FALSE'}
         if (true == noQueueFlag)
-            cmd += " --lock-flag-no-queue"
+            kvp['LOCK_FLAG_NO_QUEUE'] = 'TRUE'
         end
         if (true == orphanFlag)
-            cmd += " --lock-flag-orphan"
+            kvp['LOCK_FLAG_ORPHAN'] = 'TRUE'
         end
         if (true == invalidFlag)
-            cmd += " --lock-flag-invalid"
+            kvp['LOCK_FLAG_INVALID'] = 'TRUE'
         end
         if (true == nullLockID)
-            cmd += " --null-lock-id"
+            kvp['NULL_LOCK_ID'] = 'TRUE'
         end
-        runDriver(cmd, expectedReturn)
+        runDriver("LOCK_ASYNC_REQ", kvp_hash, expectedReturn)
     end
 
     def unlockSync(resourceID, expectedReturn)
-        cmd = "--o UNLOCK_SYNC --resource-id %s" % [resourceID]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID}
+        runDriver("UNLOCK_SYNC_REQ", kvp_hash, expectedReturn)
     end
 
     def unlockAsync(resourceID, invocation, expectedReturn)
-        cmd = "--o UNLOCK_ASYNC --resource-id %s --invocation %d" % \
-              [resourceID, invocation]
-        runDriver(cmd, expectedReturn)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID,
+                    'INVOCATION' => invocation}
+        runDriver("UNLOCK_ASYNC_REQ", kvp_hash, expectedReturn)
     end
 
     def lockGetWaitCount(resourceID, expectedLastWaiterSignal,
                          expectedNotificationCount)
-        cmd = "%s --run-dir %s --socket-file %s --load-libs %s --o WAIT_COUNT --resource-id %s" % \
-              [getDriverPath(), getRunDir(), getSocketFile(), getDriverLibs(),
-               resourceID]
-        array = captureCommand(cmd)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID}
+        array = runDriver("LOCK_GET_WAIT_COUNT_REQ", kvp_hash, expectedReturn)
         ret = array[0]
         lines = array[1]
         lastWaiterSignal = nil
@@ -195,10 +201,9 @@ class LCKTestDriver < SAFTestDriver::SAFTestDriver
 
     def lockGetAsyncLockStatus(resourceID, expectedInvocation, expectedStatus,
                                expectedReturn)
-        cmd = "%s --run-dir %s --socket-file %s --load-libs %s --o ASYNC_LOCK_STATUS --resource-id %s" % \
-              [getDriverPath(), getRunDir(), getSocketFile(), 
-               getDriverLibs(), resourceID]
-        array = captureCommand(cmd)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID}
+        array = runDriver("LOCK_GET_ASYNC_LOCK_STATUS_REQ", 
+                          kvp_hash, expectedReturn)
         ret = array[0]
         lines = array[1]
         invocation = nil
@@ -235,10 +240,9 @@ class LCKTestDriver < SAFTestDriver::SAFTestDriver
 
     def lockGetAsyncUnlockStatus(resourceID, expectedInvocation, expectedStatus,
                                  expectedReturn)
-        cmd = "%s --run-dir %s --socket-file %s --load-libs %s --o ASYNC_UNLOCK_STATUS --resource-id %s" % \
-              [getDriverPath(), getRunDir(), getSocketFile(), 
-               getDriverLibs(), resourceID]
-        array = captureCommand(cmd)
+        kvp_hash = {'LCK_RESOURCE_ID' => resourceID}
+        array = runDriver("LOCK_GET_ASYNC_UNLOCK_STATUS_REQ", 
+                          kvp_hash, expectedReturn)
         ret = array[0]
         lines = array[1]
         invocation = nil

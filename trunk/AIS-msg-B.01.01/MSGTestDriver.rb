@@ -20,9 +20,8 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
     end
 
     def createTestResource()
-        cmd = "%s --run-dir %s --o CREATE_TEST_RESOURCE_REQ --load-libs %s --socket-file %s" % \
-              [getDriverPath(), getRunDir(), getDriverLibs(), getSocketFile()]
-        array = captureCommand(cmd)
+        array = runDriver("CREATE_TEST_RESOURCE_REQ", {},
+                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         resourceID = nil
@@ -31,31 +30,11 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
                 resourceID = $1
             end
         end
-        if nil == resourceID 
-            raise "Couldn't find a Resource ID"
+        if nil == resourceID
+            raise "Couldn't find a Resource ID.  Lines = \"%s\"" % [lines.to_s]
         end
-        log("new resourceID is %d" % [resourceID])
+        #log("new resourceID is %d" % [resourceID])
         return resourceID
-    end
-
-    def runDriver(cmd, kvp_hash, expectedReturn)
-        newCmd = "%s --run-dir %s --socket-file %s --load-libs %s %s" % \
-                 [getDriverPath(), getRunDir(), getSocketFile(),
-                  getDriverLibs(), cmd]
-        kvp_hash.each do |key, value|
-            newCmd = "%s --key \"%s\" --value \"%s\"" % [newCmd, key, value]
-        end
-        array = captureCommand(newCmd)
-        ret = array[0]
-        lines = array[1]
-        lines.each do |line|
-            print line
-        end
-        if expectedReturn != ret
-            raise "Expected return %s, got %s.  Lines = \"%s\"" % \
-                   [mapErrorCodeToString(expectedReturn), 
-                    mapErrorCodeToString(ret), lines.to_s]
-        end
     end
 
     def init(resourceID, dispatchFlags, expectedReturn)
@@ -64,15 +43,17 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
                     'QUEUE_GROUP_TRACK_CB' => 'TRUE',
                     'MESSAGE_DELIVERED_CB' => 'TRUE',
                     'MESSAGE_RECEIEVED_CB' => 'TRUE',
-                    'VERSION_RELEASE_CODE' => 'B',
-                    'VERSION_MAJOR' => '1',
-                    'VERSION_MINOR' => '1',
+                    'VERSION_RELEASE_CODE' =>
+                        SAFTestUtils::SAFTestUtils.SA_AIS_RELEASE_CODE,
+                    'VERSION_MAJOR' =>
+                        SAFTestUtils::SAFTestUtils.SA_AIS_MAJOR_VERSION,
+                    'VERSION_MINOR' =>
+                        SAFTestUtils::SAFTestUtils.SA_AIS_MINOR_VERSION,
                     'DISPATCH_FLAGS' => dispatchFlags,
                     'NULL_MSG_HANDLE' => 'FALSE',
                     'NULL_CALLBACKS' => 'FALSE',
                     'NULL_VERSION' => 'FALSE'}
-        cmd = "--o MSG_INITIALIZE_REQ"
-        runDriver("--o MSG_INITIALIZE_REQ", kvp_hash, expectedReturn)
+        runDriver("INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def initWithOptions(resourceID, dispatchFlags, 
@@ -107,18 +88,18 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
             kvp_hash['NULL_VERSION'] = 'FALSE'
         end
 
-        runDriver("--o MSG_INITIALIZE_REQ", kvp_hash, expectedReturn)
+        runDriver("INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def dispatch(resourceID, dispatchFlags, expectedReturn)
         kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
                     'DISPATCH_FLAGS' => dispatchFlags}
-        runDriver("--o DISPATCH_REQ", kvp_hash, expectedReturn)
+        runDriver("DISPATCH_REQ", kvp_hash, expectedReturn)
     end
 
     def finalize(resourceID, expectedReturn)
         kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s}
-        runDriver("--o FINALIZE_REQ", kvp_hash, expectedReturn)
+        runDriver("FINALIZE_REQ", kvp_hash, expectedReturn)
     end
 
     def selectObjectGet(resourceID, nullSelectionObject, expectedReturn)
@@ -127,7 +108,7 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
         if nullSelectionObject
             kvp_hash['NULL_SELECTION_OBJECT'] = 'TRUE'
         end
-        runDriver("--o SELECTION_OBJECT_GET_REQ", kvp_hash, expectedReturn)
+        runDriver("SELECTION_OBJECT_GET_REQ", kvp_hash, expectedReturn)
     end
 
     def queueOpen(resourceID, queueName, persistent, sizeArray, retentionTime,
@@ -159,12 +140,12 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
         if empty
             kvp_hash['EMPTY'] = 'TRUE'
         end
-        runDriver("--o QUEUE_OPEN_REQ", kvp_hash, expectedReturn)
+        runDriver("QUEUE_OPEN_REQ", kvp_hash, expectedReturn)
     end
 
     def queueClose(resourceID, expectedReturn)
         kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s}
-        runDriver("--o QUEUE_CLOSE_REQ", kvp_hash, expectedReturn)
+        runDriver("QUEUE_CLOSE_REQ", kvp_hash, expectedReturn)
     end
 
     def messageSend(resourceID, entityName, senderName, msgType, msgVersion,
@@ -176,7 +157,7 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
                     'MSG_VERSION' => msgVersion.to_s,
                     'MSG_PRIORITY' => msgPriority.to_s,
                     'MSG_STRING' => msgString}
-        runDriver("--o MESSAGE_SEND_REQ", kvp_hash, expectedReturn)
+        runDriver("MESSAGE_SEND_REQ", kvp_hash, expectedReturn)
     end
 
     def messageGet(resourceID, entityName, expectedSenderName, 
@@ -184,7 +165,7 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
                    expectedMsgPriority, expectedMsgString, expectedReturn)
         kvp_hash = {'MSG_RESOURCE_ID' => resourceID.to_s,
                     'ENTITY_NAME' => entityName}
-        runDriver("--o MESSAGE_GET_REQ", kvp_hash, expectedReturn)
+        runDriver("MESSAGE_GET_REQ", kvp_hash, expectedReturn)
     end
 
     def messageSendReceive(resourceID, entityName, senderName, 
@@ -199,7 +180,8 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
                     'MSG_VERSION' => msgVersion.to_s,
                     'MSG_PRIORITY' => msgPriority.to_s,
                     'MSG_STRING' => msgString}
-        runDriver("--o MESSAGE_SEND_RECEIVE_REQ", kvp_hash, expectedReturn)
+        runDriver("MESSAGE_SEND_RECEIVE_REQ", kvp_hash, expectedReturn)
+    end
 
     def messageReply(resourceID, entityName, senderName, 
                      msgType, msgVersion, msgPriority, replyString, 
@@ -211,7 +193,7 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
                     'MSG_VERSION' => msgVersion.to_s,
                     'MSG_PRIORITY' => msgPriority.to_s,
                     'REPLY_STRING' => replyString}
-        runDriver("--o MESSAGE_REPLY_REQ", kvp_hash, expectedReturn)
+        runDriver("MESSAGE_REPLY_REQ", kvp_hash, expectedReturn)
     end
 
 end # class

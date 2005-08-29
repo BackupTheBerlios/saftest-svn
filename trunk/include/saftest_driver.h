@@ -42,10 +42,6 @@ typedef void (*saftest_daemon_message_handler_func_t)(
 typedef void (*saftest_driver_init_func_t)(
     FILE *daemon_log_fp);
 
-typedef void (*saftest_driver_handle_client_message_func_t)(
-    int client_connection_fd,
-    saftest_msg_t *message);
-
 typedef void (*saftest_driver_add_fds_func_t)(
     int *max_fd,
     fd_set *read_fd_set,

@@ -200,6 +200,28 @@ saftest_msg_set_internal_ubit64_value(saftest_msg_t *msg,
 */
 
 void
+saftest_msg_set_ubit8_value(saftest_msg_t *msg, const char *key, ubit8 value)
+{
+    char ascii_value[SAFTEST_STRING_LENGTH + 1];
+
+    memset(ascii_value, 0, sizeof(ascii_value));
+
+    sprintf(ascii_value, "%d", value);
+    saftest_msg_set_str_value(msg, key, ascii_value);
+}
+
+void
+saftest_msg_set_ubit16_value(saftest_msg_t *msg, const char *key, ubit16 value)
+{
+    char ascii_value[SAFTEST_STRING_LENGTH + 1];
+
+    memset(ascii_value, 0, sizeof(ascii_value));
+
+    sprintf(ascii_value, "%d", value);
+    saftest_msg_set_str_value(msg, key, ascii_value);
+}
+
+void
 saftest_msg_set_ubit32_value(saftest_msg_t *msg, const char *key, ubit32 value)
 {
     char ascii_value[SAFTEST_STRING_LENGTH + 1];
@@ -289,6 +311,40 @@ saftest_msg_get_internal_str_value(saftest_msg_t *msg, const char *key)
         return(kvp->value);
     }
     return(NULL);
+}
+
+ubit8
+saftest_msg_get_ubit8_value(saftest_msg_t *msg, const char *key)
+{
+    saftest_key_value_pair_t *kvp;
+    ubit32 big_value = 0;
+    ubit8 small_value = 0;
+
+    kvp = saftest_msg_find_key_value_pair(msg, key, SAFTEST_KVP_EXTERNAL);
+    assert(NULL != kvp);
+
+    big_value = atoi(kvp->value);
+    assert(big_value <= UBIT8_MAX);
+    small_value = (ubit8) big_value;
+    
+    return(small_value);
+}
+
+ubit16
+saftest_msg_get_ubit16_value(saftest_msg_t *msg, const char *key)
+{
+    saftest_key_value_pair_t *kvp;
+    ubit32 big_value = 0;
+    ubit16 small_value = 0;
+
+    kvp = saftest_msg_find_key_value_pair(msg, key, SAFTEST_KVP_EXTERNAL);
+    assert(NULL != kvp);
+
+    big_value = atoi(kvp->value);
+    assert(big_value <= UBIT16_MAX);
+    small_value = (ubit16) big_value;
+    
+    return(small_value);
 }
 
 ubit32

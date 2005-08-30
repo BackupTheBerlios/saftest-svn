@@ -34,7 +34,7 @@ class ClusterTrackCurrentCase < Test::Unit::TestCase
         impl = driver.getImplementation()
         cluster1 = impl.getClusterFromCommand()
         cluster2 = impl.getClusterFromFile(xmlFile)
-        driver.runCommand("rm -f %s" % [xmlFile])
+        #driver.runCommand("rm -f %s" % [xmlFile])
 
         if cluster1 != cluster2
             driver.log("Cluster 1 != Cluster 2...")

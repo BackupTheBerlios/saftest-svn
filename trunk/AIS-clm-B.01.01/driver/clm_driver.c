@@ -625,9 +625,9 @@ saftest_daemon_handle_display_last_notification_buffer_request(
     fprintf(fp, "    <SAFNodeList>\n");
     
     for (ndx = 0; ndx < clm_res->notification_buffer.numberOfItems; ndx++) {
-        memcpy(node_name, 
-               clm_res->notification_buffer.notification[ndx].clusterNode.nodeName.value,
-               clm_res->notification_buffer.notification[ndx].clusterNode.nodeName.length);
+        strncpy(node_name, 
+                clm_res->notification_buffer.notification[ndx].clusterNode.nodeName.value,
+                clm_res->notification_buffer.notification[ndx].clusterNode.nodeName.length);
         fprintf(fp, "        <SAFNode>\n");
         fprintf(fp, "            <id>%ld</id>\n", 
                 clm_res->notification_buffer.notification[ndx].clusterNode.nodeId);

@@ -345,6 +345,8 @@ saftest_daemon_handle_dispatch_request(
     dispatch_flags =
         saftest_daemon_get_dispatch_flags(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
+    saftest_assert(SA_DISPATCH_BLOCKING != dispatch_flags,
+                   "Can't use blocking dispatch for a dispatch request\n");
     status = saClmDispatch(clm_res->clm_handle, dispatch_flags);
     (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
 }
@@ -625,6 +627,7 @@ saftest_daemon_handle_display_last_notification_buffer_request(
     fprintf(fp, "    <SAFNodeList>\n");
     
     for (ndx = 0; ndx < clm_res->notification_buffer.numberOfItems; ndx++) {
+        memset(node_name, 0, sizeof(node_name));
         strncpy(node_name, 
                 clm_res->notification_buffer.notification[ndx].clusterNode.nodeName.value,
                 clm_res->notification_buffer.notification[ndx].clusterNode.nodeName.length);
@@ -716,6 +719,8 @@ saftest_daemon_handle_incoming_clm_message(gpointer data, gpointer user_data)
     saftest_log("Incoming request on clm selection fd %d.  "
                  "Calling saClmDispatch\n",
                  clm_res->selection_object);
+    saftest_assert(SA_DISPATCH_BLOCKING != clm_res->dispatch_flags,
+                   "It will have its own dispatch thread\n");
     err = saClmDispatch(clm_res->clm_handle, clm_res->dispatch_flags);
     if (SA_AIS_OK != err) {
         saftest_log("Error %s performing saClmDispatch\n",

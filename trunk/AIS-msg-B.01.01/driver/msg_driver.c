@@ -338,6 +338,8 @@ saftest_daemon_handle_dispatch_request(
     dispatch_flags = 
         saftest_daemon_get_dispatch_flags(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
+    saftest_assert(SA_DISPATCH_BLOCKING != dispatch_flags,
+                   "Can't use blocking dispatch for a dispatch request\n");
     status = saMsgDispatch(msg_res->msg_handle, dispatch_flags);
     (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
 }
@@ -653,6 +655,8 @@ saftest_daemon_handle_incoming_msg_message(gpointer data, gpointer user_data)
 
     saftest_log("Incoming request on msg selection fd %d\n",
                  msg_res->selection_object);
+    saftest_assert(SA_DISPATCH_BLOCKING != msg_res->dispatch_flags,
+                   "It will have its own dispatch thread\n");
     err = saMsgDispatch(msg_res->msg_handle, msg_res->dispatch_flags);
     if (SA_AIS_OK != err) {
         saftest_log("Error %s performing saMsgDispatch\n",

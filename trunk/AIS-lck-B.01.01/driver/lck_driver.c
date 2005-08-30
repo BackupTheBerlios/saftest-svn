@@ -359,7 +359,7 @@ saftest_daemon_handle_init_request(
     status = saLckInitialize(handle, callbacks, version);
     (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
     if (SA_AIS_OK == status) {
-        if (lock_res->dispatch_flags == SA_DISPATCH_BLOCKING) {
+        if (SA_DISPATCH_BLOCKING == lock_res->dispatch_flags) {
             saftest_log("Starting new dispatch thread\n");
             err = pthread_create(&lock_res->thread_id, NULL,
                                  saftest_daemon_dispatch_thread,
@@ -412,6 +412,8 @@ saftest_daemon_handle_dispatch_request(
     dispatch_flags =
         saftest_daemon_get_dispatch_flags(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
+    saftest_assert(SA_DISPATCH_BLOCKING != dispatch_flags,
+                   "Can't use blocking dispatch for a dispatch request\n");
     status = saLckDispatch(lock_res->lck_handle, dispatch_flags);
     (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
 }
@@ -743,6 +745,8 @@ saftest_daemon_handle_incoming_lock_message(gpointer data, gpointer user_data)
 
     saftest_log("Incoming request on lock selection fd %d\n",
                  lock_res->selection_object);
+    saftest_assert(SA_DISPATCH_BLOCKING != lock_res->dispatch_flags,
+                   "It will have its own dispatch thread\n");
     err = saLckDispatch(lock_res->lck_handle, lock_res->dispatch_flags);
     if (SA_AIS_OK != err) {
         saftest_log("Error %s performing saLckDispatch\n",

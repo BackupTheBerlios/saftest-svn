@@ -22,9 +22,9 @@ class LCKTestDriver < SAFTestDriver::SAFTestDriver
     def init(resourceID, dispatchFlags, expectedReturn)
         kvp_hash = {'LCK_RESOURCE_ID' => resourceID,
                     'DISPATCH_FLAGS' => dispatchFlags,
-                    'LOCK_GRANT_CB' => 'FALSE',
-                    'RESOURCE_UNLOCK_CB' => 'FALSE',
-                    'LOCK_WAITER_CB' => 'FALSE',
+                    'LOCK_GRANT_CB' => 'TRUE',
+                    'RESOURCE_UNLOCK_CB' => 'TRUE',
+                    'LOCK_WAITER_CB' => 'TRUE',
                     'VERSION_RELEASE_CODE' => 
                         SAFTestUtils::SAFTestUtils.SA_AIS_RELEASE_CODE,
                     'VERSION_MAJOR' => 
@@ -112,21 +112,21 @@ class LCKTestDriver < SAFTestDriver::SAFTestDriver
                     'LOCK_FLAG_NO_QUEUE' => 'FALSE',
                     'LOCK_FLAG_ORPHAN' => 'FALSE',
                     'LOCK_FLAG_INVALID' => 'FALSE',
-                    'EXPECTED_STATUS' => expectedStatus}
+                    'EXPECTED_LOCK_STATUS' => expectedStatus}
         if (true == noQueueFlag)
-            kvp['LOCK_FLAG_NO_QUEUE'] = 'TRUE'
+            kvp_hash['LOCK_FLAG_NO_QUEUE'] = 'TRUE'
         end
         if (true == orphanFlag)
-            kvp['LOCK_FLAG_ORPHAN'] = 'TRUE'
+            kvp_hash['LOCK_FLAG_ORPHAN'] = 'TRUE'
         end
         if (true == invalidFlag)
-            kvp['LOCK_FLAG_INVALID'] = 'TRUE'
+            kvp_hash['LOCK_FLAG_INVALID'] = 'TRUE'
         end
         if (true == nullLockID)
-            kvp['NULL_LOCK_ID'] = 'TRUE'
+            kvp_hash['NULL_LOCK_ID'] = 'TRUE'
         end
         if (true == nullStatus)
-            kvp['NULL_LOCK_STATUS'] = 'TRUE'
+            kvp_hash['NULL_LOCK_STATUS'] = 'TRUE'
         end
         runDriver("LOCK_SYNC_REQ", kvp_hash, expectedReturn)
     end
@@ -143,16 +143,16 @@ class LCKTestDriver < SAFTestDriver::SAFTestDriver
                     'LOCK_FLAG_ORPHAN' => 'FALSE',
                     'LOCK_FLAG_INVALID' => 'FALSE'}
         if (true == noQueueFlag)
-            kvp['LOCK_FLAG_NO_QUEUE'] = 'TRUE'
+            kvp_hash['LOCK_FLAG_NO_QUEUE'] = 'TRUE'
         end
         if (true == orphanFlag)
-            kvp['LOCK_FLAG_ORPHAN'] = 'TRUE'
+            kvp_hash['LOCK_FLAG_ORPHAN'] = 'TRUE'
         end
         if (true == invalidFlag)
-            kvp['LOCK_FLAG_INVALID'] = 'TRUE'
+            kvp_hash['LOCK_FLAG_INVALID'] = 'TRUE'
         end
         if (true == nullLockID)
-            kvp['NULL_LOCK_ID'] = 'TRUE'
+            kvp_hash['NULL_LOCK_ID'] = 'TRUE'
         end
         runDriver("LOCK_ASYNC_REQ", kvp_hash, expectedReturn)
     end
@@ -171,7 +171,8 @@ class LCKTestDriver < SAFTestDriver::SAFTestDriver
     def lockGetWaitCount(resourceID, expectedLastWaiterSignal,
                          expectedNotificationCount)
         kvp_hash = {'LCK_RESOURCE_ID' => resourceID}
-        array = runDriver("LOCK_GET_WAIT_COUNT_REQ", kvp_hash, expectedReturn)
+        array = runDriver("LOCK_GET_WAIT_COUNT_REQ", kvp_hash, 
+                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         lastWaiterSignal = nil

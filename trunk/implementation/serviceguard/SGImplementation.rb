@@ -40,7 +40,12 @@ class SGNetworkInterface < SGBase
     end
 
     def processLine(line)
-        processLineToMap(line)
+        if line =~ /^ip_address:(.+)\|(.*)/ then
+            ip_address, line = $1, $2
+            @map['ip_address'] = $1
+        else
+            processLineToMap(line)
+        end
     end
 
     def display()
@@ -56,7 +61,7 @@ class SGNode < SGBase
     end
 
     def processLine(line)
-        if line =~ /^interface:([A-z0-9])+\|(.*)/ then
+        if line =~ /^interface:([A-z0-9]+)\|(.*)/ then
             interfaceName, line = $1, $2
             if @interfaces.has_key?(interfaceName)
                 interface = @interfaces[interfaceName]

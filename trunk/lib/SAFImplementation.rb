@@ -7,7 +7,7 @@ class SAFNetworkAddressImplementation < SAFTestUtils::SAFTestUtils
         super()
         @family = 'SA_CLM_AF_INET'
         @length = 4
-        @value = '127.0.0.1'
+        @value = '0.0.0.0'
     end
 
     def getFamily()

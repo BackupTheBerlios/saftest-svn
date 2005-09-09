@@ -4,13 +4,20 @@ require 'SAFTestUtils'
 require 'SAFImplementation'
 
 class SAFTestDriver < SAFTestUtils::SAFTestUtils
-    def initialize(node, driverLibs, instanceId)
+    @@nextInstanceID = 1
+
+    def initialize(node, driverLibs, instanceID)
         super()
+        if instanceID == 0
+            myInstanceID = @@nextInstanceID
+            @@nextInstanceID += 1
+        end
+
         @driverPath = ENV['SAFTEST_ROOT'] + '/driver/saf_driver'
         @driverLibs = driverLibs
-        @instanceId = instanceId
-        @name = '%s_%d' % [getName(), @instanceId]
-        @socketFile = "%s/%s.sock"  % [getRunDir(), @name]
+        @instanceID = myInstanceID
+        @name = '%s_%d' % [getName(), @instanceID]
+        @socketFile = "%s/saf_driver_%d.sock"  % [getRunDir(), @instanceID]
         @logFile = "%s/%s.log"  % [@logDir, @name]
         @pidFile = "%s/%s.pid"  % [getRunDir(), @name]
         @pid = nil
@@ -28,7 +35,7 @@ class SAFTestDriver < SAFTestUtils::SAFTestUtils
     end
 
     def getName()
-        rsafe 'Subclass must override'
+        return 'saf_driver'
     end
 
     def getDriverPath()

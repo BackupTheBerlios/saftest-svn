@@ -6,12 +6,10 @@ require 'SAFTestUtils'
 class CLMTestDriver < SAFTestDriver::SAFTestDriver
     @@nextInstanceID = 1
 
-    def initialize(node)
+    def initialize(node=nil, instanceID=0)
         driverLib = "%s/AIS-clm-%s/driver/clm_driver.so" % \
                     [ENV['SAFTEST_ROOT'], 
                      SAFTestUtils::SAFTestUtils.getAISLibVersion()]
-        instanceID = @@nextInstanceID
-        @@nextInstanceID += 1
         super(node, driverLib, instanceID)
     end
 
@@ -35,6 +33,13 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
         end
         log("new resourceID is %d" % [resourceID])
         return resourceID
+    end
+
+    def CLMTestDriver.getRandomLongLivedDriver(node)
+        numDrivers = SAFTestUtils::SAFTestUtils.lookupTestParam('main', 'numLongLivedDrivers')
+        instanceID = 1
+        driver = CLMTestDriver.new(node, instanceID)
+        return driver
     end
 
     def init(resourceID, setClusterNodeGetCB, setClusterTrackCB,

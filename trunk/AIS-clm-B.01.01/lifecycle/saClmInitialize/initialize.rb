@@ -13,12 +13,9 @@ class InitializeCase < Test::Unit::TestCase
     require 'CLMTestDriver'
 
     def test_run()
-        driver = CLMTestDriver::CLMTestDriver.new(nil)
-        driver.killAllDrivers()
-        driver.start()
+        driver = CLMTestDriver::CLMTestDriver.getRandomLongLivedDriver(nil)
         resourceID = driver.createTestResource()
         driver.init(resourceID, false, false, "SA_DISPATCH_ALL",
                     SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-        driver.stop()
     end
 end

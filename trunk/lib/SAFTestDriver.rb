@@ -11,6 +11,8 @@ class SAFTestDriver < SAFTestUtils::SAFTestUtils
         if instanceID == 0
             myInstanceID = @@nextInstanceID
             @@nextInstanceID += 1
+        else
+            myInstanceID = instanceID
         end
 
         @driverPath = ENV['SAFTEST_ROOT'] + '/driver/saf_driver'
@@ -28,10 +30,6 @@ class SAFTestDriver < SAFTestUtils::SAFTestUtils
         end
         commands_file = ENV['SAFTEST_ROOT'] + '/conf/cluster_commands.conf'
         @implementation = SAFImplementation::SAFImplementation.new(commands_file)
-    end
-
-    def killAllDrivers()
-        captureCommand("killall -9 saf_driver")
     end
 
     def getName()
@@ -130,7 +128,7 @@ class SAFTestDriver < SAFTestUtils::SAFTestUtils
             if iterator? then
                 yield line
             else
-                #print line
+                print line
             end
         end
         return array

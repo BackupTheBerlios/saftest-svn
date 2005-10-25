@@ -35,11 +35,36 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
         return resourceID
     end
 
-    def CLMTestDriver.getRandomLongLivedDriver(node)
-        numDrivers = SAFTestUtils::SAFTestUtils.lookupTestParam('main', 'numLongLivedDrivers')
-        instanceID = 1
-        driver = CLMTestDriver.new(node, instanceID)
-        return driver
+    def CLMTestDriver.getLongLivedDrivers(node)
+        numDrivers = SAFTestUtils::SAFTestUtils.getTestParam('main',
+                                                             'numLongLivedDrivers')
+        driverArray = []
+        1.upto(numDrivers) do |n|
+            driver = CLMTestDriver.new(node, n)
+            driverArray << driver
+        end
+        return driverArray
+    end
+
+    def getAllTestResourceIDs()
+        resourceIDArray = []
+        array = runDriver("LOOKUP_TEST_RESOURCE_REQ", {},
+                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+        ret = array[0]
+        lines = array[1]
+        resourceID = nil
+        lines.each do |line|
+            if line =~ /^Resource ID=(\d+)/
+                resourceID = $1
+                resourceIDArray << resourceID
+            end
+        end
+        return resourceIDArray
+    end
+
+    def getRandomTestResourceID()
+        resourceIDArray = getAllTestResourceIDs()
+        return resourceIDArray[0]
     end
 
     def init(resourceID, setClusterNodeGetCB, setClusterTrackCB,
@@ -147,7 +172,7 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
         runDriver("CLUSTER_NODE_GET_ASYNC_REQ", kvp_hash, expectedReturn)
     end
 
-    def clusterNodeGetCBCount(resourceID, expectedCount)
+    def clusterNodeGetCBCount(resourceID)
         kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
         array = runDriver('CLUSTER_NODE_GET_CALLBACK_COUNT_REQ', kvp_hash,
                           SAFTestUtils::SAFTestUtils.SA_AIS_OK)
@@ -162,13 +187,10 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
         if nil == cbCount
             raise "Couldnt find a Cluster Node Get Callback Count.  Lines = \"%s\"" % [lines.to_s]
         end
-        if cbCount != expectedCount.to_s
-            raise "Expected count %d, got %s.  Lines = \"%s\"" % \
-                  [expectedCount, cbCount, lines.to_s]
-        end
+        return cbCount.to_i
     end
 
-    def clusterTrackCBCount(resourceID, expectedCount)
+    def clusterTrackCBCount(resourceID)
         kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
         array = runDriver('CLUSTER_TRACK_CALLBACK_COUNT_REQ', kvp_hash,
                           SAFTestUtils::SAFTestUtils.SA_AIS_OK)
@@ -183,10 +205,7 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
         if nil == cbCount
             raise "Couldnt find a Cluster Track Callback Count.  Lines = \"%s\"" % [lines.to_s]
         end
-        if cbCount != expectedCount.to_s
-            raise "Expected count %d, got %s.  Lines = \"%s\"" % \
-                  [expectedCount, cbCount, lines.to_s]
-        end
+        return cbCount.to_i
     end
 
     def clusterNodeGetAsyncInvocation(resourceID, expectedInvocation)

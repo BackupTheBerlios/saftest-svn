@@ -13,14 +13,11 @@ class SelectionObjectGetCase < Test::Unit::TestCase
     require 'CLMTestDriver'
 
     def test_run()
-        driver = CLMTestDriver::CLMTestDriver.new(nil)
-        driver.killAllDrivers()
-        driver.start()
-        resourceID = driver.createTestResource()
-        driver.init(resourceID, true, true, "SA_DISPATCH_ALL",
-                    SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-        driver.selectObjectGet(resourceID, false,
-                               SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-        driver.stop()
+        CLMTestDriver::CLMTestDriver.getLongLivedDrivers(nil).each do |d|
+            d.getAllTestResourceIDs().each do |r|
+                d.selectObjectGet(r, false,
+                                  SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+            end
+        end
     end
 end

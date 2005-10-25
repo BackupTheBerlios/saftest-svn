@@ -22,7 +22,7 @@
  **********************************************************************/
 
 typedef struct clm_resource {
-    int clm_resource_id;
+    ubit32 clm_resource_id;
     pthread_t thread_id;
 
     SaVersionT version;
@@ -63,7 +63,7 @@ SaClmNodeIdT get_node_id_from_string(const char *node_id_str)
 int
 get_next_clm_resource_id()
 {
-    static int next_clm_resource_id = 1;
+    static ubit32 next_clm_resource_id = 1;
     int ret_id;
 
     ret_id = next_clm_resource_id;
@@ -224,6 +224,30 @@ saftest_daemon_handle_create_test_res_request(
                                         SA_AIS_OK);
     saftest_msg_set_ubit32_value((*reply), "CLM_RESOURCE_ID",
                                  clm_res->clm_resource_id);
+}
+
+void
+saftest_daemon_handle_lookup_test_res_request(
+    saftest_map_table_entry_t *map_entry,
+    saftest_msg_t *request,
+    saftest_msg_t **reply)
+{
+    GList *element;
+    clm_resource_t *res;
+    ubit32 ndx;
+    char key[SAFTEST_STRING_LENGTH+1];
+
+    (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, 
+                                        SA_AIS_OK);
+    saftest_msg_set_ubit32_value((*reply), "NUM_CLM_RESOURCES",
+                                 g_list_length(clm_list));
+    for (ndx = 0, element = g_list_first(clm_list);
+         NULL != element;
+         ndx++, element = g_list_next(element)) {
+        res = (clm_resource_t *)element->data;
+        sprintf(key, "CLM_RESOURCE_%d_ID", ndx);
+        saftest_msg_set_ubit32_value((*reply), key, res->clm_resource_id);
+    }
 }
 
 void
@@ -779,6 +803,38 @@ saftest_client_handle_create_test_res_request(
 }
 
 SaAisErrorT
+saftest_client_handle_lookup_test_res_request(
+    int fd,
+    saftest_msg_t *request)
+{
+    saftest_msg_t *reply = NULL;
+    SaAisErrorT status;
+    ubit32 ndx;
+    char key[SAFTEST_STRING_LENGTH+1];
+ 
+    saftest_send_request(fd, get_library_id(), request, &reply);
+    saftest_assert(NULL != reply, "Received no reply from the daemon\n");
+
+    status = saftest_reply_msg_get_status(reply);
+    if (SA_AIS_OK == status) {
+        saftest_log("Number of Resources=%d\n", 
+                    saftest_msg_get_ubit32_value(reply, 
+                                                 "NUM_CLM_RESOURCES"));
+    }
+    for (ndx = 0; 
+         ndx < saftest_msg_get_ubit32_value(reply, "NUM_CLM_RESOURCES");
+         ndx++) {
+        sprintf(key, "CLM_RESOURCE_%d_ID", ndx);
+        saftest_log("Resource ID=%d\n", 
+                    saftest_msg_get_ubit32_value(reply, key));
+    }
+    status = saftest_reply_msg_get_status(reply);
+    saftest_msg_free(&reply);
+
+    return(status);
+}
+
+SaAisErrorT
 saftest_client_handle_cluster_node_get_cb_count_request(
     int fd,
     saftest_msg_t *request)
@@ -851,6 +907,11 @@ SAFTEST_MAP_TABLE_ENTRY(
     "CREATE_TEST_RESOURCE_REQ", "CREATE_TEST_RESOURCE_REPLY",
     saftest_client_handle_create_test_res_request,
     saftest_daemon_handle_create_test_res_request)
+
+SAFTEST_MAP_TABLE_ENTRY(
+    "LOOKUP_TEST_RESOURCE_REQ", "LOOKUP_TEST_RESOURCE_REPLY",
+    saftest_client_handle_lookup_test_res_request,
+    saftest_daemon_handle_lookup_test_res_request)
 
 SAFTEST_MAP_TABLE_ENTRY(
     "INITIALIZE_REQ", "INITIALIZE_REPLY",

@@ -309,7 +309,7 @@ class SAFTestUtils
         return array
     end
 
-    def SAFTestUtils.lookupTestParam(section, paramName)
+    def SAFTestUtils.getTestParam(section, paramName)
         if section == 'main'
             if paramName == 'numLongLivedDrivers'
                 return 2

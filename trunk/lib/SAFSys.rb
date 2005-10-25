@@ -1,5 +1,6 @@
-module SAFSys
+module SAFTest
 
+# The SAFSys class should not be dependent on any other SAFTest classes
 class SAFSys
     require 'socket'
 
@@ -66,4 +67,4 @@ class SAFSys
 
 end # class SAFSys
 
-end # module SAFSys
+end # module SAFTest

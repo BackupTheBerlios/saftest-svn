@@ -1,4 +1,4 @@
-module SAFTestCase
+module SAFTest
 
 SA_SAF_OK=1
 SA_SAF_ERR_LIBRARY=2

@@ -1,9 +1,9 @@
-module SAFTestDriver
+module SAFTest
 
 require 'SAFTestUtils'
 require 'SAFImplementation'
 
-class SAFTestDriver < SAFTestUtils::SAFTestUtils
+class SAFTestDriver < SAFTestUtils
     @@nextInstanceID = 1
 
     def initialize(node, driverLibs, instanceID)
@@ -29,7 +29,7 @@ class SAFTestDriver < SAFTestUtils::SAFTestUtils
             @nodeName = nil
         end
         commands_file = ENV['SAFTEST_ROOT'] + '/conf/cluster_commands.conf'
-        @implementation = SAFImplementation::SAFImplementation.new(commands_file)
+        @implementation = SAFImplementation.new(commands_file)
     end
 
     def getName()
@@ -136,7 +136,7 @@ class SAFTestDriver < SAFTestUtils::SAFTestUtils
 
     def createTestResource()
         array = runDriver("CREATE_TEST_RESOURCE_REQ", {},
-                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+                          SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         resourceID = nil
@@ -154,4 +154,4 @@ class SAFTestDriver < SAFTestUtils::SAFTestUtils
 
 end # class SAFTestDriver
 
-end # module SAFTestDriver
+end # module SAFTest

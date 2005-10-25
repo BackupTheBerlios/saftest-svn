@@ -1,8 +1,8 @@
-module SAFImplementation
+module SAFTest
 
 require 'SAFTestUtils'
 
-class SAFNetworkAddressImplementation < SAFTestUtils::SAFTestUtils
+class SAFNetworkAddressImplementation < SAFTestUtils
     def initialize()
         super()
         @family = 'SA_CLM_AF_INET'
@@ -50,7 +50,7 @@ class SAFNetworkAddressImplementation < SAFTestUtils::SAFTestUtils
     end
 end
 
-class SAFNodeImplementation < SAFTestUtils::SAFTestUtils
+class SAFNodeImplementation < SAFTestUtils
     def initialize()
         super()
         @name = ''
@@ -147,7 +147,7 @@ class SAFNodeImplementation < SAFTestUtils::SAFTestUtils
     end
 end
 
-class SAFClusterImplementation < SAFTestUtils::SAFTestUtils
+class SAFClusterImplementation SAFTestUtils
     def initialize()
         super()
         @nodes = [] # Array of node objects
@@ -296,7 +296,7 @@ class SAFClusterImplementation < SAFTestUtils::SAFTestUtils
 
 end
 
-class SAFImplementation < SAFTestUtils::SAFTestUtils
+class SAFImplementation < SAFTestUtils
     def initialize(cluster_commands_path)
         super()
         @config = {}
@@ -353,7 +353,6 @@ class SAFImplementation < SAFTestUtils::SAFTestUtils
 
     def stopNode(nodeName)
         stopCommand = "%s %s" % [@config['STOP_NODE'], nodeName]
-        #SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS
         runAndCheckCommand(stopCommand, 
                            EXPECT_SUCCESS,
                            "Unable to halt node %s" % [nodeName])
@@ -361,7 +360,6 @@ class SAFImplementation < SAFTestUtils::SAFTestUtils
 
     def startNode(nodeName)
         startCommand = "%s %s" % [@config['START_NODE'], nodeName]
-        #SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS
         runAndCheckCommand(startCommand, 
                            EXPECT_SUCCESS,
                            "Unable to start node %s" % [nodeName])
@@ -375,4 +373,4 @@ class SAFImplementation < SAFTestUtils::SAFTestUtils
 
 end # class SAFImplementation
 
-end # module SAFImplementation
+end # module SAFTest

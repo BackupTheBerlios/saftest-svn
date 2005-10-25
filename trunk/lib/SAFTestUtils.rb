@@ -1,4 +1,4 @@
-module SAFTestUtils
+module SAFTest
 
 class SAFTestUtils
     def SAFTestUtils.SA_AIS_OK
@@ -230,10 +230,11 @@ class SAFTestUtils
     def initialize()
         require 'SAFSys'
 
-        @safSys = SAFSys::SAFSys.new()
+        @safSys = SAFSys.new()
         @rootDir = ENV['SAFTEST_ROOT']
-        @runDir = "%s/results/run" % [@rootDir]
-        @logDir = "%s/results/log" % [@rootDir]
+        @workDir = "%s/work" % [ENV['SAFTEST_ROOT']]
+        @workDirs = ['conf', 'run', 'log', 'tmp']
+
         @logLevel = 0
 
         # make sure all output goes to stdout
@@ -241,8 +242,36 @@ class SAFTestUtils
         $stderr = $stdout
     end
 
-    def getRunDir()
+    def rootDir()
         return @runDir
+    end
+
+    def workDir()
+        return '%s/%s' % [@rootDir, 'work']
+    end
+
+    def confDir()
+        return '%s/%s' % [workDir, 'conf']
+    end
+
+    def runDir()
+        return '%s/%s' % [workDir, 'run']
+    end
+
+    def logDir()
+        return '%s/%s' % [workDir, 'log']
+    end
+
+    def tmpDir()
+        return '%s/%s' % [workDir, 'tmp']
+    end
+
+    def makeWorkDirs()
+        @workDirs.each do |dir|
+            cmd = 'mkdir -p %s/%s' % [workDir, dir]
+            runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
+                               "Error running %s" % [cmd])
+        end
     end
 
     def setLogLevel(level)

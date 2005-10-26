@@ -7,9 +7,12 @@ SA_SAF_ERR_LIBRARY=2
 
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 
-require 'test/unit'
+class SAFTestCase
+    PASSED_EXIT_STATUS = 0
+    FAILED_EXIT_STATUS = 1
+    SKIPPED_EXIT_STATUS = 2
+    NOT_CONFIGURED_EXIT_STATUS = 3
 
-class SAFTestCase < Test::Unit::TestCase
     def setup()
         require 'SAFSys'
         require 'SAFTestUtils'
@@ -21,8 +24,8 @@ class SAFTestCase < Test::Unit::TestCase
         $stderr = $stdout
     end
 
-    def getRunDir()
-        return @utils.getRunDir()
+    def runDir()
+        return @utils.runDir()
     end
 
     def setLogLevel(level)
@@ -34,11 +37,23 @@ class SAFTestCase < Test::Unit::TestCase
     end
 
     def passed()
-        @utils.passed()
+        print "PASSED\n"
+        exit PASSED_EXIT_STATUS
     end
 
     def failed(message)
-        @utils.failed(message)
+        print "FAILED: #{message}\n"
+        exit FAILED_EXIT_STATUS
+    end
+
+    def skipped(message)
+        print "SKIPPED: #{message}\n"
+        exit SKIPPED_EXIT_STATUS
+    end
+
+    def notConfigured(message)
+        print "NOT CONFIGURED: #{message}\n"
+        exit NOT_CONFIGURED_EXIT_STATUS
     end
 
     def logCommand(cmd, node, user)

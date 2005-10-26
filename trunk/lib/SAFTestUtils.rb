@@ -232,8 +232,7 @@ class SAFTestUtils
 
         @safSys = SAFSys.new()
         @rootDir = ENV['SAFTEST_ROOT']
-        @workDir = "%s/work" % [ENV['SAFTEST_ROOT']]
-        @workDirs = ['conf', 'run', 'log', 'tmp']
+        @workDirs = ['conf', 'run', 'log', 'tmp', 'implementation']
 
         @logLevel = 0
 
@@ -243,7 +242,7 @@ class SAFTestUtils
     end
 
     def rootDir()
-        return @runDir
+        return @rootDir
     end
 
     def workDir()
@@ -251,11 +250,11 @@ class SAFTestUtils
     end
 
     def confDir()
-        return '%s/%s' % [workDir, 'conf']
+        return '%s/%s' % [workDir(), 'conf']
     end
 
     def runDir()
-        return '%s/%s' % [workDir, 'run']
+        return '%s/%s' % [workDir(), 'run']
     end
 
     def logDir()
@@ -264,6 +263,18 @@ class SAFTestUtils
 
     def tmpDir()
         return '%s/%s' % [workDir, 'tmp']
+    end
+
+    def implementationDir()
+        return '%s/%s' % [workDir, 'implementation']
+    end
+
+    def configXMLFile()
+        return '%s/%s' % [confDir, 'saftest.xml']
+    end
+
+    def bundleFile()
+        return '%s/%s' % [confDir, 'cases_bundle.xml']
     end
 
     def makeWorkDirs()
@@ -282,17 +293,6 @@ class SAFTestUtils
         return if @logLevel == -1
         $stdout.print Time.now.strftime("%b %d %H:%M:%S") + ' ' + message + "\n"
         $stdout.flush
-    end
-
-    def passed()
-        print "PASSED\n"
-        exit(0)
-    end
-
-    def failed(message)
-        print message + "\n"
-        print "FAILED\n"
-        exit(1)
     end
 
     EXPECT_SUCCESS = true

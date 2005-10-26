@@ -4,7 +4,7 @@ $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 
 require 'SAFTestUtils'
 
-class SGBase < SAFTestUtils::SAFTestUtils
+class SGBase < SAFTest::SAFTestUtils
     def initialize()
         super()
         @map = {} # key=>value

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SAFTestBundle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SAFTestBundle.xsd" schemaVersion="1">
+<SAFTestCaseList type="initial" mode="sequential">
+ <SAFTestCase>
+  <cmd>driver/startLongLivedDrivers.rb</cmd>
+  <weight/>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+<SAFTestCaseList type="main" mode="random">
+ <SAFTestCase>
+  <cmd>driver/startLongLivedDrivers.rb --arg 1 --arg 2</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <cmd>driver/startLongLivedDrivers.rb --arg 1 --arg 2</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+<SAFTestCaseList type="final" mode="sequential">
+ <SAFTestCase>
+  <cmd>driver/startLongLivedDrivers.rb</cmd>
+  <weight/>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+</SAFTestBundle>

@@ -303,10 +303,10 @@ class SAFImplementation < SAFTestUtils
         f = open(File.expand_path(cluster_commands_path), 'r')
         while !f.eof?()
             line = f.readline()
+            # Skip comments
             if line =~ /^\s*#.*/ then
                 next
             end
-            # !!! Need to skip blank lines
             if line =~ /^(\S+)=(.*)/ then
                 key, value = $1, $2
                 @config[key] = value

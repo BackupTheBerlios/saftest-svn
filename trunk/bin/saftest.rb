@@ -4,6 +4,9 @@ module SAFTest
 
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 require 'SAFTestUtils'
+require 'SAFTestConfig'
+require 'SAFTestEngine'
+require 'xmlparser'
 
 def usage(msg=nil)
     print msg + "\n" if msg
@@ -73,97 +76,6 @@ end # class
     #end
 #end # class 
 
-class SAFTestConfig
-    def initialize(verbose = false)
-        # Hash from Section Name to Config Hash
-        @config = {}
-    end
-
-    def insertConfigValue(section, key, value)
-        if not @config.has_key?(section)
-            @config[section] = {}
-        end
-        @config[section][key] = value
-    end
-
-    def promptArray(section, key, label, optionArray, defaultOption)
-        optionString = ''
-        optionArray.each do |option|
-            optionString = '%s|%s' % [optionString, option]
-        end
-        while(true)
-            print "%s (%s) [%s]: " % [label, 
-                                      optionString.slice(1, 
-                                                         optionString.length),
-                                      defaultOption]
-            answer = gets
-            answer.chomp!
-            if answer == ''
-                answer = defaultOption
-            end
-
-            if optionArray.include?(answer)
-                insertConfigValue(section, key, answer)
-                break
-            else
-                print "Invalid answer: \"%s\"\n" % [answer]
-            end
-        end
-    end
-
-    def promptYesNo(section, key, label, defaultIsYes)
-        while(true)
-            if defaultIsYes
-                defaultOption = 'yes'
-            else
-                defaultOption = 'no'
-            end
-
-            print "%s (yes/no) [%s]: " % [label, defaultOption]
-            answer = gets
-            answer.chomp!
-            if answer == ''
-                answer = defaultOption
-            end
-
-            if answer.downcase()[0] == 'y'[0]
-                insertConfigValue(section, key, 'yes')
-                break
-            elsif answer.downcase()[0] == 'n'[0]
-                insertConfigValue(section, key, 'no')
-                break
-            else
-                print "Invalid answer: \"%s\"\n" % [answer]
-            end
-        end
-    end
-
-    def save()
-        f = File.new("%s/saftest.xml" % [$utils.confDir], "w")
-        f.puts "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        f.puts "<SAFTestConfig " + \
-              " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " + \
-              " xsi:noNamespaceSchemaLocation=\"SAFTestConfig.xsd\" " + \
-              " schemaVersion=\"1\">\n"
-
-        f.puts "<SAFTestConfigSectionList>\n"
-        @config.keys().each do |section|
-            f.puts " <SAFTestConfigSection>\n"
-            f.puts "  <name>%s</name>\n" % [section]
-            f.puts "  <SAFTestConfigEntryList>\n"
-            @config[section].keys().each do |key|
-                f.puts "   <SAFTestConfigEntry>\n"
-                f.puts "    <name>%s</name>\n" % [key]
-                f.puts "    <value>%s</value>\n" % [@config[section][key]]
-                f.puts "   </SAFTestConfigEntry>\n"
-            end
-            f.puts "  </SAFTestConfigEntryList>\n"
-            f.puts " </SAFTestConfigSection>\n"
-        end
-        f.puts "</SAFTestConfigSectionList>\n"
-    end
-end
-
 if not ENV.has_key?('SAFTEST_ROOT')
     errExit("You must define a SAFTEST_ROOT environment variable")
 end
@@ -185,11 +97,25 @@ while (true)
         if op == nil
             usage()
         end
-        break;
+        break
     end
 end
 
 if op == 'create'
+    xmlConfig = nil
+    while (true)
+        opt = ARGV.shift;
+
+        if opt == '--from-xml' then
+            opt = ARGV.shift
+            xmlConfig = opt 
+        elsif opt != nil and opt[1,1] == '-' then
+            usage("Invalid option: #{opt}")
+        else
+            break
+        end
+    end
+
     workDir = $utils.workDir
     workDirExists = true
     begin
@@ -204,38 +130,71 @@ if op == 'create'
         $utils.makeWorkDirs()
     end
 
-    config = SAFTestConfig.new
-    config.promptArray('main', 'testType', 'Test Type', 
-                       ['conformance', 'functional'], 'functional')
-    config.promptYesNo('main', 'testCLM', 'Test CLM', true)
-    config.promptYesNo('main', 'testLCK', 'Test LCK', false)
-    config.promptYesNo('main', 'testMSG', 'Test MSG', false)
-    config.save()
-#elsif op == 'run'
-    #bundle = SAFTestBundle.new
+    if xmlConfig != nil
+        config = SAFTestConfig.new
+        config.loadFromXML(xmlConfig)
+    else
+        implementations = []
+        begin
+            Dir.new("%s/implementation" % [$utils.rootDir]).each do |d|
+                begin
+                    # "d" must be a directory.  See if it starts with a letter
+                    # or number
+                    if d =~ /^[A-z0-9].*/
+                        implementations << d
+                    end
+                rescue SystemCallError
+                    print "error"
+                end
+            end
+        rescue SystemCallError
+            errExit("%s/implementation doesn't exist" % [$utils.rootDir])
+        end
 
-    #cmd = 'mkdir -p %s/results/tmp' % [ENV['SAFTEST_ROOT']]
-    #$utils.runAndCheckCommand(cmd, SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS, 
-                              #"Error running %s" % [cmd])
-    #cmd = 'mkdir -p %s/results/run' % [ENV['SAFTEST_ROOT']]
-    #$utils.runAndCheckCommand(cmd, SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS, 
-                              #"Error running %s" % [cmd])
-    #cmd = 'mkdir -p %s/results/log' % [ENV['SAFTEST_ROOT']]
-    #$utils.runAndCheckCommand(cmd, SAFTestUtils::SAFTestUtils::EXPECT_SUCCESS, 
-                              #"Error running %s" % [cmd])
-    #while (true)
-        #arg = ARGV.shift
-        #if arg == "--directory" then
-            #usage("missing directory argument") if ARGV.length == 0
-            #dir = ARGV.shift
-            #bundle.loadFromDirectory(dir)
-        #end
-        #break
-    #end
-    #bundle.loadSuites()
-    #bundle.run()
-    #engine = SAFTestEngine.new(bundle)
-    #engine.run()
+        if implementations.length == 0
+            errExit("%s/implementation has no entries" % [$utils.rootDir])
+        end
+
+        config = SAFTestConfig.new
+        config.promptArray('main', 'testType', 'Test Type', 
+                           ['conformance', 'functional'], 'functional')
+        config.promptArray('main', 'implementation', 'Implementation', 
+                           implementations, implementations[0])
+        config.promptYesNo('main', 'testCLM', 'Test CLM', true)
+        config.promptYesNo('main', 'testLCK', 'Test LCK', false)
+        config.promptYesNo('main', 'testMSG', 'Test MSG', false)
+        config.promptInt('main', 'numLongLivedDrivers', 
+                         'Number of Long-Lived Drivers', 1, 10, 3)
+    end
+    config.save()
+
+    # Validate the implementation files are correct
+    commandsFile = "%s/implementation/%s/commands.conf" % 
+                   [$utils.rootDir, 
+                    config.getStrValue('main', 'implementation')]
+    f = open(File.expand_path(commandsFile), 'r')
+
+    # Copy the appropriate bundle file into the ork directory
+    cmd = "cp -f %s/conf/%s_bundle.xml %s" % 
+          [$utils.rootDir, 
+           config.getStrValue('main', 'testType'),
+           $utils.bundleFile]
+    $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
+                              "Error running #{cmd}")
+
+    # Copy the implementation files into the work directory
+    cmd = "cp -a %s/implementation/%s/* %s" % 
+          [$utils.rootDir, 
+           config.getStrValue('main', 'implementation'),
+           $utils.implementationDir]
+    $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
+                              "Error running #{cmd}")
+elsif op == 'start'
+    engine = SAFTestEngine::SAFTestEngine.new()
+    engine.start()
+elsif op == 'stop'
+    engine = SAFTestEngine::SAFTestEngine.new()
+    engine.stop()
 elsif op == 'delete'
     cmd = 'rm -rf %s' % [$utils.workDir]
     $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS, 

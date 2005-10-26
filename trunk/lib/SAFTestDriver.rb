@@ -28,7 +28,7 @@ class SAFTestDriver < SAFTestUtils
         else
             @nodeName = nil
         end
-        commands_file = ENV['SAFTEST_ROOT'] + '/conf/cluster_commands.conf'
+        commands_file = "%s/commands.conf" % [implementationDir]
         @implementation = SAFImplementation.new(commands_file)
     end
 

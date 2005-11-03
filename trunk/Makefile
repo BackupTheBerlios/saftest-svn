@@ -22,7 +22,7 @@
 #   2.  make -f Makefile.new IMPLEMENTATION=<implementation> <target>
 #
 # Example:
-#   make IMPLEMENTATION=serviceguard driver/saf_driver AIS-clm-B.01.01/driver/clm_driver.so
+#   make IMPLEMENTATION=serviceguard driver/saf_driver cases/clm/driver/clm_driver.so
 
 TIMEOUT_CMD = t0
 
@@ -32,10 +32,9 @@ VERBOSE = 0
 
 include implementation/$(IMPLEMENTATION)/vars.mk
 
-AIS_VERSION = B.01.01
-CLM_DIR = AIS-clm-$(AIS_VERSION)
-LCK_DIR = AIS-lck-$(AIS_VERSION)
-MSG_DIR = AIS-msg-$(AIS_VERSION)
+CLM_DIR = cases/clm
+LCK_DIR = cases/lck
+MSG_DIR = cases/msg
 
 all: driver/saf_driver libs
 

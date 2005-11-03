@@ -13,9 +13,8 @@ class StartDriversCase < SAFTestCase
     end
 
     def run()
-        driverLib = "%s/AIS-clm-%s/driver/clm_driver.so,%s/AIS-lck-%s/driver/lck_driver.so,%s/AIS-msg-%s/driver/msg_driver.so" % \
+        driverLib = "%s/cases/clm/driver/clm_driver.so,%s/AIS-lck-%s/driver/lck_driver.so,%s/AIS-msg-%s/driver/msg_driver.so" % \
                     [ENV['SAFTEST_ROOT'],
-                     SAFTestUtils.getAISLibVersion(),
                      ENV['SAFTEST_ROOT'],
                      SAFTestUtils.getAISLibVersion(),
                      ENV['SAFTEST_ROOT'],

@@ -147,7 +147,7 @@ class SAFNodeImplementation < SAFTestUtils
     end
 end
 
-class SAFClusterImplementation SAFTestUtils
+class SAFClusterImplementation < SAFTestUtils
     def initialize()
         super()
         @nodes = [] # Array of node objects

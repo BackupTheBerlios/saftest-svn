@@ -1,5 +1,8 @@
 module SAFTest
 
+require 'SAFTestUtils'
+require 'SAFTestConfig'
+
 SA_SAF_OK=1
 SA_SAF_ERR_LIBRARY=2
 
@@ -8,20 +11,15 @@ SA_SAF_ERR_LIBRARY=2
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 
 class SAFTestCase
-    PASSED_EXIT_STATUS = 0
-    FAILED_EXIT_STATUS = 1
-    SKIPPED_EXIT_STATUS = 2
-    NOT_CONFIGURED_EXIT_STATUS = 3
-
-    def setup()
-        require 'SAFSys'
-        require 'SAFTestUtils'
-
-        @utils = SAFTestUtils::SAFTestUtils.new()
+    def initialize()
 
         # make sure all output goes to stdout
         # we do this so sb can easily use one pipe to capture all output
         $stderr = $stdout
+
+        @utils = SAFTestUtils.new()
+        @config = SAFTestConfig.new()
+        @config.loadFromXML(@utils.configXMLFile())
     end
 
     def runDir()
@@ -37,23 +35,19 @@ class SAFTestCase
     end
 
     def passed()
-        print "PASSED\n"
-        exit PASSED_EXIT_STATUS
+        @utils.passed()
     end
 
     def failed(message)
-        print "FAILED: #{message}\n"
-        exit FAILED_EXIT_STATUS
+        @utils.failed(message)
     end
 
     def skipped(message)
-        print "SKIPPED: #{message}\n"
-        exit SKIPPED_EXIT_STATUS
+        @utils.skipped(message)
     end
 
     def notConfigured(message)
-        print "NOT CONFIGURED: #{message}\n"
-        exit NOT_CONFIGURED_EXIT_STATUS
+        @utils.notConfigured(message)
     end
 
     def logCommand(cmd, node, user)
@@ -61,19 +55,19 @@ class SAFTestCase
     end
 
     def runCommand(cmd, node=nil, user=nil)
-        @utils.logCommand(cmd, node, user)
+        #@utils.logCommand(cmd, node, user)
         return @utils.runCommand(cmd, node, user)
     end
 
     def runAndCheckCommand(cmd, expectZeroStatus, errorMessage="", 
                            node=nil, user=nil)
-        @utils.logCommand(cmd, node, user)
+        #@utils.logCommand(cmd, node, user)
         @utils.runAndCheckCommand(cmd, expectZeroStatus, errorMessage, 
                                   node, user)
     end
 
     def captureCommand(cmd, node=nil, user=nil)
-        @utils.logCommand(cmd, node, user)
+        #@utils.logCommand(cmd, node, user)
         return @utils.captureCommand(cmd, node, user)
     end
 

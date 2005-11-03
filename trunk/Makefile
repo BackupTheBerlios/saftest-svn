@@ -22,7 +22,7 @@
 #   2.  make -f Makefile.new IMPLEMENTATION=<implementation> <target>
 #
 # Example:
-#   make -f Makefile.new IMPLEMENTATION=serviceguard AIS-clm-B.01.01/clm_driver
+#   make IMPLEMENTATION=serviceguard driver/saf_driver AIS-clm-B.01.01/driver/clm_driver.so
 
 TIMEOUT_CMD = t0
 

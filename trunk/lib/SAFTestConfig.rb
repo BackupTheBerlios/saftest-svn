@@ -1,5 +1,7 @@
 module SAFTest
 
+require 'xmlparser'
+
 class SAFTestConfig < SAFTestUtils
     def initialize(verbose = false)
         super()

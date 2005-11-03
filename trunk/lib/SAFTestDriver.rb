@@ -19,16 +19,16 @@ class SAFTestDriver < SAFTestUtils
         @driverLibs = driverLibs
         @instanceID = myInstanceID
         @name = '%s_%d' % [getName(), @instanceID]
-        @socketFile = "%s/saf_driver_%d.sock"  % [getRunDir(), @instanceID]
+        @socketFile = "%s/saf_driver_%d.sock"  % [runDir(), @instanceID]
         @logFile = "%s/%s.log"  % [@logDir, @name]
-        @pidFile = "%s/%s.pid"  % [getRunDir(), @name]
+        @pidFile = "%s/%s.pid"  % [runDir(), @name]
         @pid = nil
         if node != nil
             @nodeName = node.getName()
         else
             @nodeName = nil
         end
-        commands_file = "%s/commands.conf" % [implementationDir]
+        commands_file = "%s/commands.conf" % [implementationDir()]
         @implementation = SAFImplementation.new(commands_file)
     end
 
@@ -81,7 +81,7 @@ class SAFTestDriver < SAFTestUtils
                            "Unable to remove %s" % [@pidFile])
 
         cmd = "export CMDLOG_FILE=%s/%s_lib.log; export CONTEXT_LOG_LEVEL=5; %s --daemon --socket-file %s --run-dir %s --log-file %s --pid-file %s --load-libs %s" % \
-              [@logDir, @name, @driverPath, @socketFile, @runDir, 
+              [@logDir, @name, @driverPath, @socketFile, runDir(), 
                @logFile, @pidFile, @driverLibs]
         runAndCheckCommand(cmd, EXPECT_SUCCESS, "Unable to start %s" % \
                            [getName()])
@@ -111,7 +111,7 @@ class SAFTestDriver < SAFTestUtils
 
     def runDriver(op, kvp_hash, expectedReturn)
         cmd = "%s --run-dir %s --socket-file %s --load-libs %s --op %s" % \
-                 [getDriverPath(), getRunDir(), getSocketFile(),
+                 [getDriverPath(), runDir(), getSocketFile(),
                   getDriverLibs(), op]
         kvp_hash.each do |key, value|
             cmd = "%s --key \"%s\" --value \"%s\"" % [cmd, key.to_s, value.to_s]

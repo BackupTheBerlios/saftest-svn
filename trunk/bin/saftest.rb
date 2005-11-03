@@ -6,7 +6,6 @@ $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 require 'SAFTestUtils'
 require 'SAFTestConfig'
 require 'SAFTestEngine'
-require 'xmlparser'
 
 def usage(msg=nil)
     print msg + "\n" if msg
@@ -38,44 +37,6 @@ class Log
     end
 end # class
 
-#require 'test/unit/ui/console/testrunner'
-#class SAFTestConsoleRunner < Test::Unit::UI::Console::TestRunner
-    #def test_started(name)
-        #output_single("BEGIN %s\n" % [name])
-    #end
-
-    #def test_finished(name)
-        #output_single("END %s\n\n" % [name])
-    #end
-#end # class
-
-#class SAFTestBundle
-    #require 'test/unit/testsuite'
-    #require 'SAFTestSuite'
-
-    #@@suite = Test::Unit::TestSuite.new()
-
-    #def self.suite
-        #return @@suite
-    #end
-
-    #def loadSuites()
-        #ObjectSpace.each_object(SAFTestSuite::SAFTestSuite) do |obj|
-            #$log.print("Object is \"%s\"" % [obj.to_s])
-            #@@suite << obj.suite
-        #end
-    #end
-
-    #def loadFromDirectory(path)
-        #suitePath = path + '/suite.rb'
-        #require suitePath
-    #end
-
-    #def run()
-        #SAFTestConsoleRunner.run(SAFTestBundle, Test::Unit::UI::VERBOSE)
-    #end
-#end # class 
-
 if not ENV.has_key?('SAFTEST_ROOT')
     errExit("You must define a SAFTEST_ROOT environment variable")
 end
@@ -95,7 +56,7 @@ while (true)
     else
         op = opt
         if op == nil
-            usage()
+            usage
         end
         break
     end

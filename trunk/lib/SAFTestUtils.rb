@@ -193,6 +193,27 @@ class SAFTestUtils
         end
     end
 
+    @@PASSED_EXIT_STATUS = 0
+    @@FAILED_EXIT_STATUS = 1
+    @@SKIPPED_EXIT_STATUS = 2
+    @@NOT_CONFIGURED_EXIT_STATUS = 3
+
+    def SAFTestUtils.PASSED_EXIT_STATUS
+        return @@PASSED_EXIT_STATUS
+    end
+
+    def SAFTestUtils.FAILED_EXIT_STATUS
+        return @@FAILED_EXIT_STATUS
+    end
+
+    def SAFTestUtils.SKIPPED_EXIT_STATUS
+        return @@SKIPPED_EXIT_STATUS
+    end
+
+    def SAFTestUtils.NOT_CONFIGURED_EXIT_STATUS
+        return @@NOT_CONFIGURED_EXIT_STATUS
+    end
+
     @@SA_AIS_RELEASE_CODE="B"
     @@SA_AIS_MAJOR_VERSION="01"
     @@SA_AIS_MINOR_VERSION="01"
@@ -297,6 +318,26 @@ class SAFTestUtils
 
     EXPECT_SUCCESS = true
     EXPECT_FAILURE = false
+
+    def passed()
+        print "PASSED\n"
+        exit @@PASSED_EXIT_STATUS
+    end
+
+    def failed(message)
+        print "FAILED: #{message}\n"
+        exit @@FAILED_EXIT_STATUS
+    end
+
+    def skipped(message)
+        print "SKIPPED: #{message}\n"
+        exit @@SKIPPED_EXIT_STATUS
+    end
+
+    def notConfigured(message)
+        print "NOT CONFIGURED: #{message}\n"
+        exit @@NOT_CONFIGURED_EXIT_STATUS
+    end
 
     def fullHostname()
         return @safSys.fullHostname()

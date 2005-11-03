@@ -622,8 +622,6 @@ main(int argc, char *argv[], char *envp[])
     shared_library_t *shlib;
     GList *element;
 
-    saftest_driver_init("/root/src/saftest_ng/trunk/results/run");
-
     argc_copy = argc;
     argv_copy = (char **)malloc(sizeof(char*) * argc);
     for (argv_ndx = 0, argv_copy_ndx = 0; argv_ndx < argc; argv_ndx++) {

@@ -2,6 +2,7 @@ module SAFTest
 
 require 'SAFTestUtils'
 require 'SAFTestConfig'
+require 'SAFImplementation'
 
 SA_SAF_OK=1
 SA_SAF_ERR_LIBRARY=2
@@ -20,6 +21,8 @@ class SAFTestCase
         @utils = SAFTestUtils.new()
         @config = SAFTestConfig.new()
         @config.loadFromXML(@utils.configXMLFile())
+        commands_file = "%s/commands.conf" % [@utils.implementationDir()]
+        @implementation = SAFImplementation.new(commands_file)
     end
 
     def runDir()

@@ -19,7 +19,7 @@
 #
 # Usage:
 #   1.  Fill out the implementation specific vars.mk
-#   2.  make -f Makefile.new IMPLEMENTATION=<implementation> <target>
+#   2.  make IMPLEMENTATION=<implementation> <target>
 #
 # Example:
 #   make IMPLEMENTATION=serviceguard driver/saf_driver cases/clm/driver/clm_driver.so

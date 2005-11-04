@@ -13,19 +13,28 @@ class StartDriversCase < SAFTestCase
     end
 
     def run()
-        driverLib = "%s/cases/clm/driver/clm_driver.so,%s/AIS-lck-%s/driver/lck_driver.so,%s/AIS-msg-%s/driver/msg_driver.so" % \
-                    [ENV['SAFTEST_ROOT'],
-                     ENV['SAFTEST_ROOT'],
-                     SAFTestUtils.getAISLibVersion(),
-                     ENV['SAFTEST_ROOT'],
-                     SAFTestUtils.getAISLibVersion()]
-
-        ndx = 0
+        libPath = ""
+        driverLibs = []
+        if @config.valueIsYes('main', 'testCLM')
+            driverLibs << "cases/clm/driver/clm_driver.so"
+        end
+        if @config.valueIsYes('main', 'testLCK')
+            driverLibs << "cases/lck/driver/lck_driver.so"
+        end
+        if @config.valueIsYes('main', 'testMSG')
+            driverLibs += "cases/msg/driver/msg_driver.so"
+        end
+        driverLibs.each do |lib|
+            libPath += ",%s/%s" % [ENV['SAFTEST_ROOT'], lib] 
+        end
         print "Num Drivers: %d\n" % [@config.getIntValue('main', 'numLongLivedDrivers')]
-        while ndx < @config.getIntValue('main', 'numLongLivedDrivers')
-            driver = SAFTestDriver.new(nil, driverLib, 0)
-            driver.start()
-            ndx += 1
+        @implementation.getCluster().getNodes().each do |node|
+            ndx = 0
+            while ndx < @config.getIntValue('main', 'numLongLivedDrivers')
+                driver = SAFTestDriver.new(node, libPath[1, libPath.length], 0)
+                driver.start()
+                ndx += 1
+            end
         end
         passed()
     end

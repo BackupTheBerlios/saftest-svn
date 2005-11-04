@@ -4,13 +4,27 @@ require 'SAFTestUtils'
 require 'SAFImplementation'
 
 class SAFTestDriver < SAFTestUtils
-    @@nextInstanceID = 1
+    @@nextInstanceID = {} # hash from nodename to next instance id
+
+    def SAFTestDriver.getNextInstanceID(nodeName)
+        if not @@nextInstanceID.has_key?(nodeName)
+            @@nextInstanceID[nodeName] = 1
+        end    
+
+        @@nextInstanceID[nodeName] += 1
+        return @@nextInstanceID[nodeName] - 1
+    end
 
     def initialize(node, driverLibs, instanceID)
         super()
+        if node != nil
+            @nodeName = node.getName()
+        else
+            @nodeName = nil
+        end
+
         if instanceID == 0
-            myInstanceID = @@nextInstanceID
-            @@nextInstanceID += 1
+            myInstanceID = SAFTestDriver.getNextInstanceID(@nodeName)
         else
             myInstanceID = instanceID
         end
@@ -20,14 +34,9 @@ class SAFTestDriver < SAFTestUtils
         @instanceID = myInstanceID
         @name = '%s_%d' % [getName(), @instanceID]
         @socketFile = "%s/saf_driver_%d.sock"  % [runDir(), @instanceID]
-        @logFile = "%s/%s.log"  % [@logDir, @name]
+        @logFile = "%s/%s.log"  % [logDir(), @name]
         @pidFile = "%s/%s.pid"  % [runDir(), @name]
         @pid = nil
-        if node != nil
-            @nodeName = node.getName()
-        else
-            @nodeName = nil
-        end
         commands_file = "%s/commands.conf" % [implementationDir()]
         @implementation = SAFImplementation.new(commands_file)
     end

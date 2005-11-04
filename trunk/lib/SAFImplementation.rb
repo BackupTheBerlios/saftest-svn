@@ -314,7 +314,7 @@ class SAFImplementation < SAFTestUtils
         end
     end
 
-    def getClusterFromCommand()
+    def getCluster()
         cluster = SAFClusterImplementation.new()
         xml = ''
         array = captureCommand(@config['DISPLAY_CLUSTER'])

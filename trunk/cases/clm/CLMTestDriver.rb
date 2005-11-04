@@ -1,15 +1,14 @@
-module CLMTestDriver
+module SAFTest
 
 require 'SAFTestDriver'
 require 'SAFTestUtils'
 
-class CLMTestDriver < SAFTestDriver::SAFTestDriver
+class CLMTestDriver < SAFTestDriver
     @@nextInstanceID = 1
 
     def initialize(node=nil, instanceID=0)
-        driverLib = "%s/AIS-clm-%s/driver/clm_driver.so" % \
-                    [ENV['SAFTEST_ROOT'], 
-                     SAFTestUtils::SAFTestUtils.getAISLibVersion()]
+        driverLib = "%s/cases/clm/driver/clm_driver.so" % \
+                    [ENV['SAFTEST_ROOT']]
         super(node, driverLib, instanceID)
     end
 
@@ -19,7 +18,7 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
 
     def createTestResource()
         array = runDriver("CREATE_TEST_RESOURCE_REQ", {}, 
-                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+                          SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         resourceID = nil
@@ -36,8 +35,7 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
     end
 
     def CLMTestDriver.getLongLivedDrivers(node)
-        numDrivers = SAFTestUtils::SAFTestUtils.getTestParam('main',
-                                                             'numLongLivedDrivers')
+        numDrivers = SAFTestUtils.getTestParam('main', 'numLongLivedDrivers')
         driverArray = []
         1.upto(numDrivers) do |n|
             driver = CLMTestDriver.new(node, n)
@@ -49,7 +47,7 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
     def getAllTestResourceIDs()
         resourceIDArray = []
         array = runDriver("LOOKUP_TEST_RESOURCE_REQ", {},
-                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+                          SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         resourceID = nil
@@ -73,12 +71,9 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
                     'DISPATCH_FLAGS' => dispatchFlags,
                     'CLUSTER_NODE_GET_CB' => 'FALSE',
                     'CLUSTER_TRACK_CB' => 'FALSE',
-                    'VERSION_RELEASE_CODE' =>
-                        SAFTestUtils::SAFTestUtils.SA_AIS_RELEASE_CODE,
-                    'VERSION_MAJOR' =>
-                        SAFTestUtils::SAFTestUtils.SA_AIS_MAJOR_VERSION,
-                    'VERSION_MINOR' =>
-                        SAFTestUtils::SAFTestUtils.SA_AIS_MINOR_VERSION,
+                    'VERSION_RELEASE_CODE' => SAFTestUtils.SA_AIS_RELEASE_CODE,
+                    'VERSION_MAJOR' => SAFTestUtils.SA_AIS_MAJOR_VERSION,
+                    'VERSION_MINOR' => SAFTestUtils.SA_AIS_MINOR_VERSION,
                     'DISPATCH_FLAGS' => dispatchFlags,
                     'NULL_CLM_HANDLE' => 'FALSE',
                     'NULL_CALLBACKS' => 'FALSE',
@@ -175,7 +170,7 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
     def clusterNodeGetCBCount(resourceID)
         kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
         array = runDriver('CLUSTER_NODE_GET_CALLBACK_COUNT_REQ', kvp_hash,
-                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+                          SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         cbCount = nil
@@ -193,7 +188,7 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
     def clusterTrackCBCount(resourceID)
         kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
         array = runDriver('CLUSTER_TRACK_CALLBACK_COUNT_REQ', kvp_hash,
-                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+                          SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         cbCount = nil
@@ -211,7 +206,7 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
     def clusterNodeGetAsyncInvocation(resourceID, expectedInvocation)
         kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
         array = runDriver('CLUSTER_NODE_GET_ASYNC_INVOCATION_REQ', kvp_hash,
-                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+                          SAFTestUtils.SA_AIS_OK)
         ret = array[0]
         lines = array[1]
         invocation = nil
@@ -272,7 +267,7 @@ class CLMTestDriver < SAFTestDriver::SAFTestDriver
         kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
                     'XML_FILE' => xmlFile}
         array = runDriver('DISPLAY_LAST_NOTIFICATION_BUFFER_REQ', kvp_hash,
-                          SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+                          SAFTestUtils.SA_AIS_OK)
     end
 end # class
 

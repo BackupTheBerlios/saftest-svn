@@ -24,6 +24,20 @@ class SAFTestConfig < SAFTestUtils
         @config[section][key] = value
     end
 
+    def valueIsYes(section, key)
+        value = getStrValue(section, key)
+        if value == 'yes'
+            return true
+        else
+            if value != 'no'
+                error = "Expected 'yes' or 'no' for section=#{section} " +
+                        "key=#{key}, but got '#{value}'"
+                raise error
+            end
+        end
+        return false
+    end
+
     def promptArray(section, key, label, optionArray, defaultOption)
         optionString = ''
         optionArray.each do |option|

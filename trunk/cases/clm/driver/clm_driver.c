@@ -227,7 +227,7 @@ saftest_daemon_handle_create_test_res_request(
 }
 
 void
-saftest_daemon_handle_lookup_test_res_request(
+saftest_daemon_handle_status_request(
     saftest_map_table_entry_t *map_entry,
     saftest_msg_t *request,
     saftest_msg_t **reply)
@@ -247,6 +247,10 @@ saftest_daemon_handle_lookup_test_res_request(
         res = (clm_resource_t *)element->data;
         sprintf(key, "CLM_RESOURCE_%d_ID", ndx);
         saftest_msg_set_ubit32_value((*reply), key, res->clm_resource_id);
+        sprintf(key, "CLM_RESOURCE_%d_DISPATCH_FLAGS", res->clm_resource_id);
+        saftest_msg_set_str_value((*reply), key,
+                                  saftest_dispatch_flags_to_string(
+                                      res->dispatch_flags));
     }
 }
 
@@ -310,7 +314,7 @@ saftest_daemon_handle_init_request(
     }
 
     clm_res->dispatch_flags =
-        saftest_daemon_get_dispatch_flags(
+        saftest_dispatch_flags_from_string(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
 
     status = saClmInitialize(handle, callbacks, version);
@@ -367,7 +371,7 @@ saftest_daemon_handle_dispatch_request(
     clm_res = lookup_clm_resource_from_request(request);
 
     dispatch_flags =
-        saftest_daemon_get_dispatch_flags(
+        saftest_dispatch_flags_from_string(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
     saftest_assert(SA_DISPATCH_BLOCKING != dispatch_flags,
                    "Can't use blocking dispatch for a dispatch request\n");
@@ -402,6 +406,7 @@ saftest_daemon_handle_cluster_node_get_request(
     clm_resource_t *clm_res = NULL;
     SaAisErrorT status;
     SaClmNodeIdT node_id;
+    SaTimeT timeout;
 
     SaClmClusterNodeT cluster_node;
     SaClmClusterNodeT *cluster_node_ptr = NULL;
@@ -419,11 +424,14 @@ saftest_daemon_handle_cluster_node_get_request(
      */
     node_id = get_node_id_from_string(
                       saftest_msg_get_str_value(request, "NODE_ID"));
+    if (0 == strcmp(saftest_msg_get_str_value(request, "TIMEOUT"), 
+                                              "SA_TIME_MAX")) {
+        timeout = SA_TIME_MAX;
+    } else {
+        timeout = saftest_msg_get_sbit64_value(request, "TIMEOUT");
+    }
     status = saClmClusterNodeGet(clm_res->clm_handle, 
-                                 node_id, 
-                                 saftest_msg_get_ubit32_value(request, 
-                                                              "TIMEOUT"),
-                                 cluster_node_ptr);
+                                 node_id, timeout, cluster_node_ptr);
     (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
 }
 
@@ -792,7 +800,7 @@ saftest_client_handle_create_test_res_request(
 
     status = saftest_reply_msg_get_status(reply);
     if (SA_AIS_OK == status) {
-        saftest_log("Resource ID=%d\n", 
+        saftest_log("CLM_RESOURCE_ID=%d\n", 
                     saftest_msg_get_ubit32_value(reply, 
                                                  "CLM_RESOURCE_ID"));
     }
@@ -803,13 +811,14 @@ saftest_client_handle_create_test_res_request(
 }
 
 SaAisErrorT
-saftest_client_handle_lookup_test_res_request(
+saftest_client_handle_status_request(
     int fd,
     saftest_msg_t *request)
 {
     saftest_msg_t *reply = NULL;
     SaAisErrorT status;
     ubit32 ndx;
+    ubit32 clm_resource_id;
     char key[SAFTEST_STRING_LENGTH+1];
  
     saftest_send_request(fd, get_library_id(), request, &reply);
@@ -817,16 +826,20 @@ saftest_client_handle_lookup_test_res_request(
 
     status = saftest_reply_msg_get_status(reply);
     if (SA_AIS_OK == status) {
-        saftest_log("Number of Resources=%d\n", 
+        saftest_log("NUM_CLM_RESOURCES=%d\n", 
                     saftest_msg_get_ubit32_value(reply, 
                                                  "NUM_CLM_RESOURCES"));
-    }
-    for (ndx = 0; 
-         ndx < saftest_msg_get_ubit32_value(reply, "NUM_CLM_RESOURCES");
-         ndx++) {
-        sprintf(key, "CLM_RESOURCE_%d_ID", ndx);
-        saftest_log("Resource ID=%d\n", 
-                    saftest_msg_get_ubit32_value(reply, key));
+        for (ndx = 0; 
+             ndx < saftest_msg_get_ubit32_value(reply, "NUM_CLM_RESOURCES");
+             ndx++) {
+            sprintf(key, "CLM_RESOURCE_%d_ID", ndx);
+            clm_resource_id = saftest_msg_get_ubit32_value(reply, key);
+            saftest_log("CLM_RESOURCE_%d_ID=%d\n",
+                        ndx, clm_resource_id);
+            sprintf(key, "CLM_RESOURCE_%d_DISPATCH_FLAGS", clm_resource_id);
+            saftest_log("CLM_RESOURCE_%d_DISPATCH_FLAGS=%s\n",
+                        ndx, saftest_msg_get_str_value(reply, key));
+        }
     }
     status = saftest_reply_msg_get_status(reply);
     saftest_msg_free(&reply);
@@ -909,9 +922,9 @@ SAFTEST_MAP_TABLE_ENTRY(
     saftest_daemon_handle_create_test_res_request)
 
 SAFTEST_MAP_TABLE_ENTRY(
-    "LOOKUP_TEST_RESOURCE_REQ", "LOOKUP_TEST_RESOURCE_REPLY",
-    saftest_client_handle_lookup_test_res_request,
-    saftest_daemon_handle_lookup_test_res_request)
+    "STATUS_REQ", "STATUS_REPLY",
+    saftest_client_handle_status_request,
+    saftest_daemon_handle_status_request)
 
 SAFTEST_MAP_TABLE_ENTRY(
     "INITIALIZE_REQ", "INITIALIZE_REPLY",

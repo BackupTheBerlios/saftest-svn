@@ -352,7 +352,7 @@ saftest_daemon_handle_init_request(
     }
 
     lock_res->dispatch_flags =
-        saftest_daemon_get_dispatch_flags(
+        saftest_dispatch_flags_from_string(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
 
     status = saLckInitialize(handle, callbacks, version);
@@ -409,7 +409,7 @@ saftest_daemon_handle_dispatch_request(
     lock_res = lookup_lock_resource_from_request(request);
 
     dispatch_flags =
-        saftest_daemon_get_dispatch_flags(
+        saftest_dispatch_flags_from_string(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
     saftest_assert(SA_DISPATCH_BLOCKING != dispatch_flags,
                    "Can't use blocking dispatch for a dispatch request\n");

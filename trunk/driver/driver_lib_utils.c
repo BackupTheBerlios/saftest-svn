@@ -65,7 +65,7 @@ const char * get_error_string(SaAisErrorT error)
 }
 
 SaDispatchFlagsT
-saftest_daemon_get_dispatch_flags(const char *dispatch_flags_str)
+saftest_dispatch_flags_from_string(const char *dispatch_flags_str)
 {
     SaDispatchFlagsT flags;
 
@@ -82,4 +82,20 @@ saftest_daemon_get_dispatch_flags(const char *dispatch_flags_str)
                       dispatch_flags_str);
     }
     return(flags);
+}
+
+const char *
+saftest_dispatch_flags_to_string(SaDispatchFlagsT dispatch_flags)
+{
+    if (SA_DISPATCH_ONE == dispatch_flags) {
+        return("SA_DISPATCH_ONE");
+    } else if (SA_DISPATCH_ALL == dispatch_flags) {
+        return("SA_DISPATCH_ALL");
+    } else if (SA_DISPATCH_BLOCKING == dispatch_flags) {
+        return("SA_DISPATCH_BLOCKING");
+    } else {
+        saftest_abort("Unknown dispatch flags %d\n",
+                      dispatch_flags);
+    }
+    return(NULL);
 }

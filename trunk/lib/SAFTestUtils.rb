@@ -379,14 +379,6 @@ class SAFTestUtils
         return array
     end
 
-    def SAFTestUtils.getTestParam(section, paramName)
-        if section == 'main'
-            if paramName == 'numLongLivedDrivers'
-                return 2
-            end
-        end
-    end
-
 end # class
 
 end # module

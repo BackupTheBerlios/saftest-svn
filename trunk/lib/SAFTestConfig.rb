@@ -1,6 +1,7 @@
 module SAFTest
 
 require 'xmlparser'
+require 'SAFTestUtils'
 
 class SAFTestConfig < SAFTestUtils
     def initialize(verbose = false)
@@ -169,8 +170,8 @@ class SAFTestConfig < SAFTestUtils
                             when 'name'
                                 currentName = data
                             when 'value'
-                                print "Adding (%s, %s, %s)\n" % \
-                                    [currentSection, currentName, data]
+                                #print "Adding (%s, %s, %s)\n" % \
+                                    #[currentSection, currentName, data]
                                 insertConfigValue(currentSection, currentName,
                                                   data)
                         end

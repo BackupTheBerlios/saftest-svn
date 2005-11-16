@@ -39,6 +39,8 @@ class SAFTestDriver < SAFTestUtils
         @pid = nil
         commands_file = "%s/commands.conf" % [implementationDir()]
         @implementation = SAFImplementation.new(commands_file)
+        @config = SAFTestConfig.new()
+        @config.loadFromXML(configXMLFile())
     end
 
     def getName()
@@ -126,6 +128,7 @@ class SAFTestDriver < SAFTestUtils
             cmd = "%s --key \"%s\" --value \"%s\"" % [cmd, key.to_s, value.to_s]
         end
         array = captureCommand(cmd)
+        kvp_return = {}
         ret = array[0]
         lines = array[1]
         if expectedReturn != ret
@@ -134,13 +137,11 @@ class SAFTestDriver < SAFTestUtils
                     mapErrorCodeToString(ret), lines.to_s]
         end
         lines.each do |line|
-            if iterator? then
-                yield line
-            else
-                print line
+            if line =~ /(\S+)=(\S+)/
+                kvp_return[$1] = $2
             end
         end
-        return array
+        return kvp_return
     end
 
     def createTestResource()

@@ -1,23 +1,29 @@
 #!/usr/bin/ruby
 
+module SAFTest
+
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
 require 'SAFTestUtils'
-require 'test/unit'
 
-clmDir = "%s/AIS-clm-%s" % \
-         [ENV['SAFTEST_ROOT'], 
-          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
 $: << clmDir
+require 'CLMTestDriver'
 
-class NodeGetLocalCase < Test::Unit::TestCase
-    require 'CLMTestDriver'
+class NodeGetLocalCase < SAFTestCase
+    def initialize()
+        super()
+    end
 
-    def test_run()
-        CLMTestDriver::CLMTestDriver.getLongLivedDrivers(nil).each do |d|
-            resourceID = d.getRandomTestResourceID()
-            d.clusterNodeGet(resourceID, "SA_CLM_LOCAL_NODE_ID",
-                             100, false, 
-                             SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-        end
+    def run()
+        d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.getRandomTestResource()
+        d.clusterNodeGet(resource, "SA_CLM_LOCAL_NODE_ID", "SA_TIME_MAX", 
+                         false, SAFTestUtils.SA_AIS_OK)
     end
 end
+
+test = NodeGetLocalCase.new()
+test.run()
+
+end # module

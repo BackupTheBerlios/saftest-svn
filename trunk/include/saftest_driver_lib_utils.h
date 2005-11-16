@@ -27,7 +27,9 @@ extern const char *
 get_error_string(SaAisErrorT error);
 
 extern SaDispatchFlagsT
-saftest_daemon_get_dispatch_flags(const char *dispatch_flags_str);
+saftest_dispatch_flags_from_string(const char *dispatch_flags_str);
 
+extern const char *
+saftest_dispatch_flags_to_string(SaDispatchFlagsT dispatch_flags);
 
 #endif /* SAFTEST_DRIVER_LIB_UTILS_H */

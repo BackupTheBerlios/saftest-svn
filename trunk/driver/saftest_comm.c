@@ -360,6 +360,19 @@ saftest_msg_get_ubit32_value(saftest_msg_t *msg, const char *key)
     return(value);
 }
 
+sbit64
+saftest_msg_get_sbit64_value(saftest_msg_t *msg, const char *key)
+{
+    saftest_key_value_pair_t *kvp;
+    sbit64 value = 0;
+
+    kvp = saftest_msg_find_key_value_pair(msg, key, SAFTEST_KVP_EXTERNAL);
+    assert(NULL != kvp);
+
+    value = strtoll(kvp->value, NULL, 0);
+    return(value);
+}
+
 ubit64
 saftest_msg_get_ubit64_value(saftest_msg_t *msg, const char *key)
 {

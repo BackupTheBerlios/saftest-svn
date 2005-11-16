@@ -279,7 +279,7 @@ saftest_daemon_handle_init_request(
     }
 
     msg_res->dispatch_flags = 
-        saftest_daemon_get_dispatch_flags(
+        saftest_dispatch_flags_from_string(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
 
     status = saMsgInitialize(handle, callbacks, version);
@@ -336,7 +336,7 @@ saftest_daemon_handle_dispatch_request(
     msg_res = lookup_msg_resource_from_request(request);
 
     dispatch_flags = 
-        saftest_daemon_get_dispatch_flags(
+        saftest_dispatch_flags_from_string(
                    saftest_msg_get_str_value(request, "DISPATCH_FLAGS"));
     saftest_assert(SA_DISPATCH_BLOCKING != dispatch_flags,
                    "Can't use blocking dispatch for a dispatch request\n");

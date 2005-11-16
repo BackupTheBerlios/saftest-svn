@@ -17,8 +17,8 @@ class InitializeCase < SAFTestCase
     def run()
         @implementation.getCluster().getNodes().each do |node|
             CLMTestDriver.getLongLivedDrivers(node).each do |d|
-                resourceID = d.createTestResource()
-                d.init(resourceID, true, true, "SA_DISPATCH_ALL",
+                resource = d.createTestResource()
+                d.init(resource, true, true, "SA_DISPATCH_ALL",
                        SAFTestUtils.SA_AIS_OK)
             end
         end

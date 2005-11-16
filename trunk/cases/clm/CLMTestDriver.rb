@@ -3,6 +3,25 @@ module SAFTest
 require 'SAFTestDriver'
 require 'SAFTestUtils'
 
+class CLMTestResource < SAFTestUtils
+    def initialize(resourceID)
+        @resourceID = resourceID
+        @dispatchFlags = ''
+    end
+
+    def getID()
+        return @resourceID
+    end
+
+    def getDispatchFlags()
+        return @dispatchFlags
+    end
+
+    def setDispatchFlags(dispatchFlags)
+        @dispatchFlags = dispatchFlags
+    end
+end
+
 class CLMTestDriver < SAFTestDriver
     @@nextInstanceID = 1
 
@@ -17,25 +36,23 @@ class CLMTestDriver < SAFTestDriver
     end
 
     def createTestResource()
-        array = runDriver("CREATE_TEST_RESOURCE_REQ", {}, 
-                          SAFTestUtils.SA_AIS_OK)
-        ret = array[0]
-        lines = array[1]
-        resourceID = nil
-        lines.each do |line|
-            if line =~ /^Resource ID=(\d+)/
-                resourceID = $1
-            end
+        results = runDriver("CREATE_TEST_RESOURCE_REQ", {}, 
+                                SAFTestUtils.SA_AIS_OK)
+
+        results.each do |key, value|
+            print "#{key}=#{value}\n"
         end
-        if nil == resourceID 
-            raise "Couldn't find a Resource ID.  Lines = \"%s\"" % [lines.to_s]
-        end
-        log("new resourceID is %d" % [resourceID])
-        return resourceID
+        resourceID = results["CLM_RESOURCE_ID"].to_i
+        resource = CLMTestResource.new(resourceID)
+        return resource
     end
 
     def CLMTestDriver.getLongLivedDrivers(node)
-        numDrivers = SAFTestUtils.getTestParam('main', 'numLongLivedDrivers')
+        utils = SAFTestUtils.new
+        config = SAFTestConfig.new
+        config.loadFromXML(utils.configXMLFile())
+
+        numDrivers = config.getIntValue('main', 'numLongLivedDrivers')
         driverArray = []
         1.upto(numDrivers) do |n|
             driver = CLMTestDriver.new(node, n)
@@ -44,30 +61,33 @@ class CLMTestDriver < SAFTestDriver
         return driverArray
     end
 
-    def getAllTestResourceIDs()
-        resourceIDArray = []
-        array = runDriver("LOOKUP_TEST_RESOURCE_REQ", {},
-                          SAFTestUtils.SA_AIS_OK)
-        ret = array[0]
-        lines = array[1]
-        resourceID = nil
-        lines.each do |line|
-            if line =~ /^Resource ID=(\d+)/
-                resourceID = $1
-                resourceIDArray << resourceID
-            end
+    def CLMTestDriver.getRandomLongLivedDriver(node)
+        driverArray = CLMTestDriver.getLongLivedDrivers(node)
+        return driverArray[0]
+    end
+
+    def getAllTestResources()
+        resourceArray = []
+        results = runDriver("STATUS_REQ", {},
+                            SAFTestUtils.SA_AIS_OK)
+        numResources = results["NUM_CLM_RESOURCES"].to_i
+        0.upto(numResources - 1) do |n|
+            resourceID = results["CLM_RESOURCE_#{n}_ID"]
+            resource = CLMTestResource.new(resourceID)
+            dispatchFlags = results["CLM_RESOURCE_#{n}_DISPATCH_FLAGS"]
+            resourceArray << resource
         end
-        return resourceIDArray
+        return resourceArray
     end
 
-    def getRandomTestResourceID()
-        resourceIDArray = getAllTestResourceIDs()
-        return resourceIDArray[0]
+    def getRandomTestResource()
+        resourceArray = getAllTestResources()
+        return resourceArray[rand(resourceArray.length())]
     end
 
-    def init(resourceID, setClusterNodeGetCB, setClusterTrackCB,
+    def init(resource, setClusterNodeGetCB, setClusterTrackCB,
              dispatchFlags, expectedReturn)
-        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+        kvp_hash = {'CLM_RESOURCE_ID' => resource.getID(),
                     'DISPATCH_FLAGS' => dispatchFlags,
                     'CLUSTER_NODE_GET_CB' => 'FALSE',
                     'CLUSTER_TRACK_CB' => 'FALSE',
@@ -88,11 +108,11 @@ class CLMTestDriver < SAFTestDriver
         runDriver("INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
-    def initWithOptions(resourceID, dispatchFlags, 
+    def initWithOptions(resource, dispatchFlags, 
                         releaseCode, majorVersion, minorVersion,
                         nullClmHandle, nullCallbacks, nullVersion,
                         expectedReturn)
-        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+        kvp_hash = {'CLM_RESOURCE_ID' => resource.getID(),
                     'VERSION_RELEASE_CODE' => releaseCode,
                     'VERSION_MAJOR' => majorVersion,
                     'VERSION_MINOR' => minorVersion,
@@ -119,8 +139,8 @@ class CLMTestDriver < SAFTestDriver
         runDriver("INITIALIZE_REQ", kvp_hash, expectedReturn)
     end
 
-    def finalize(resourceID, expectedReturn)
-        kvp_hash = {'CLM_RESOURCE_ID' => resourceID}
+    def finalize(resource, expectedReturn)
+        kvp_hash = {'CLM_RESOURCE_ID' => resource.getID()}
         runDriver("FINALIZE_REQ", kvp_hash, expectedReturn)
     end
 
@@ -140,9 +160,9 @@ class CLMTestDriver < SAFTestDriver
         runDriver("DISPATCH_REQ", kvp_hash, expectedReturn)
     end
 
-    def clusterNodeGet(resourceID, nodeIDString, timeout, nullClusterNode,
+    def clusterNodeGet(resource, nodeIDString, timeout, nullClusterNode,
                        expectedReturn)
-        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+        kvp_hash = {'CLM_RESOURCE_ID' => resource.getID(),
                     'NODE_ID' => nodeIDString,
                     'NULL_CLUSTER_NODE' => 'FALSE',
                     'TIMEOUT' => timeout}

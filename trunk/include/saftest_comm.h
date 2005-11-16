@@ -69,6 +69,9 @@ saftest_msg_get_ubit16_value(saftest_msg_t *msg, const char *key);
 extern ubit32
 saftest_msg_get_ubit32_value(saftest_msg_t *msg, const char *key);
 
+extern sbit64
+saftest_msg_get_sbit64_value(saftest_msg_t *msg, const char *key);
+
 extern ubit64
 saftest_msg_get_ubit64_value(saftest_msg_t *msg, const char *key);
 

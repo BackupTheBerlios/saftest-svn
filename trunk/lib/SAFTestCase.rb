@@ -23,6 +23,26 @@ class SAFTestCase
         @config.loadFromXML(@utils.configXMLFile())
         commands_file = "%s/commands.conf" % [@utils.implementationDir()]
         @implementation = SAFImplementation.new(commands_file)
+        @params = {}
+
+        # Test case parameters take the form:
+        #  --key1=value1 --key2=value2 ... --keyN=valueN
+        # 
+        # Inserted into the hash would be keyN,valueN
+       
+        while (true)
+            opt = ARGV.shift
+            if nil == opt
+                break
+            end
+            if opt =~ /--(\S+)=(\S+)/
+                @params[$1] = $2
+            end
+        end
+    end
+
+    def getParam(key)
+        return @params[key]
     end
 
     def runDir()

@@ -337,6 +337,10 @@ class SAFClusterImplementation < SAFTestUtils
         raise 'Should be able to find a local node'
     end
 
+    def getRandomNode()
+        return @nodes[rand(@nodes.length())]
+    end
+
     def ==(other)
         return false unless SAFClusterImplementation === other
         return false unless other.getNodes().length == @nodes.length

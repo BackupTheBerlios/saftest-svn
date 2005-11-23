@@ -1,23 +1,32 @@
 #!/usr/bin/ruby
 
+module SAFTest
+
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
-require 'SAFTestUtils'
-require 'test/unit'
+require 'SAFTestCase'
 
-clmDir = "%s/AIS-clm-%s" % \
-         [ENV['SAFTEST_ROOT'], 
-          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
 $: << clmDir
+require 'CLMTestDriver'
 
-class SelectionObjectGetCase < Test::Unit::TestCase
-    require 'CLMTestDriver'
+class SelectionObjectGetCase < SAFTestCase
+    def initialize()
+        super()
+    end
 
-    def test_run()
-        CLMTestDriver::CLMTestDriver.getLongLivedDrivers(nil).each do |d|
-            d.getAllTestResourceIDs().each do |r|
-                d.selectObjectGet(r, false,
-                                  SAFTestUtils::SAFTestUtils.SA_AIS_OK)
+    def run()
+        @implementation.getCluster().getNodes().each do |node|
+            CLMTestDriver.getLongLivedDrivers(node).each do |d|
+                d.getAllTestResources().each do |r|
+                    d.selectObjectGet(r, false, SAFTestUtils.SA_AIS_OK)
+                end
             end
         end
+        passed()
     end
 end
+
+test = SelectionObjectGetCase.new()
+test.run()
+
+end # module

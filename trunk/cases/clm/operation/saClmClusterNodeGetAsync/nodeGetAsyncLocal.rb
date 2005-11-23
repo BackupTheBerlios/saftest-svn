@@ -1,31 +1,31 @@
 #!/usr/bin/ruby
 
+module SAFTest
+
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
 require 'SAFTestUtils'
-require 'test/unit'
 
-clmDir = "%s/AIS-clm-%s" % \
-         [ENV['SAFTEST_ROOT'], 
-          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
 $: << clmDir
+require 'CLMTestDriver'
 
-class NodeGetAsyncLocalCase < Test::Unit::TestCase
-    require 'CLMTestDriver'
+class NodeGetAsyncLocalCase < SAFTestCase
+    def initialize()
+        super()
+    end
 
-    def test_run()
-        CLMTestDriver::CLMTestDriver.getLongLivedDrivers(nil).each do |d|
-            randomInvocation = d.generateInvocation()
-            resourceID = d.getRandomTestResourceID()
-            oldCBCount = d.clusterNodeGetCBCount(resourceID)
-            d.clusterNodeGetAsync(resourceID, randomInvocation, 
-                                       "SA_CLM_LOCAL_NODE_ID",
-                                       SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-            newCBCount = d.clusterNodeGetCBCount(resourceID)
-            if newCBCount != oldCBCount + 1
-                raise 'currentCBCount = %d, newCBCount = %d' % [oldCBCount,
-                                                                newCBCount]
-            end
-            d.clusterNodeGetAsyncInvocation(resourceID, randomInvocation)
-        end
+    def run()
+        d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.getRandomTestResource()
+        localNode = d.getImplementation().getCluster().getLocalNode()
+        d.clusterNodeGetAsync(resource, "SA_CLM_LOCAL_NODE_ID", 
+                              localNode, SAFTestUtils.SA_AIS_OK)
+        passed()
     end
 end
+
+test = NodeGetAsyncLocalCase.new()
+test.run()
+
+end # module

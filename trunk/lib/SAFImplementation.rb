@@ -1,6 +1,7 @@
 module SAFTest
 
 require 'SAFTestUtils'
+require 'xmlparser'
 
 class SAFNetworkAddressImplementation < SAFTestUtils
     def initialize()
@@ -109,6 +110,68 @@ class SAFNodeImplementation < SAFTestUtils
         @addresses << addr
     end
 
+    def loadFromXML(xml)
+        currentAddress = nil
+        currentElement = nil
+        parser = XML::Parser.new
+        begin
+            parser.parse(xml) do |type, name, data|
+                case type
+                    when XML::Parser::START_ELEM
+                        case name
+                            when ''
+                                raise 'Empty Start Tag?'
+                            else
+                                currentElement = name
+                        end
+
+                    when XML::Parser::CDATA
+                        case currentElement
+                            when 'id'
+                                setID(data.to_i)
+                            when 'name'
+                                setName(data)
+                            when 'member'
+                                case data
+                                    when 'TRUE'
+                                        setMember(true)
+                                    when 'FALSE'
+                                        setMember(false)
+                                    else
+                                        raise "Unknown member value %s" % \
+                                               [value]
+                                end
+                            when 'bootTimestamp'
+                                setBootTimestamp(data.to_i)
+                            when 'initialViewNumber'
+                                setInitialViewNumber(data.to_i)
+                            when 'Address'
+                                currentAddress = 
+                                    SAFNetworkAddressImplementation.new()
+                            when 'family'
+                                currentAddress.setFamily(data)
+                            when 'length'
+                                currentAddress.setLength(data)
+                            when 'value'
+                                currentAddress.setValue(data)
+                        end
+
+                    when XML::Parser::END_ELEM
+                        case name
+                            when 'Address'
+                                addAddress(currentAddress)
+                                currentAddress = nil
+                        end
+                        currentElement = nil
+                end
+            end
+        rescue XMLParserError
+            line = parser.line
+            raise "XML parse error #{$!}: LINE #{line} FROM #{xml}\n"
+        end
+
+    end
+
     def isLocalNode()
         return getName() == fullHostname() || getName() == simpleHostname()
     end
@@ -133,7 +196,8 @@ class SAFNodeImplementation < SAFTestUtils
     alias eql? ==
 
     def display()
-        print "Node: %s\n" % [getName()]
+        print "Node:\n"
+        print "    Name: %s\n" % [getName()]
         print "    Node ID: %d\n" % [getID()]
         print "    Member: %s\n" % [getMember().to_s]
         print "    Boot Timestamp: %d\n" % [getBootTimestamp()]
@@ -154,8 +218,6 @@ class SAFClusterImplementation < SAFTestUtils
     end
 
     def loadFromXML(xml)
-        require 'xmlparser'
-
         currentNode = nil
         currentAddress = nil
         currentElement = nil
@@ -349,6 +411,20 @@ class SAFImplementation < SAFTestUtils
 
         cluster.loadFromXML(xml)
         return cluster
+    end
+
+    def getNodeFromFile(path)
+        node = SAFNodeImplementation.new()
+        f = open(File.expand_path(path), 'r')
+        xmlLines = f.readlines()
+        f.close
+        xml = ''
+        xmlLines.each do |line|
+            xml += line
+        end
+
+        node.loadFromXML(xml)
+        return node
     end
 
     def stopNode(nodeName)

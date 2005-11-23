@@ -23,6 +23,10 @@ class CLMTestResource < SAFTestUtils
 end
 
 class CLMTestDriver < SAFTestDriver
+    # This is the timeout we use when waiting for things to happen
+    @@WAIT_INTERVAL = 1
+    @@WAIT_TIMEOUT = 30
+
     @@nextInstanceID = 1
 
     def initialize(node=nil, instanceID=0)
@@ -85,6 +89,16 @@ class CLMTestDriver < SAFTestDriver
         return resourceArray[rand(resourceArray.length())]
     end
 
+    def compareNodes(node, validateNode)
+        if node != validateNode
+            log("node (from file)")
+            node.display()
+            log("node (from command)")
+            validateNode.display()
+            failed("node != validateNode")
+        end
+    end
+
     def init(resource, setClusterNodeGetCB, setClusterTrackCB,
              dispatchFlags, expectedReturn)
         kvp_hash = {'CLM_RESOURCE_ID' => resource.getID(),
@@ -144,14 +158,13 @@ class CLMTestDriver < SAFTestDriver
         runDriver("FINALIZE_REQ", kvp_hash, expectedReturn)
     end
 
-    def selectObjectGet(resourceID, nullSelectionObject, expectedReturn)
-        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+    def selectObjectGet(resource, nullSelectionObject, expectedReturn)
+        kvp_hash = {'CLM_RESOURCE_ID' => resource.getID(),
                     'NULL_SELECTION_OBJECT' => 'FALSE'}
         if nullSelectionObject
             kvp_hash['NULL_SELECTION_OBJECT'] = 'TRUE'
         end
         runDriver("SELECTION_OBJECT_GET_REQ", kvp_hash, expectedReturn)
-
     end
 
     def dispatch(resourceID, dispatchFlags, expectedReturn)
@@ -161,7 +174,8 @@ class CLMTestDriver < SAFTestDriver
     end
 
     def clusterNodeGet(resource, nodeIDString, timeout, nullClusterNode,
-                       expectedReturn)
+                       validateNode, expectedReturn)
+        xmlFile = nil
         kvp_hash = {'CLM_RESOURCE_ID' => resource.getID(),
                     'NODE_ID' => nodeIDString,
                     'NULL_CLUSTER_NODE' => 'FALSE',
@@ -169,22 +183,51 @@ class CLMTestDriver < SAFTestDriver
         if nullClusterNode
             kvp_hash['NULL_CLUSTER_NODE'] = 'TRUE'
         end
+
+        if validateNode != nil
+            xmlFile = tmpFile("cluster_node_local")
+            kvp_hash['XML_FILE'] = xmlFile
+        end
+
         runDriver("CLUSTER_NODE_GET_REQ", kvp_hash, expectedReturn)
+        if validateNode != nil
+            node = getImplementation().getNodeFromFile(xmlFile)
+            compareNodes(node, validateNode)
+            File.unlink(xmlFile)
+        end
     end
 
     def generateInvocation()
-        return rand(1000)
+        invocation = rand(1000)
+        if invocation == 0
+            invocation += 1
+        end
+        return invocation
     end
 
-    def clusterNodeGetAsync(resourceID, invocation, nodeIDString, 
+    def clusterNodeGetAsync(resource, nodeIDString, validateNode,
                             expectedReturn)
-        if invocation <= 0
-            raise "invocation must be greater than 0"
-        end
-        kvp_hash = {'CLM_RESOURCE_ID' => resourceID,
+        invocation = generateInvocation()
+        xmlFile = nil
+        kvp_hash = {'CLM_RESOURCE_ID' => resource.getID(),
                     'INVOCATION' => invocation,
                     'NODE_ID' => nodeIDString}
+        if validateNode != nil
+            xmlFile = tmpFile("cluster_node_async_local")
+            kvp_hash['XML_FILE'] = xmlFile
+        end
+
         runDriver("CLUSTER_NODE_GET_ASYNC_REQ", kvp_hash, expectedReturn)
+        if validateNode != nil
+            print "Going to wait for the XML file\n"
+            waitFor(@@WAIT_INTERVAL, @@WAIT_TIMEOUT, "#{xmlFile} to exist") {
+                # !!! This should be made to validate against the schema
+                FileTest.exist?(xmlFile) and not File.stat(xmlFile).zero?
+            }
+            node = getImplementation().getNodeFromFile(xmlFile)
+            compareNodes(node, validateNode)
+            File.unlink(xmlFile)
+        end
     end
 
     def clusterNodeGetCBCount(resourceID)

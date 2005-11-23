@@ -18,8 +18,10 @@ class NodeGetLocalCase < SAFTestCase
     def run()
         d = CLMTestDriver.getRandomLongLivedDriver(nil)
         resource = d.getRandomTestResource()
+        localNode = d.getImplementation().getCluster().getLocalNode()
         d.clusterNodeGet(resource, "SA_CLM_LOCAL_NODE_ID", "SA_TIME_MAX", 
-                         false, SAFTestUtils.SA_AIS_OK)
+                         false, localNode, SAFTestUtils.SA_AIS_OK)
+        passed()
     end
 end
 

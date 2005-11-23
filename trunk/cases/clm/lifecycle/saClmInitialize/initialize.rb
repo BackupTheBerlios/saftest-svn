@@ -22,6 +22,7 @@ class InitializeCase < SAFTestCase
                        SAFTestUtils.SA_AIS_OK)
             end
         end
+        passed()
     end
 end
 

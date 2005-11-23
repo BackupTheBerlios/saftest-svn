@@ -35,6 +35,8 @@ typedef struct clm_resource {
     SaClmClusterNotificationBufferT notification_buffer;
 
     SaInvocationT cluster_node_get_async_invocation;
+    char cluster_node_get_callback_xml_file[SAFTEST_STRING_LENGTH + 1];
+
     int cluster_node_get_callback_count;
     int cluster_track_callback_count;
 } clm_resource_t;
@@ -160,18 +162,77 @@ lookup_clm_resource_with_track_callback()
 }
 
 void
+saftest_daemon_write_cluster_node(FILE *fp, 
+                                  const SaClmClusterNodeT *cluster_node)
+{
+    char node_name[SA_MAX_NAME_LENGTH+1];
+    const char *family;
+    struct in_addr in_addr;
+    char addr_buf[INET6_ADDRSTRLEN];
+
+    memset(node_name, 0, sizeof(node_name));
+    strncpy(node_name, 
+            cluster_node->nodeName.value,
+            cluster_node->nodeName.length);
+    fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    fprintf(fp, "<SAFNode "
+                " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+                " xsi:noNamespaceSchemaLocation=\"SAFNode.xsd\" "
+                " schemaVersion=\"1\"> \n");
+
+    fprintf(fp, "    <id>%ld</id>\n", cluster_node->nodeId);
+    fprintf(fp, "    <AddressList>\n");
+    fprintf(fp, "        <Address>\n");
+    if (SA_CLM_AF_INET == cluster_node->nodeAddress.family) {
+        family = "SA_CLM_AF_INET";
+    } else if (SA_CLM_AF_INET == cluster_node->nodeAddress.family) {
+        family = "SA_CLM_AF_INET6";
+    } else {
+        saftest_abort("Unknown address family\n");
+    }
+    fprintf(fp, "            <family>%s</family>\n", family);
+    fprintf(fp, "            <length>%d</length>\n",
+            cluster_node->nodeAddress.length);
+
+    memcpy(&in_addr.s_addr, cluster_node->nodeAddress.value,
+            cluster_node->nodeAddress.length);
+    strcpy(addr_buf, inet_ntoa(in_addr));
+    fprintf(fp, "            <value>%s</value>\n",
+            addr_buf);
+    fprintf(fp, "        </Address>\n");
+    fprintf(fp, "    </AddressList>\n");
+    fprintf(fp, "    <name>%s</name>\n", 
+            node_name);
+    fprintf(fp, "    <member>%s</member>\n", 
+            cluster_node->member ?
+            "TRUE" : "FALSE");
+    fprintf(fp, "    <bootTimestamp>%lld</bootTimestamp>\n", 
+            cluster_node->bootTimestamp);
+    fprintf(fp, "    <initialViewNumber>%lld</initialViewNumber>\n",
+            cluster_node->initialViewNumber);
+    fprintf(fp, "</SAFNode>\n");
+}
+
+void
 saftest_daemon_cluster_node_get_callback(SaInvocationT invocation,
-                                          const SaClmClusterNodeT *clusterNode,
-                                          SaAisErrorT error)
+                                         const SaClmClusterNodeT *cluster_node,
+                                         SaAisErrorT error)
 {
     clm_resource_t *clm_res = NULL;
+    FILE *fp = NULL;
 
     saftest_log("Cluster Node Get Callback for invocation %lld\n", invocation);
     clm_res = lookup_clm_resource_by_invocation(invocation);
     if (NULL == clm_res) {
-        saftest_abort("Unknown invocation id %d\n",
-                       invocation);
+        saftest_abort("Unknown invocation id %lld\n", invocation);
     }
+    fp = fopen(clm_res->cluster_node_get_callback_xml_file, "w+");
+    if (NULL == fp) {
+        saftest_abort("Unable to open %s for writing\n",
+                      clm_res->cluster_node_get_callback_xml_file);
+    }
+    saftest_daemon_write_cluster_node(fp, cluster_node);
+    fclose(fp);
     clm_res->cluster_node_get_callback_count += 1;
 }
 
@@ -407,7 +468,8 @@ saftest_daemon_handle_cluster_node_get_request(
     SaAisErrorT status;
     SaClmNodeIdT node_id;
     SaTimeT timeout;
-
+    const char *xml_file = NULL;
+    FILE *fp = NULL;
     SaClmClusterNodeT cluster_node;
     SaClmClusterNodeT *cluster_node_ptr = NULL;
 
@@ -432,6 +494,20 @@ saftest_daemon_handle_cluster_node_get_request(
     }
     status = saClmClusterNodeGet(clm_res->clm_handle, 
                                  node_id, timeout, cluster_node_ptr);
+    if (NULL != (xml_file = saftest_msg_get_str_value(request, "XML_FILE"))) {
+        saftest_assert(NULL != cluster_node_ptr,
+                       "Can't ask for an XML_FILE without a cluster_node");
+        fp = fopen(xml_file, "w+");
+        if (NULL == fp) {
+            saftest_abort("Unable to open %s for writing\n", xml_file);
+        }
+
+        saftest_daemon_write_cluster_node(fp, cluster_node_ptr);
+        fclose(fp);    
+        (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, 
+                                            SA_AIS_OK);
+    }
+    
     (*reply) = saftest_reply_msg_create(request, map_entry->reply_op, status);
 }
 
@@ -449,6 +525,8 @@ saftest_daemon_handle_cluster_node_get_async_request(
                 saftest_msg_get_ubit32_value(request, "CLM_RESOURCE_ID"));
     clm_res = lookup_clm_resource_from_request(request);
 
+    strcpy(clm_res->cluster_node_get_callback_xml_file, 
+           saftest_msg_get_str_value(request, "XML_FILE"));
     clm_res->cluster_node_get_async_invocation = 
                       saftest_msg_get_ubit64_value(request, "INVOCATION");
     node_id = get_node_id_from_string(

@@ -29,6 +29,10 @@ class SAFTestCase
         return @utils.runDir()
     end
 
+    def tmpFile(fileName)
+        return "%s/%s.%d" % [@utils.tmpDir(), fileName, $$]
+    end
+
     def setLogLevel(level)
         @utils.setLogLevel(level)
     end

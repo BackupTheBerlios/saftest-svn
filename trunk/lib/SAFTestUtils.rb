@@ -306,6 +306,10 @@ class SAFTestUtils
         end
     end
 
+    def tmpFile(fileName)
+        return "%s/%s.%d" % [tmpDir(), fileName, $$]
+    end
+
     def setLogLevel(level)
         @logLevel = level
     end
@@ -379,6 +383,24 @@ class SAFTestUtils
         return array
     end
 
+    def waitFor(interval, timeout, whyMessage)
+        startTime = Time.now()
+        endTime = startTime + timeout
+        first = true
+        while true
+            if yield then
+                return
+            end
+            if Time.now() >= endTime then
+              failed("timed out waiting for " + whyMessage)
+            end
+            if first then
+              log("waiting up to " + timeout.to_s + " seconds for " + whyMessage);
+              first = false
+            end
+            sleep(interval)
+        end
+    end
 end # class
 
 end # module

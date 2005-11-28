@@ -193,6 +193,14 @@ class SAFTestUtils
         end
     end
 
+    def SAFTestUtils.SUPPORTED_SPECS
+        specs = []
+        specs << 'CLM'
+        specs << 'LCK'
+        specs << 'MSG'
+        return specs
+    end
+
     @@PASSED_EXIT_STATUS = 0
     @@FAILED_EXIT_STATUS = 1
     @@SKIPPED_EXIT_STATUS = 2
@@ -312,6 +320,23 @@ class SAFTestUtils
 
     def setLogLevel(level)
         @logLevel = level
+    end
+
+    def formatSeconds(seconds)
+        hour = (seconds / 3600).to_i
+        min = ((seconds - (hour * 3600)) / 60).to_i
+        sec = (seconds - (hour * 3600 + min * 60)).to_i
+        str = ""
+        if hour > 0
+            str = "#{hour}h#{min}m#{sec}s"
+        else
+            if min > 0
+                str = "#{min}m#{sec}s"
+            else
+                str = "#{sec}s"
+            end
+        end
+        return str
     end
 
     def log(message)

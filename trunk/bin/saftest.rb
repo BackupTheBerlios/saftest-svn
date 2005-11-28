@@ -7,21 +7,23 @@ require 'SAFTestUtils'
 require 'SAFTestConfig'
 require 'SAFTestEngine'
 
-def usage(msg=nil)
-    print msg + "\n" if msg
-    print "saftest.rb [--verbose] \n"
-    print "            create [--from-xml <xml file>]\n"
-    print "            start\n"
-    print "            delete\n"
-    exit 1
-end
-
-def errExit(msg)
-    print msg + "\n"
-    exit 1
-end
-
 class Log
+
+    def Log.usage(msg = nil)
+        print msg + "\n" if msg
+        print "saftest.rb [--verbose] \n"
+        print "            create [--from-xml <xml file>]\n"
+        print "            start\n"
+        print "            stop\n"
+        print "            delete\n"
+        exit 1
+    end
+
+    def Log.errExit(msg)
+        print msg + "\n"
+        exit 1
+    end
+
     def initialize(verbose = false)
         @verbose = verbose
     end
@@ -38,7 +40,7 @@ class Log
 end # class
 
 if not ENV.has_key?('SAFTEST_ROOT')
-    errExit("You must define a SAFTEST_ROOT environment variable")
+    Log.errExit("You must define a SAFTEST_ROOT environment variable")
 end
 
 # globals
@@ -51,12 +53,14 @@ while (true)
 
     if opt == '--verbose' then
         $log.setVerbose(true)
+    elsif opt == '--help' then
+        Log.usage()
     elsif opt != nil and opt[1,1] == '-' then
-        usage("Invalid option: #{opt}")
+        Log.usage("Invalid option: #{opt}")
     else
         op = opt
         if op == nil
-            usage
+            Log.usage()
         end
         break
     end
@@ -71,7 +75,7 @@ if op == 'create'
             opt = ARGV.shift
             xmlConfig = opt 
         elsif opt != nil and opt[1,1] == '-' then
-            usage("Invalid option: #{opt}")
+            Log.usage("Invalid option: #{opt}")
         else
             break
         end
@@ -86,7 +90,7 @@ if op == 'create'
     end
 
     if workDirExists
-        errExit("Directory %s already exists" % [workDir])
+        Log.errExit("Directory %s already exists" % [workDir])
     else
         $utils.makeWorkDirs()
     end
@@ -109,11 +113,11 @@ if op == 'create'
                 end
             end
         rescue SystemCallError
-            errExit("%s/implementation doesn't exist" % [$utils.rootDir])
+            Log.errExit("%s/implementation doesn't exist" % [$utils.rootDir])
         end
 
         if implementations.length == 0
-            errExit("%s/implementation has no entries" % [$utils.rootDir])
+            Log.errExit("%s/implementation has no entries" % [$utils.rootDir])
         end
 
         config = SAFTestConfig.new
@@ -121,11 +125,11 @@ if op == 'create'
                            ['conformance', 'functional'], 'functional')
         config.promptArray('main', 'implementation', 'Implementation', 
                            implementations, implementations[0])
-        config.promptYesNo('main', 'testCLM', 'Test CLM', true)
-        config.promptYesNo('main', 'testLCK', 'Test LCK', false)
-        config.promptYesNo('main', 'testMSG', 'Test MSG', false)
         config.promptInt('main', 'numLongLivedDrivers', 
                          'Number of Long-Lived Drivers', 1, 10, 3)
+        SAFTestUtils.SUPPORTED_SPECS.each do |spec|
+            config.promptYesNo('main', "testSpec#{spec}", "Test #{spec}", true)
+        end
     end
     config.save()
 
@@ -161,7 +165,7 @@ elsif op == 'delete'
     $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS, 
                               "Error running %s" % [cmd])
 else
-    usage("unknown operation: %s" % [op])
+    Log.usage("unknown operation: %s" % [op])
 end
 
 end # module SAFTest

@@ -21,10 +21,10 @@ class NodeGetAsyncCase < SAFTestCase
         validateNode = nil
 
         nodeIDParam = getParam('node-id')
-        if nodeIDParam == 'LOCAL'
+        if nodeIDParam == 'local'
             validateNode = d.getImplementation().getCluster().getLocalNode()
             nodeID = "SA_CLM_LOCAL_NODE_ID"
-        elsif nodeIDParam == 'RANDOM'
+        elsif nodeIDParam == 'random'
             validateNode = d.getImplementation().getCluster().getRandomNode()
             nodeID = validateNode.getID()
         else

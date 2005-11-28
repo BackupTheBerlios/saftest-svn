@@ -15,14 +15,12 @@ class StartDriversCase < SAFTestCase
     def run()
         libPath = ""
         driverLibs = []
-        if @config.valueIsYes('main', 'testCLM')
-            driverLibs << "cases/clm/driver/clm_driver.so"
-        end
-        if @config.valueIsYes('main', 'testLCK')
-            driverLibs << "cases/lck/driver/lck_driver.so"
-        end
-        if @config.valueIsYes('main', 'testMSG')
-            driverLibs += "cases/msg/driver/msg_driver.so"
+        SAFTestUtils.SUPPORTED_SPECS.each do |spec|
+            lower = spec.downcase()
+            upper = spec.upcase()
+            if @config.valueIsYes('main', "testSpec#{upper}")
+                driverLibs << "cases/#{lower}/driver/#{lower}_driver.so"
+            end
         end
         driverLibs.each do |lib|
             libPath += ",%s/%s" % [ENV['SAFTEST_ROOT'], lib] 

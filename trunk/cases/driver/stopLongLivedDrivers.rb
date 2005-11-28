@@ -7,7 +7,6 @@ require 'SAFTestCase'
 require 'SAFTestDriver'
 
 class StopDriversCase < SAFTestCase
-
     def initialize()
         super()
     end

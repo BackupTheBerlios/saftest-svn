@@ -5,10 +5,20 @@ require 'SAFTestUtils'
 
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 
-class SAFTestEngineCase
+class SAFTestEngineCase < SAFTest::SAFTestUtils
     def initialize()
+        super()
+        @name = ''
         @cmd = ''
         @weight = 0
+    end
+
+    def name()
+        return @name
+    end
+
+    def name=(name)
+        @name = name
     end
 
     def command()
@@ -26,6 +36,15 @@ class SAFTestEngineCase
     def weight=(weight)
         @weight = weight
     end
+
+    def run(node)
+        fullCmd = "%s/cases/%s" % [ENV['SAFTEST_ROOT'], @cmd]
+        exitCode = @safSys.runCommand(fullCmd, node) do |line|
+            line.chomp!
+            log(line)
+        end
+        return exitCode
+    end
 end
 
 class SAFTestBundle
@@ -38,6 +57,10 @@ class SAFTestBundle
 
     def getMainMode()
         return @mainMode
+    end
+
+    def cases()
+        return @cases
     end
 
     def loadFromXML(xmlPath)
@@ -74,8 +97,6 @@ class SAFTestBundle
                                     end
                                     @mainMode = currentType
                                 end
-                                print "Current type is #{currentType}\n"
-                                print "Current mode is #{currentMode}\n"
                                 @cases[currentType] = []
                             when 'SAFTestCase'
                                 # No attributes on these tags
@@ -87,6 +108,8 @@ class SAFTestBundle
 
                     when XML::Parser::CDATA
                         case currentElement
+                            when 'name'
+                                currentCase.name = data
                             when 'cmd'
                                 currentCase.command = data
                             when 'weight'
@@ -136,11 +159,37 @@ class SAFTestEngine < SAFTest::SAFTestUtils
         @config = SAFTest::SAFTestConfig.new()
         @config.loadFromXML(configXMLFile())
         @bundle = SAFTestBundle.new(bundleFile())
+        @cases = @bundle.cases()
         @pidfile = "%s/engine.pid" % [runDir()]
         @logfile = "%s/%s.log" % [logDir(), 
                                  @config.getStrValue("main", "testType")]
         @needToHalt = false
         @state = @@INITIALIZING
+        @testStartTime = nil
+        @testEndTime = nil
+
+        # weightedCaseArray will be an array where each test case has as many
+        # entries in the array as it's weight.  If case A has weight 2, it will
+        # have 2 entries in weightedCaseArray and if case B has weight 4, it 
+        # will have 4 entries.  Selected a random test case means just picking
+        # a random number in the rage [0, totalWeight) and using that as an
+        # index into weightedCaseArray.
+
+        @weightedCaseArray = Array.new
+        setupMainTestCases()
+    end
+
+    def setupMainTestCases()
+        @cases['main'].each do |testCase|
+            tmpArray = Array.new(testCase.weight, testCase)
+            tmpArray.each do |tmpCase|
+                @weightedCaseArray << tmpCase
+            end
+        end
+    end
+
+    def selectRandomMainTestCase()
+        return @weightedCaseArray[rand(@weightedCaseArray.length)]
     end
 
     def daemonize()
@@ -167,8 +216,9 @@ class SAFTestEngine < SAFTest::SAFTestUtils
     end 
 
     def start()
+        @testStartTime = Time.now()
         trap('SIGINT') {
-            log("Caught SIGINT.  Shutting down...")
+            log("ENGINE: Caught SIGINT.  Shutting down...")
             @needToHalt = true
         }
 
@@ -185,11 +235,44 @@ class SAFTestEngine < SAFTest::SAFTestUtils
         Process.kill("SIGINT", pid)
     end
 
-    def runCases()
-        while (not @needToHalt)
-            sleep 1
-            log("Woke up")           
+    def runTestCase(testCase, testPhase, node)
+        nodeLog = ""
+        if node != nil
+            nodeLog = " on #{node}"
         end
+
+        log("BEGIN #{testPhase} #{testCase.name}#{nodeLog}")
+
+        startTime = Time.now()
+        exitCode = testCase.run(node)
+        endTime = Time.now()
+
+        elapsedTime = ((endTime - startTime).to_f).to_s
+        log("END #{testPhase} #{testCase.name}#{nodeLog} " + 
+            "status #{exitCode} in #{elapsedTime} seconds\n")
+        return exitCode
+    end
+
+    def runCases()
+        @state = @@RUNNING_INITIAL_CASES
+        @cases['initial'].each do |testCase|
+            exitCode = runTestCase(testCase, 'initial', nil)
+        end
+
+        @state = @@RUNNING_MAIN_CASES
+        while (not @needToHalt)
+            testCase = selectRandomMainTestCase()
+            exitCode = runTestCase(testCase, 'main', nil)
+        end
+
+        @state = @@RUNNING_FINAL_CASES
+        @cases['final'].each do |testCase|
+            exitCode = runTestCase(testCase, 'final', nil)
+        end
+
+        @testEndTime = Time.now()
+        elapsedTime = (@testEndTime - @testStartTime).to_i
+        log("FINISHED in " + formatSeconds(elapsedTime))
     end
 
 end # class

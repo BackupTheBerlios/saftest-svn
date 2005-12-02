@@ -261,7 +261,7 @@ class SAFTestUtils
 
         @safSys = SAFSys.new()
         @rootDir = ENV['SAFTEST_ROOT']
-        @workDirs = ['conf', 'run', 'log', 'tmp', 'implementation']
+        @workDirs = ['conf', 'run', 'log', 'tmp', 'implementation', 'objs']
 
         @logLevel = 0
 
@@ -292,6 +292,10 @@ class SAFTestUtils
 
     def tmpDir()
         return '%s/%s' % [workDir, 'tmp']
+    end
+
+    def objDir()
+        return '%s/%s' % [workDir, 'objs']
     end
 
     def implementationDir()

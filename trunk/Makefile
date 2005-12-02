@@ -19,86 +19,37 @@
 #
 # Usage:
 #   1.  Fill out the implementation specific vars.mk
-#   2.  make IMPLEMENTATION=<implementation> <target>
+#   2.  make IMPLEMENTATION=<implementation> <LIB>=1 <LIB>=1 <target>
 #
 # Example:
-#   make IMPLEMENTATION=serviceguard driver/saf_driver cases/clm/driver/clm_driver.so
-
-TIMEOUT_CMD = t0
+#   make IMPLEMENTATION=serviceguard CLM=1 LCK=1 all
 
 LDFLAGS := -ldl -lpthread -lglib-2.0
 
 VERBOSE = 0
+CLM = 0
+LCK = 0
+MSG = 0
 
 include implementation/$(IMPLEMENTATION)/vars.mk
+include build/vars.mk
 
-CLM_DIR = cases/clm
-LCK_DIR = cases/lck
-MSG_DIR = cases/msg
+# This will get appended to in the individual specification vars.mk files
+test_libs=
 
-all: driver/saf_driver libs
+ifeq ($(CLM), 1)
+include cases/clm/vars.mk
+endif
 
-libs: $(CLM_DIR)/driver/clm_driver.so \
-      $(LCK_DIR)/driver/lck_driver.so \
-      $(MSG_DIR)/driver/msg_driver.so
+ifeq ($(LCK), 1)
+include cases/lck/vars.mk
+endif
 
-CFLAGS = -g -Wall -Werror -D__AIS_B_TEST__ 
+ifeq ($(MSG), 1)
+include cases/msg/vars.mk
+endif
 
-LIBS = -L/usr/local/glib-2.6.3/lib $(IMPLEMENTATION_LIBS)
-
-STANDARD_INCLUDE = -Iinclude/standard
-
-SHARED_INCLUDE = -I/usr/local/glib-2.6.3/include/glib-2.0 -I/usr/local/glib-2.6.3/lib/glib-2.0/include -Iinclude $(STANDARD_INCLUDE)
-
-COMMON_OBJS = driver/saftest_comm.o \
-              driver/saftest_log.o
-
-DRIVER_OBJS = $(COMMON_OBJS) driver/driver_utils.o
-
-DRIVER_LIB_OBJS = $(COMMON_OBJS) driver/driver_lib_utils.o
-
-driver/saftest_comm.o: driver/saftest_comm.c
-	$(CC) $(CFLAGS) $(SHARED_INCLUDE) -c $< -o $@
-
-driver/saftest_log.o: driver/saftest_log.c
-	$(CC) $(CFLAGS) $(SHARED_INCLUDE) -c $< -o $@
-
-driver/driver_utils.o: driver/driver_utils.c
-	$(CC) $(CFLAGS) $(SHARED_INCLUDE) -c $< -o $@
-
-driver/driver_lib_utils.o: driver/driver_lib_utils.c
-	$(CC) $(CFLAGS) $(SHARED_INCLUDE) -c $< -o $@
-
-driver/saf_driver: driver/driver_main.c $(DRIVER_OBJS)
-	$(CC) $(CFLAGS) $(SHARED_INCLUDE) $(LIBS) $^ -o $@ $(LDFLAGS) 
-
-$(CLM_DIR)/driver/clm_driver.o: $(CLM_DIR)/driver/clm_driver.c
-	$(CC) $(CFLAGS) $(LIBS) $(SHARED_INCLUDE) -c $< -o $@
-
-$(CLM_DIR)/driver/clm_driver.so: $(CLM_DIR)/driver/clm_driver.o \
-                                 $(DRIVER_LIB_OBJS)
-	$(LD) $(LIBS) -shared -o $@ $^ $(LDFLAGS) -lSaClm 
-
-$(LCK_DIR)/driver/lck_driver.o: $(LCK_DIR)/driver/lck_driver.c
-	$(CC) $(CFLAGS) $(LIBS) $(SHARED_INCLUDE) -c $< -o $@
-
-$(LCK_DIR)/driver/lck_driver.so: $(LCK_DIR)/driver/lck_driver.o \
-                                 $(DRIVER_LIB_OBJS)
-	$(LD) $(LIBS) -shared -o $@ $^ $(LDFLAGS) -lSaLck
-
-$(MSG_DIR)/driver/msg_driver.o: $(MSG_DIR)/driver/msg_driver.c
-	$(CC) $(CFLAGS) $(LIBS) $(SHARED_INCLUDE) -c $< -o $@
-
-$(MSG_DIR)/driver/msg_driver.so: $(MSG_DIR)/driver/msg_driver.o \
-                                 $(DRIVER_LIB_OBJS)
-	$(LD) $(LIBS) -shared -o $@ $^ $(LDFLAGS) -lSaMsg
-
-$(TIMEOUT_CMD):$(TIMEOUT_CMD).c
-	@echo Building timeout helper files; \
-	$(CC) -O2 -o $@ $< ; \
+all: $(FINAL_OBJDIR)/dir_exists $(FINAL_OBJDIR)/saf_driver $(test_libs)
 
 clean:
-	@rm -f $(TIMEOUT_CMD)
-	@rm -f driver/saf_driver
-	@find . -name "*.o" -print | xargs rm -f
-	@find . -name "*.so" -print | xargs rm -f
+	rm -rf $(OBJDIR)

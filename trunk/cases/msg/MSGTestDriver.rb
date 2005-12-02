@@ -7,12 +7,9 @@ class MSGTestDriver < SAFTestDriver::SAFTestDriver
     @@nextInstanceID = 1
 
     def initialize(node)
-        driverLib = "%s/AIS-msg-%s/driver/msg_driver.so" % \
-                    [ENV['SAFTEST_ROOT'],
-                     SAFTestUtils::SAFTestUtils.getAISLibVersion()]
         instanceID = @@nextInstanceID
         @@nextInstanceID += 1
-        super(node, driverLib, instanceID)
+        super(node, nil, instanceID)
     end
 
     def getName()

@@ -95,6 +95,12 @@ if op == 'create'
         $utils.makeWorkDirs()
     end
 
+    # Copy the binary files to the work dir
+    cmd = "cp -a %s/objs/final/* %s" % [ENV['SAFTEST_ROOT'],
+                                        $utils.objDir()]
+    $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
+                              "Error running %s" % [cmd])
+
     if xmlConfig != nil
         config = SAFTestConfig.new
         config.loadFromXML(xmlConfig)
@@ -129,6 +135,13 @@ if op == 'create'
                          'Number of Long-Lived Drivers', 1, 10, 3)
         SAFTestUtils.SUPPORTED_SPECS.each do |spec|
             config.promptYesNo('main', "testSpec#{spec}", "Test #{spec}", true)
+            if config.valueIsYes('main', "testSpec#{spec}")
+                libDriver = "%s/%s_driver.so" % [$utils.objDir(),
+                                                 spec.downcase()]
+                if not FileTest.exists?(libDriver)
+                    Log.errExit("#{libDriver} does not exist")
+                end
+            end
         end
     end
     config.save()

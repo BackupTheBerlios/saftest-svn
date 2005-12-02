@@ -19,11 +19,11 @@ class StartDriversCase < SAFTestCase
             lower = spec.downcase()
             upper = spec.upcase()
             if @config.valueIsYes('main', "testSpec#{upper}")
-                driverLibs << "cases/#{lower}/driver/#{lower}_driver.so"
+                driverLibs << "%s/#{lower}_driver.so" % [@utils.objDir()]
             end
         end
         driverLibs.each do |lib|
-            libPath += ",%s/%s" % [ENV['SAFTEST_ROOT'], lib] 
+            libPath += ",%s" % [lib] 
         end
         print "Num Drivers: %d\n" % [@config.getIntValue('main', 'numLongLivedDrivers')]
         @implementation.getCluster().getNodes().each do |node|

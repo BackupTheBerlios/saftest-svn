@@ -7,12 +7,9 @@ class LCKTestDriver < SAFTestDriver::SAFTestDriver
     @@nextInstanceID = 1
 
     def initialize(node)
-        driverLib = "%s/AIS-lck-%s/driver/lck_driver.so" % \
-                    [ENV['SAFTEST_ROOT'],
-                     SAFTestUtils::SAFTestUtils.getAISLibVersion()]
         instanceID = @@nextInstanceID
         @@nextInstanceID += 1
-        super(node, driverLib, instanceID)
+        super(node, nil, instanceID)
     end
 
     def getName()

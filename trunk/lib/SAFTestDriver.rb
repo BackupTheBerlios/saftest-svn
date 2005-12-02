@@ -29,8 +29,13 @@ class SAFTestDriver < SAFTestUtils
             myInstanceID = instanceID
         end
 
-        @driverPath = ENV['SAFTEST_ROOT'] + '/driver/saf_driver'
-        @driverLibs = driverLibs
+        @driverPath = "%s/saf_driver" % [objDir()]
+        if driverLibs == nil
+            @driverLibs = "%s/%s.so" % [objDir(), getName()]
+        else 
+            @driverLibs = driverLibs
+        end
+
         @instanceID = myInstanceID
         @name = '%s_%d' % [getName(), @instanceID]
         @socketFile = "%s/saf_driver_%d.sock"  % [runDir(), @instanceID]

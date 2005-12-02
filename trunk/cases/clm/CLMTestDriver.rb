@@ -30,9 +30,7 @@ class CLMTestDriver < SAFTestDriver
     @@nextInstanceID = 1
 
     def initialize(node=nil, instanceID=0)
-        driverLib = "%s/cases/clm/driver/clm_driver.so" % \
-                    [ENV['SAFTEST_ROOT']]
-        super(node, driverLib, instanceID)
+        super(node, nil, instanceID)
     end
 
     def getName()

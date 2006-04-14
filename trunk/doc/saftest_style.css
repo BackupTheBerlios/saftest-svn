@@ -1,0 +1,37 @@
+body {font: 0.825em Verdana, sans-serif; background: #ffffff;}
+h1, h2, h3, h4 {color: #ffffff; padding-left: 20px;}
+h1 {background: #003366; font-size: 170%;}
+h2 {background: #004477; font-size: 130%;}
+h3 {background: #336699; font-size: 110%;}
+h4 {background: #d5d2d5; color: #004477;}
+td, th {text-align: left; vertical-align: top; padding: 10px; border-top: 1px dashed blue;}
+tr.choice {background-color: #ccffcc;}
+tr.heading {background-color: #ccccff;}
+p.todo {color: #e56701;}
+blockquote {font-style: italic; 
+            padding: 2px;
+            background: #efefef; 
+            border: 1px gray dashed;}
+a.cite {text-decoration: none;}
+div.subsection {margin-left: 2em;}
+div.reference {margin-top: 1em; border: 1px gray dashed; padding: .5em;}
+div.reference p.name {font-style: bold; font-size: 90%; display: inline;}
+div.reference p.title {font-style: bold; font-size: 110%; display: inline;}
+div.reference p.part {font-size: 90%; margin: 0; margin-left: 1em;}
+div.reference p.url {margin: 0; margin-left: 1em;}
+div.reference p.author {margin: 0; padding: .001em}
+
+pre.example {
+    border: 2px ridge black;
+    background: #dddddd;
+    width: 90%;
+    margin-left: 12px;
+    padding: 8px;
+    font-family: Courier, monospace;
+    font-weight: bold;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+#author {margin: 0; padding: .001em}
+#date   {margin: 0; padding: .001em}
+#copyright {text-align: center;}

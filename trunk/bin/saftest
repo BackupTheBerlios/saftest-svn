@@ -1,14 +1,5 @@
 #!/usr/bin/ruby
 
-module SAFTest
-
-$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
-require 'SAFTestUtils'
-require 'SAFTestConfig'
-require 'SAFTestEngine'
-require 'SAFTestBundle'
-require 'SAFTestReport'
-
 class Log
 
     def Log.usage(msg = nil)
@@ -42,13 +33,38 @@ class Log
     end
 end # class
 
-if not ENV.has_key?('SAFTEST_ROOT')
-    Log.errExit("You must define a SAFTEST_ROOT environment variable")
+module SAFTest
+
+sourceDir = nil
+if ENV.has_key?('SAFTEST_DEVEL_ROOT')
+    sourceDir = ENV['SAFTEST_DEVEL_ROOT']
+else
+    optDirExists = true
+    begin
+        entries = Dir.entries('/opt/saftest')
+    rescue SystemCallError
+        optDirExists = false
+    end
+    if optDirExists
+        sourceDir = '/opt/saftest'
+    end
 end
+if sourceDir == nil
+    Log.errExit("Unable to find a source directory.  Either set the SAFTEST_DEVEL_ROOT env variable or install SAFTest to /opt/saftest")
+end
+
+$: << "%s/lib" % [sourceDir]
+
+require 'SAFTestUtils'
+require 'SAFTestConfig'
+require 'SAFTestEngine'
+require 'SAFTestBundle'
+require 'SAFTestReport'
 
 # globals
 $log = Log.new()
 $utils = SAFTestUtils.new()
+$utils.setLogLevel(-1)
 op = nil
 
 while (true)
@@ -70,6 +86,7 @@ while (true)
 end
 
 if op == 'create'
+    nodes = []
     xmlConfig = nil
     while (true)
         opt = ARGV.shift;
@@ -84,25 +101,18 @@ if op == 'create'
         end
     end
 
-    workDir = $utils.workDir
-    workDirExists = true
+    rootDirExists = true
     begin
-        entries = Dir.entries(workDir)
+        entries = Dir.entries($utils.rootDir)
     rescue SystemCallError
-        workDirExists = false
+        rootDirExists = false
     end
 
-    if workDirExists
-        Log.errExit("Directory %s already exists" % [workDir])
+    if rootDirExists
+        Log.errExit("Directory %s already exists" % [$utils.rootDir])
     else
-        $utils.makeWorkDirs()
+        $utils.setupRootDir()
     end
-
-    # Copy the binary files to the work dir
-    cmd = "cp -a %s/objs/final/* %s" % [ENV['SAFTEST_ROOT'],
-                                        $utils.objDir()]
-    $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
-                              "Error running %s" % [cmd])
 
     if xmlConfig != nil
         config = SAFTestConfig.new
@@ -192,6 +202,18 @@ if op == 'create'
            $utils.implementationDir]
     $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
                               "Error running #{cmd}")
+    nodes = config.getStrListValue('main', 'testNodes')
+    nodes.each do |node|
+        next if node == $utils.simpleHostname()
+        $log.print("Syncing %s to node #{node}" % [$utils.rootDir])
+        cmd = "mkdir -p %s" % [$utils.rootDir]
+        $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
+                                  "Error running #{cmd}", node)
+
+        cmd = "scp -r %s/* #{node}:%s" % [$utils.rootDir, $utils.rootDir]
+        $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
+                                  "Error running #{cmd}")
+    end
 elsif op == 'start'
     engine = SAFTestEngine::SAFTestEngine.new()
     engine.start()
@@ -202,9 +224,19 @@ elsif op == 'report'
     report = SAFTestReport.new()
     report.printReport()
 elsif op == 'delete'
-    cmd = 'rm -rf %s' % [$utils.workDir]
-    $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS, 
-                              "Error running %s" % [cmd])
+    cmd = 'rm -rf %s' % [$utils.rootDir]
+    if File.exists?($utils.configXMLFile())
+        config = SAFTestConfig.new()
+        config.loadFromXML($utils.configXMLFile())
+        nodes = config.getStrListValue('main', 'testNodes')
+        nodes.each do |node|
+            $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS, 
+                                      "Error running %s" % [cmd], node)
+        end
+    else
+        $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS, 
+                                  "Error running %s" % [cmd])
+    end
 else
     Log.usage("unknown operation: %s" % [op])
 end

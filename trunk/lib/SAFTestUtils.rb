@@ -270,6 +270,7 @@ class SAFTestUtils
 
         @safSys = SAFSys.new()
         @rootDir = ENV['SAFTEST_ROOT']
+        @sourceDirs = ['bin', 'cases', 'conf', 'implementation', 'lib', 'xml']
         @workDirs = ['conf', 'run', 'log', 'tmp', 'implementation', 'objs',
                      'action']
 
@@ -328,12 +329,45 @@ class SAFTestUtils
         return '%s/%s' % [implementationDir, 'implementation.xml']
     end
 
-    def makeWorkDirs()
+    def setupRootDir()
+        sourceDir = nil
+        if ENV.has_key?('SAFTEST_DEVEL_ROOT')
+            sourceDir = ENV['SAFTEST_DEVEL_ROOT']
+        else
+            optDirExists = true
+            begin
+                entries = Dir.entries('/opt/saftest')
+            rescue SystemCallError
+                optDirExists = false
+            end
+            if optDirExists
+                sourceDir = '/opt/saftest'
+            end
+        end
+        if sourceDir == nil
+            Log.errExit("Unable to find a source directory.  Either set the SAFTEST_DEVEL_ROOT env variable or install SAFTest to /opt/saftest")
+        end
+
+        @sourceDirs.each do |dir|
+            cmd = 'mkdir -p %s/%s' % [rootDir, dir]
+            runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
+                               "Error running %s" % [cmd])
+            cmd = 'cp -a %s/%s/* %s/%s' % [sourceDir, dir, rootDir, dir]
+            runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
+                               "Error running %s" % [cmd])
+        end
+
         @workDirs.each do |dir|
             cmd = 'mkdir -p %s/%s' % [workDir, dir]
             runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
                                "Error running %s" % [cmd])
         end
+
+        # Copy the binary files to the work dir
+        cmd = "cp -a %s/objs/final/* %s" % [sourceDir, objDir]
+        $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
+                                  "Error running %s" % [cmd])
+
     end
 
     def tmpFile(fileName)

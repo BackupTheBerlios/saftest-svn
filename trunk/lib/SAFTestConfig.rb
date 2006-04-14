@@ -19,7 +19,6 @@ class SAFTestConfig < SAFTestUtils
     end
 
     def getStrListValue(section, key)
-        print "list is \"%s\"\n" % [@config[section][key]]
         return [].concat(@config[section][key].split(' '))
     end
 

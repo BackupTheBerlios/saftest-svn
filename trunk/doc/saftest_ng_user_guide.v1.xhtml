@@ -21,7 +21,7 @@
 
     <p id="author">Chad Tindel &lt;chad@tindel.net&gt;</p>
 
-    <p id="date">Last Updated 4 April 2006</p>
+    <p id="date">Last Updated 14 April 2006</p>
 
     <p id="description">Instructions for how to build, configure, and use
     SAFTest Next Generation.</p>
@@ -54,6 +54,31 @@
       <p>This document will cover the external interfaces of SAFTest.  First 
       the build process will be discussed, then we will discuss the lifecycle
       of a test, and end with test report generation.</p>
+    </div>
+
+    <div class="section">
+
+      <h2>Getting SAFTest</h2>
+
+      <p>SAFTest is available through an SVN repository on svn.berlios.de.  If
+      you need an SVN client you should go to the 
+      <a href="http://subversion.tigris.org/">Subversion website</a>.
+      </p>
+
+      <p>If you are not a SAFTest developer, you can access the source
+      anonymously by running 
+      <i>svn checkout svn://svn.berlios.de/saftest/trunk</i>
+      </p>
+
+      <p>If you are a SAFTest developer you can access the source code 
+      directly via svn+ssh.  To get the latest SAFTest source from SVN, run 
+      <i>svn checkout svn+ssh://svn.berlios.de/svnroot/repos/saftest/trunk</i>
+      </p>
+      
+      <p>For more details see the 
+      <a href="https://developer.berlios.de/docman/display_doc.php?docid=394&group_id=2">
+      berlios subversion howto</a>.
+      </p>
     </div>
 
     <div class="section">
@@ -131,10 +156,19 @@
       <div class="section">
         <h3>Environment Variables</h3>
 
-        <p>There is only one environment variable that must be defined in
-        the root user's environment.  This variable is called
-        <b>SAFTEST_ROOT</b> and must point to the location where your SAFTest
-        installation resides.</p>
+        <p>SAFTest actually resides in two places.  The first is your 
+        <i>installed copy</i> (or development copy, if you are a SAFTest
+        developer).  The default location for this copy is /opt/saftest.  If
+        you want to keep it somewhere else, like ~/src/saftest then you need
+        to define an environment variable called <b>SAFTEST_DEVEL_ROOT</b>
+        which points to this directory.  An example would be
+        <b>SAFTEST_ROOT=/root/src/saftest</b></p>
+
+        <p>The other copy of SAFTest is the <i>working copy</i>.  This copy
+        is created by running <i>saftest create</i> and exists on every node
+        in your configuration.  You must define a variable called
+        <b>SAFTEST_ROOT</b> which points to where you want the working copy
+        to reside.  An example would be <b>SAFTEST_ROOT=/var/opt/saftest</b>
       </div>
       
       <div class="section">

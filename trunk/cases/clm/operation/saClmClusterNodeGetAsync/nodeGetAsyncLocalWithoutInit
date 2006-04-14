@@ -1,0 +1,31 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+require 'SAFTestUtils'
+
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
+$: << clmDir
+require 'CLMTestDriver'
+
+class NodeGetAsyncLocalWithoutInitCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.createShortLivedTestResource()
+        d.clusterNodeGetAsync(resource, "SA_CLM_LOCAL_NODE_ID", nil,
+                              SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteTestResource(resource)
+        passed()
+    end
+end
+
+test = NodeGetAsyncLocalWithoutInitCase.new()
+test.run()
+
+end # module

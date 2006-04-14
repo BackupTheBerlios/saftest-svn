@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SAFTestBundle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SAFTestBundle.xsd" schemaVersion="1">
+<SAFTestCaseList type="initial" mode="sequential">
+ <SAFTestCase>
+  <name>clm_init_all</name>
+  <cmd>clm/lifecycle/saClmInitialize/initialize</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_select_obj_get_all</name>
+  <cmd>clm/lifecycle/saClmSelectionObjectGet/selectionObjectGet</cmd>
+  <weight/>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+<SAFTestCaseList type="main" mode="random">
+ <SAFTestCase>
+  <name>clm_node_get_local</name>
+  <cmd>clm/operation/saClmClusterNodeGet/nodeGet --node-id=local</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_node_get_random</name>
+  <cmd>clm/operation/saClmClusterNodeGet/nodeGet --node-id=random</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_node_get_async_local</name>
+  <cmd>clm/operation/saClmClusterNodeGetAsync/nodeGetAsync --node-id=local</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_node_get_async_random</name>
+  <cmd>clm/operation/saClmClusterNodeGetAsync/nodeGetAsync --node-id=random</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+<SAFTestCaseList type="final" mode="sequential">
+ <SAFTestCase>
+  <name>clm_finalize_all</name>
+  <cmd>clm/lifecycle/saClmFinalize/finalize</cmd>
+  <weight/>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+</SAFTestBundle>

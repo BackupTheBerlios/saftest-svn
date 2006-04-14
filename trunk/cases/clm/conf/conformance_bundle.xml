@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SAFTestBundle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SAFTestBundle.xsd" schemaVersion="1">
+<SAFTestCaseList type="initial" mode="sequential">
+ <SAFTestCase>
+  <name>clm_init_all</name>
+  <cmd>clm/lifecycle/saClmInitialize/initialize</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_select_obj_get_all</name>
+  <cmd>clm/lifecycle/saClmSelectionObjectGet/selectionObjectGet</cmd>
+  <weight/>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+<SAFTestCaseList type="main" mode="sequential">
+ <SAFTestCase>
+  <name>clm_init_invalid_version</name>
+  <cmd>clm/lifecycle/saClmInitialize/initializeInvalidVersion</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_init_null_callback</name>
+  <cmd>clm/lifecycle/saClmInitialize/initializeNullCallbacks</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_init_null_handle</name>
+  <cmd>clm/lifecycle/saClmInitialize/initializeNullHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_init_null_version</name>
+  <cmd>clm/lifecycle/saClmInitialize/initializeNullVersion</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_init_two_times</name>
+  <cmd>clm/lifecycle/saClmInitialize/initializeTwice</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_finalize_two_times</name>
+  <cmd>clm/lifecycle/saClmFinalize/finalizeTwice</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_finalize_without_init</name>
+  <cmd>clm/lifecycle/saClmFinalize/finalizeWithoutInit</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_select_object_get_with_finalized_handle</name>
+  <cmd>clm/lifecycle/saClmSelectionObjectGet/selectionObjectGetFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_select_object_get_invalid_handle</name>
+  <cmd>clm/lifecycle/saClmSelectionObjectGet/selectionObjectGetInvalidHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_select_object_get_null_selection_object</name>
+  <cmd>clm/lifecycle/saClmSelectionObjectGet/selectionObjectGetNullSelectionObject</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_select_object_get_null_selection_object</name>
+  <cmd>clm/lifecycle/saClmSelectionObjectGet/selectionObjectGetNullSelectionObject</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>node_get_async_local_without_init</name>
+  <cmd>clm/operation/saClmClusterNodeGetAsync/nodeGetAsyncLocalWithoutInit</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>node_get_async_local_with_finalized_handle</name>
+  <cmd>clm/operation/saClmClusterNodeGetAsync/nodeGetAsyncLocalFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>node_get_async_local_with_no_callback</name>
+  <cmd>clm/operation/saClmClusterNodeGetAsync/nodeGetAsyncLocalNoCallback</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_changes_only_stop_two_times</name>
+  <cmd>clm/operation/saClmClusterTrackStop/clusterTrackChangesOnlyStopTwice</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_changes_stop_two_times</name>
+  <cmd>clm/operation/saClmClusterTrackStop/clusterTrackChangesStopTwice</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_stop_with_finalized_handle</name>
+  <cmd>clm/operation/saClmClusterTrackStop/clusterTrackStopFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_stop_with_invalid_handle</name>
+  <cmd>clm/operation/saClmClusterTrackStop/clusterTrackStopInvalidHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_stop_without_track</name>
+  <cmd>clm/operation/saClmClusterTrackStop/clusterTrackStopWithoutTrack</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_stop_with_track_current</name>
+  <cmd>clm/operation/saClmClusterTrackStop/clusterTrackStopWithTrackCurrent</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_changes_and_changes_only</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrackChangesAndChangesOnly</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_current_with_finalized_handle</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrackCurrentFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_current_multiple_times</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrackCurrentMultiple</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_current_with_no_callback</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrackCurrentNoCallback</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_current_null_notification_buffer</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrackCurrentNullNotificationBuffer</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_current_without_init</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrackCurrentWithoutInit</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_invalid_flags</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrackInvalidFlags</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>cluster_track_invalid_number_of_items</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrackInvalidNumberOfItems</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>node_get_local_finalized_handle</name>
+  <cmd>clm/operation/saClmClusterNodeGet/nodeGetLocalFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>node_get_local_null_cluster_node</name>
+  <cmd>clm/operation/saClmClusterNodeGet/nodeGetLocalNullClusterNode</cmd>  
+  <weight/>
+ </SAFTestCase> 
+
+ <SAFTestCase>
+  <name>node_get_local_without_init</name>
+  <cmd>clm/operation/saClmClusterNodeGet/nodeGetLocalWithoutInit</cmd>  
+  <weight/>
+ </SAFTestCase> 
+ 
+ <SAFTestCase>  
+  <name>node_get_local_zero_timeout</name>
+  <cmd>clm/operation/saClmClusterNodeGet/nodeGetLocalZeroTimeout</cmd>  
+  <weight/>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+<SAFTestCaseList type="final" mode="sequential">
+ <SAFTestCase>
+  <name>clm_finalize_all</name>
+  <cmd>clm/lifecycle/saClmFinalize/finalize</cmd>
+  <weight/>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+</SAFTestBundle>

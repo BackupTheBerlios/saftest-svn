@@ -1,0 +1,69 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+require 'SAFTestDriver'
+
+class StartDriversCase < SAFTestCase
+
+    def initialize()
+        super()
+    end
+
+    def run()
+        libPath = ""
+        driverLibs = []
+
+        SAFTestUtils.SUPPORTED_SPECS.each do |spec|
+            lower = spec.downcase()
+            upper = spec.upcase()
+            if @config.valueIsYes('main', "testSpec#{upper}")
+                driverLibs << "%s/#{lower}_driver.so" % [@utils.objDir()]
+            end
+        end
+
+        driverLibs.each do |lib|
+            libPath += ",%s" % [lib] 
+        end
+
+        @implementation.getCluster().getNodes().each do |node|
+            ndx = 0
+
+            while ndx < @config.getIntValue('main', 'numLongLivedDrivers')
+                driver = SAFTestDriver.new(node, libPath[1, libPath.length], ndx+1)
+                pidFile = driver.getPidFile()
+
+                cmd = "cat %s" % pidFile 
+                array = captureCommand(cmd, node.getName())
+                ret, lines = array[0], array[1]
+
+                if ret != 0
+                    rsafe "%s failed on node %s with status %d" % \
+                      [cmd, @node.getName(), ret]
+                end
+
+                lines.each do |line|
+                    if line =~ /^(\d+)/ then
+                        @pid = $1
+                        log("Killing Driver pid %s" % [@pid])
+                        cmd = "kill -9 %s" % [@pid]
+                        runCommand("kill -9 %s" % [@pid], node.getName()) 
+                    end
+                end
+                if nil == @pid
+                   rsafe "Unable to find a pid for driver %s" % [@name]
+                end
+
+                ndx += 1
+            end
+        end
+        passed()
+    end
+end
+
+test = StartDriversCase.new()
+test.run()
+
+end # module

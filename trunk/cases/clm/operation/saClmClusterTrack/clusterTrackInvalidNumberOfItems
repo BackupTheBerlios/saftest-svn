@@ -1,0 +1,36 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+require 'SAFTestUtils'
+
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
+$: << clmDir
+require 'CLMTestDriver'
+
+class ClusterTrackInvalidNumberOfItemsCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.createShortLivedTestResource()
+        d.init(resource, true, true, "SA_DISPATCH_ONE",
+               SAFTestUtils.SA_AIS_OK)
+        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
+        d.clusterTrack(resource, true, false, false, false, 
+                       false, false, 0, nil,
+                       SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
+        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
+        d.deleteTestResource(resource)
+        passed()
+    end
+end
+
+test = ClusterTrackInvalidNumberOfItemsCase.new()
+test.run()
+
+end # module

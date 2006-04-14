@@ -1,0 +1,25 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class UnlockPRAsyncLockCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        failed("need to implement")
+    end
+end
+
+test = UnlockPRAsyncLockCase.new()
+test.run()
+
+end # module

@@ -1,0 +1,35 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class LockEXNullLockIDCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = LCKTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.createShortLivedTestResource()
+        d.init(resource, true, true, true, true,
+                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
+        d.resourceOpen(resource, "lock1", SAFTestUtils.SA_AIS_OK)
+        d.lockSync(resource, 'EX', 0, true, false, true, false, false,
+                   'SA_LCK_LOCK_GRANTED', SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
+        d.resourceClose(resource, SAFTestUtils.SA_AIS_OK)
+        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
+        d.deleteTestResource(resource)
+        passed()
+    end
+end
+
+test = LockEXNullLockIDCase.new()
+test.run()
+
+end # module

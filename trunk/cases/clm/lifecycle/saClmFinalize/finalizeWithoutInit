@@ -1,0 +1,29 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
+$: << clmDir
+require 'CLMTestDriver'
+
+class FinalizeWithoutInitCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.createShortLivedTestResource()
+        d.finalize(resource, SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteTestResource(resource)
+        passed()
+    end
+end
+
+test = FinalizeWithoutInitCase.new()
+test.run()
+
+end # module

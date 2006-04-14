@@ -1,0 +1,38 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
+$: << clmDir
+require 'CLMTestDriver'
+
+class DispatchBlockingCase < SAFTestCase
+    def initialize()
+        super()
+    end
+     
+    def run()
+        d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.createShortLivedTestResource()
+        invocation = d.generateInvocation()
+        d.init(resource, true, false, "SA_DISPATCH_BLOCKING",
+               SAFTestUtils.SA_AIS_OK)
+        d.clusterNodeGetCBCount(resource, 0)
+        d.clusterNodeGetAsyncWithInvocation(resource, invocation,
+                                            "SA_CLM_LOCAL_NODE_ID",
+                                            nil, SAFTestUtils.SA_AIS_OK)
+        d.clusterNodeGetAsyncWithInvocation(resource, invocation,
+                                            "SA_CLM_LOCAL_NODE_ID",
+                                            nil, SAFTestUtils.SA_AIS_OK)
+        d.waitForClusterNodeGetCBCount(resource, 2)
+        passed()
+    end
+end
+
+test = DispatchBlockingCase.new()
+test.run()
+
+end # module

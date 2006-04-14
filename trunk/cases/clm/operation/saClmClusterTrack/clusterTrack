@@ -1,0 +1,130 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+require 'SAFTestUtils'
+
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
+$: << clmDir
+require 'CLMTestDriver'
+
+class ClusterTrackCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        @d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        @resource = @d.getRandomTestResource()
+        validateCluster = nil
+        validateNode = nil
+        numberOfItems = 0
+        trackCurrent = false
+        trackChanges = false
+        trackChangesOnly = false
+        invalidTrackFlags = false
+        nullNotificationBuffer = false
+        nullClusterNotification = false
+        xmlFile = tmpFile("cluster_track")
+        nodeName = nil
+
+        if getParam('track-current') == 'yes'
+            trackCurrent = true
+            validateCluster = @d.getImplementation().getCluster()
+            numberOfItems = validateCluster.getNodes().length
+        end
+        if getParam('track-changes') == 'yes'
+            trackChanges = true
+        end
+        if getParam('track-changes-only') == 'yes'
+            trackChangesOnly = true
+        end
+
+        if trackChanges == true and trackChangesOnly == true
+            skipped("Can not specify track-changes and track-changes-only concurrently")
+        end 
+
+        @d.clusterTrack(@resource, trackCurrent, trackChanges, 
+                             trackChangesOnly,
+                             invalidTrackFlags, nullNotificationBuffer, 
+                             nullClusterNotification, numberOfItems,
+                             xmlFile, SAFTestUtils.SA_AIS_OK)
+        if trackCurrent
+            cluster = @d.getImplementation().getClusterFromFile(xmlFile)
+            @d.compareCluster(cluster, validateCluster)
+        end
+
+        if trackChangesOnly or trackChanges 
+            # Cause a reformation
+            @currentCluster = @d.getImplementation().getCluster()
+
+            if @currentCluster.getNodes().length < 2
+                skipped("Need at least 2 nodes to continue, only have %d" % \
+                        [@currentCluster.getNodes().length])
+            end
+
+            downNode = nil
+            @currentCluster.getDownNodes().each do |node|
+               if !node.isLocalNode()
+                  downNode = node
+                  nodeName = downNode.getName()
+                  break
+               end
+            end
+
+            if downNode != nil
+                runNodeStartScenario(nodeName)
+            else
+                upNode = nil
+                @currentCluster.getUpNodes().each do |node|
+                    if !node.isLocalNode()
+                        upNode = node
+                        nodeName = upNode.getName()
+                        break
+                    end
+                end
+                runNodeStopScenario(nodeName)
+            end
+
+            @d.waitForFileExists(xmlFile)
+        end
+
+        validateCluster = @d.getImplementation().getCluster()
+        cluster = @d.getImplementation().getClusterFromFile(xmlFile)
+
+        if trackChanges 
+            @d.compareCluster(cluster, validateCluster)
+        end 
+
+        if trackChangesOnly
+            validateNode = validateCluster.getNodeByName(nodeName)
+            node = @d.getImplementation().getNodeFromFile(xmlFile)
+            @d.compareCluster(node, validateNode)
+        end 
+
+        File.unlink(xmlFile)
+
+        passed()
+    end
+
+    def runNodeStopScenario(nodeName)
+        if !@currentCluster.getNodeByName(nodeName).getMember()
+            raise "%s is not a running node" % [nodeName]
+        end
+        @d.getImplementation().stopNode(nodeName)
+    end
+
+    def runNodeStartScenario(nodeName)
+        if @currentCluster.getNodeByName(nodeName).getMember()
+            raise "%s is not a down node" % [nodeName]
+        end
+        @d.getImplementation().startNode(nodeName)
+    end
+end
+
+test = ClusterTrackCase.new()
+test.run()
+
+end # module

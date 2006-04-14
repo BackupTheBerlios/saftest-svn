@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SAFTestBundle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SAFTestBundle.xsd" schemaVersion="1">
+<SAFTestCaseList type="initial" mode="sequential">
+ <SAFTestCase>
+  <name>lck_init_all</name>
+  <cmd>lck/lifecycle/saLckInitialize/initialize</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_select_obj_get_all</name>
+  <cmd>lck/lifecycle/saLckSelectionObjectGet/selectionObjectGet</cmd>
+  <weight/>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+<SAFTestCaseList type="main" mode="sequential">
+ <SAFTestCase>
+  <name>lck_init_invalid_version</name>
+  <cmd>lck/lifecycle/saLckInitialize/initializeInvalidVersion</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_init_null_callback</name>
+  <cmd>lck/lifecycle/saLckInitialize/initializeNullCallbacks</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_init_null_handle</name>
+  <cmd>lck/lifecycle/saLckInitialize/initializeNullHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_init_null_version</name>
+  <cmd>lck/lifecycle/saLckInitialize/initializeNullVersion</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_init_two_times</name>
+  <cmd>lck/lifecycle/saLckInitialize/initializeTwice</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_finalize_two_times</name>
+  <cmd>lck/lifecycle/saLckFinalize/finalizeTwice</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_finalize_without_init</name>
+  <cmd>lck/lifecycle/saLckFinalize/finalizeWithoutInit</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_select_object_get_with_finalized_handle</name>
+  <cmd>lck/lifecycle/saLckSelectionObjectGet/selectionObjectGetFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_select_object_get_invalid_handle</name>
+  <cmd>lck/lifecycle/saLckSelectionObjectGet/selectionObjectGetInvalidHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_select_object_get_null_selection_object</name>
+  <cmd>lck/lifecycle/saLckSelectionObjectGet/selectionObjectGetNullSelectionObject</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_select_object_get_null_selection_object</name>
+  <cmd>lck/lifecycle/saLckSelectionObjectGet/selectionObjectGetNullSelectionObject</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_close</name>
+  <cmd>lck/operation/saLckResourceClose/resourceClose</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_close_finalized_handle</name>
+  <cmd>lck/operation/saLckResourceClose/resourceCloseFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_close_two_times</name>
+  <cmd>lck/operation/saLckResourceClose/resourceCloseTwice</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_close_unopened_resource</name>
+  <cmd>lck/operation/saLckResourceClose/resourceCloseUnopenedResource</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_lock_exclusive</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusive</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_lock_exclusive_twice</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveTwice</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_lock_exclusive_closed_resource</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveClosedResource</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_lock_exclusive_no_resource_open</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveNoResourceOpen</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_lock_exclusive_null_lock_id</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveNullLockID</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_lock_exclusive_null_status</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveNullStatus</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_lock_invalid_flag</name>
+  <cmd>lck/operation/saLckResourceLock/lockInvalidFlag</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_lock_invalid_mode</name>
+  <cmd>lck/operation/saLckResourceLock/lockInvalidMode</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_lock_protected_read</name>
+  <cmd>lck/operation/saLckResourceLock/lockProtectedRead</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_async_lock_exclusive</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockExclusive</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_unlock_exclusive_async_lock</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockExclusiveAsyncLock</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_unlock_exclusive_async_lock</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockExclusiveAsyncLock</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_unlock_exclusive_finalized_handle</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockExclusiveFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_unlock_exclusive_sync_lock</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockExclusiveSyncLock</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_unlock_invalid_lock_id</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockInvalidLockID</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_unlock_protected_read_async_lock</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockProtectedReadAsyncLock</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_unlock_protected_read_sync_lock</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockProtectedReadSyncLock</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_unlock_exlusive_async_lock</name>
+  <cmd>lck/operation/saLckResourceUnlockAsync/asyncUnlockExclusiveAsyncLock</cmd>
+  <weight/>
+ </SAFTestCase>
+
+</SAFTestCaseList>
+
+<SAFTestCaseList type="final" mode="sequential">
+ <SAFTestCase>
+  <name>lck_finalize_all</name>
+  <cmd>lck/lifecycle/saLckFinalize/finalize</cmd>
+  <weight/>
+ </SAFTestCase>
+</SAFTestCaseList>
+
+</SAFTestBundle>

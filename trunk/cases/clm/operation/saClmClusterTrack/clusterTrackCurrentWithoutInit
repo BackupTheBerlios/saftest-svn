@@ -1,0 +1,32 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+require 'SAFTestUtils'
+
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
+$: << clmDir
+require 'CLMTestDriver'
+
+class ClusterTrackCurrentWithoutInitCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.createShortLivedTestResource()
+        d.clusterTrack(resource, true, false, false, false,
+                       true, true, 0, nil,
+                       SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteTestResource(resource)
+        passed()
+    end
+end
+
+test = ClusterTrackCurrentWithoutInitCase.new()
+test.run()
+
+end # module

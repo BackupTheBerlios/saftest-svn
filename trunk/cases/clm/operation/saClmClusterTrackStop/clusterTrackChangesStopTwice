@@ -1,0 +1,38 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
+$: << clmDir
+require 'CLMTestDriver'
+
+class ClusterTrackChangesStopTwiceCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.createShortLivedTestResource()
+        xmlFile = tmpFile("cluster_track")
+        d.init(resource, true, true, "SA_DISPATCH_ONE",
+               SAFTestUtils.SA_AIS_OK)
+        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
+        d.clusterTrack(resource, false, true, false,  false,
+                       true, true, 0, xmlFile, SAFTestUtils.SA_AIS_OK)
+        d.clusterTrackStop(resource, SAFTestUtils.SA_AIS_OK)
+        d.clusterTrackStop(resource, SAFTestUtils.SA_AIS_ERR_NOT_EXIST)
+        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
+        d.deleteTestResource(resource)
+        passed()
+    end
+end
+
+
+test = ClusterTrackChangesStopTwiceCase.new()
+test.run()
+
+end # module

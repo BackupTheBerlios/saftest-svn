@@ -1,0 +1,30 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class SelectionObjectGetInvalidHandleCase  < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = LCKTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.createShortLivedTestResource()
+        d.selectObjectGet(resource, false, 
+                   SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteTestResource(resource)
+        passed()
+    end
+end
+
+test = SelectionObjectGetInvalidHandleCase.new()
+test.run()
+
+end # module

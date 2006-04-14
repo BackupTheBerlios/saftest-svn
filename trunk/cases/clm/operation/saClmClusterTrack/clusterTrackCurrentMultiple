@@ -1,0 +1,36 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+require 'SAFTestUtils'
+
+clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
+$: << clmDir
+require 'CLMTestDriver'
+
+class ClusterTrackCurrentMultipleCase < SAFTestCase
+    @@TIMES_TO_RUN = 5
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = CLMTestDriver.getRandomLongLivedDriver(nil)
+        resource = d.getMainLongLivedTestResource()
+        d.clusterTrackResetCBCount(resource)
+        @@TIMES_TO_RUN.times do 
+            d.clusterTrack(resource, true, false, false, false, 
+                           true, false, 0, nil, 
+                           SAFTestUtils.SA_AIS_OK)
+        end
+        d.waitForClusterTrackCBCount(resource, @@TIMES_TO_RUN)
+        passed()
+    end
+end
+
+test = ClusterTrackCurrentMultipleCase.new()
+test.run()
+
+end # module

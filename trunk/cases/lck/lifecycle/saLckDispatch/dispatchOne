@@ -1,0 +1,61 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class DispatchOneCase < SAFTestCase
+    @@WAITER_SIGNAL = $$
+    def initialize()
+        super()
+    end
+
+    def run()
+        d1 = LCKTestDriver.getRandomLongLivedDriver(nil)
+        resource1 = d1.createShortLivedTestResource()
+        d1.init(resource1, true, true, true, true,
+                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
+        d1.resourceOpen(resource1, "lock1", SAFTestUtils.SA_AIS_OK)
+        d1.lockSync(resource1, 'EX', 0, false, false, true, false, false,
+                    'SA_LCK_LOCK_GRANTED', SAFTestUtils.SA_AIS_OK)
+
+        d2 = LCKTestDriver.getRandomLongLivedDriver(nil)
+        resource2 = d2.createShortLivedTestResource()
+        d2.init(resource2, true, true, true, true,
+                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
+        d2.resourceOpen(resource2, "lock1", SAFTestUtils.SA_AIS_OK)
+        d2.lockSync(resource2, 'EX', @@WAITER_SIGNAL,
+                    false, false, true, false, false,
+                    'SA_LCK_LOCK_NOT_QUEUED', SAFTestUtils.SA_AIS_OK)
+        d2.lockSync(resource2, 'EX', @@WAITER_SIGNAL,
+                    false, false, true, false, false,
+                    'SA_LCK_LOCK_NOT_QUEUED', SAFTestUtils.SA_AIS_OK)
+
+        d1.lockGetWaitCount(resource1, 0, 0)
+
+        d1.dispatch(resource1, "SA_DISPATCH_ONE", SAFTestUtils.SA_AIS_OK)
+        d1.lockGetWaitCount(resource1, @@WAITER_SIGNAL, 1)
+
+        d1.dispatch(resource1, "SA_DISPATCH_ONE", SAFTestUtils.SA_AIS_OK)
+        d1.lockGetWaitCount(resource1, @@WAITER_SIGNAL, 2)
+
+        d2.resourceClose(resource2, SAFTestUtils.SA_AIS_OK)
+        d2.finalize(resource2, SAFTestUtils.SA_AIS_OK)
+        d2.deleteTestResource(resource2)
+
+        d1.resourceClose(resource1, SAFTestUtils.SA_AIS_OK)
+        d1.finalize(resource1, SAFTestUtils.SA_AIS_OK)
+        d1.deleteTestResource(resource1)
+        passed()
+    end
+end
+
+test = DispatchOneCase.new()
+test.run()
+
+end # module

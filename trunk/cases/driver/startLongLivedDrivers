@@ -1,0 +1,28 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+require 'SAFTestDriver'
+
+class StartDriversCase < SAFTestCase
+
+    def initialize()
+        super()
+    end
+
+    def run()
+        @implementation.getCluster().getNodes().each do |node|
+            @config.getIntValue('main', 'numLongLivedDrivers').times do
+                SAFTestDriver.startNewLongLivedDriver(node)
+            end
+        end
+        passed()
+    end
+end
+
+test = StartDriversCase.new()
+test.run()
+
+end # module

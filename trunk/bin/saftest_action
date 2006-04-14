@@ -1,0 +1,37 @@
+#!/usr/bin/env ruby
+
+#
+# runs an action
+#
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestAction'
+
+def usage()
+    print "usage: saftest_action <id>\n"
+    exit 1
+end
+
+usage() unless ARGV.length == 1
+
+actions = Actions.instance
+actions.load()
+action = actions.getAction(ARGV[0])
+
+if ! action then
+    print "Unable to find action #{ARGV[0]}\n"
+    exit 1
+end
+
+if action.state != "pending" then
+    print "Action #{action.id} is #{action.state}\n"
+    exit 1
+end
+
+$stdin.close()
+
+action.run()
+
+end # module

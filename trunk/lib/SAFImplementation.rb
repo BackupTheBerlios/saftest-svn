@@ -1,7 +1,7 @@
 module SAFTest
 
 require 'SAFTestUtils'
-require 'xmlparser'
+require 'rexml/document'
 
 class SAFNetworkAddressImplementation < SAFTestUtils
     def initialize()
@@ -111,65 +111,48 @@ class SAFNodeImplementation < SAFTestUtils
     end
 
     def loadFromXML(xml)
-        currentAddress = nil
-        currentElement = nil
-        parser = XML::Parser.new
-        begin
-            parser.parse(xml) do |type, name, data|
-                case type
-                    when XML::Parser::START_ELEM
-                        case name
-                            when ''
-                                raise 'Empty Start Tag?'
+        doc = REXML::Document.new(xml)
+
+        doc.elements.each("SAFNode") { |element|
+            element.each_element_with_text { |ne|
+                if ne.name == "id"
+                    setID(ne.get_text.to_s.to_i)
+                elsif ne.name == "AddressList"
+                    ne.each_element_with_text { |addressElement|
+                        address = SAFNetworkAddressImplementation.new()
+                        addressElement.each_element_with_text { |ae|
+                            text = ae.get_text.to_s
+                            if ae.name == "family"
+                                address.setFamily(text)
+                            elsif ae.name == "length"
+                                address.setLength(text)
+                            elsif ae.name == "value"
+                                address.setValue(text)
                             else
-                                currentElement = name
-                        end
-
-                    when XML::Parser::CDATA
-                        case currentElement
-                            when 'id'
-                                setID(data.to_i)
-                            when 'name'
-                                setName(data)
-                            when 'member'
-                                case data
-                                    when 'TRUE'
-                                        setMember(true)
-                                    when 'FALSE'
-                                        setMember(false)
-                                    else
-                                        raise "Unknown member value %s" % \
-                                               [value]
-                                end
-                            when 'bootTimestamp'
-                                setBootTimestamp(data.to_i)
-                            when 'initialViewNumber'
-                                setInitialViewNumber(data.to_i)
-                            when 'Address'
-                                currentAddress = 
-                                    SAFNetworkAddressImplementation.new()
-                            when 'family'
-                                currentAddress.setFamily(data)
-                            when 'length'
-                                currentAddress.setLength(data)
-                            when 'value'
-                                currentAddress.setValue(data)
-                        end
-
-                    when XML::Parser::END_ELEM
-                        case name
-                            when 'Address'
-                                addAddress(currentAddress)
-                                currentAddress = nil
-                        end
-                        currentElement = nil
+                                raise "Unknown address element %s" % [text]
+                            end
+                        }
+                        addAddress(address)
+                    }
+                elsif ne.name == "name"
+                    setName(ne.get_text.to_s)
+                elsif ne.name == "member"
+                    if ne.get_text.to_s == "TRUE"
+                        setMember(true)
+                    elsif ne.get_text.to_s == "FALSE"
+                        setMember(false)
+                    else
+                        raise "Unknown member element %s" % [ne.get_text.to_s]
+                    end
+                elsif ne.name == "bootTimestamp"
+                    setBootTimestamp(ne.get_text.to_s.to_i)
+                elsif ne.name == "initialViewNumber"
+                    setInitialViewNumber(ne.get_text.to_s.to_i)
+                else
+                    raise "Unknown element %s" % [ne.name]
                 end
-            end
-        rescue XMLParserError
-            line = parser.line
-            raise "XML parse error #{$!}: LINE #{line} FROM #{xml}\n"
-        end
-
+            }
+        }
     end
 
     def isLocalNode()
@@ -221,75 +204,15 @@ class SAFClusterImplementation < SAFTestUtils
     end
 
     def loadFromXML(xml)
-        currentNode = nil
-        currentAddress = nil
-        currentElement = nil
-        parser = XML::Parser.new
-        begin
-            parser.parse(xml) do |type, name, data|
-                case type
-                    when XML::Parser::START_ELEM
-                        case name
-                            when ''
-                                raise 'Empty Start Tag?'
-                            when 'SAFNode'
-                                currentNode = SAFNodeImplementation.new()
-                                # No attributes on these tags
-                                #data.each do |key, value|
-                                #end
-                            else
-                                currentElement = name
-                        end
+        doc = REXML::Document.new(xml)
 
-                    when XML::Parser::CDATA
-                        case currentElement
-                            when 'id'
-                                currentNode.setID(data.to_i)
-                            when 'name'
-                                currentNode.setName(data)
-                            when 'member'
-                                case data
-                                    when 'TRUE'
-                                        currentNode.setMember(true)
-                                    when 'FALSE'
-                                        currentNode.setMember(false)
-                                    else
-                                        raise "Unknown member value %s" % \
-                                               [value]
-                                end
-                            when 'bootTimestamp'
-                                currentNode.setBootTimestamp(data.to_i)
-                            when 'initialViewNumber'
-                                currentNode.setInitialViewNumber(data.to_i)
-                            when 'Address'
-                                currentAddress = 
-                                    SAFNetworkAddressImplementation.new()
-                            when 'family'
-                                currentAddress.setFamily(data)
-                            when 'length'
-                                currentAddress.setLength(data)
-                            when 'value'
-                                currentAddress.setValue(data)
-                        end
-
-                    when XML::Parser::END_ELEM
-                        case name
-                            when 'SAFNode'
-                                @nodes << currentNode
-                                currentNode = nil
-                            when 'Address'
-                                currentNode.addAddress(currentAddress)
-                                currentAddress = nil
-                        end
-                        currentElement = nil
-                end
-            end
-        rescue XMLParserError
-            line = parser.line
-            raise "XML parse error #{$!}: LINE #{line} FROM #{xml}\n"
-        end
-
+        doc.elements.each("SAFCluster/SAFNodeList/SAFNode") { |element|
+            node = SAFNodeImplementation.new()
+            node.loadFromXML(element.to_s)
+            @nodes << node
+        }
     end
+
     def addToMap(key, value)
         @map[key] = value
     end
@@ -408,58 +331,46 @@ class SAFImplementation < SAFTestUtils
     end
 
     def loadFromXML(xmlConfigFile)
-        f = open(File.expand_path(xmlConfigFile), 'r')
-        xmlLines = f.readlines()
-        f.close
-        xml = ''
-        xmlLines.each do |line|
-            if line =~ /^<\?xml.*/ then
-                next
-            end
-            xml += line
-        end
+        file = open(File.expand_path(xmlConfigFile), 'r')
+        doc = REXML::Document.new(file)
 
-        currentElement = nil
-        currentName = nil
-
-        parser = XML::Parser.new
-        begin
-            parser.parse(xml) do |type, name, data|
-                case type
-                    when XML::Parser::START_ELEM
-                        case name
-                            when ''
-                                raise 'Empty Start Tag?'
-                            else
-                                currentElement = name
-                        end
-                    when XML::Parser::CDATA
-                        case currentElement
-                            when 'DisplayClusterCommand'
-                                @displayClusterCommand = data
-                            when 'StartNodeCommand'
-                                @startNodeCommand = data
-                            when 'StopNodeCommand'
-                                @stopNodeCommand = data
-                            when 'AddNodeCommand'
-                                @addNodeCommand = data
-                            when 'DeleteNodeCommand'
-                                @deleteNodeCommand = data
-                            when 'DriverLogEnvironmentVariable'
-                                @driverLogEnvironmentVariable = data
-                            when 'name'
-                                currentName = data
-                            when 'value'
-                                @driverEnvVars[currentName] = data
-                        end
-                    when XML::Parser::END_ELEM
-                        currentElement = nil
+        doc.elements.each("SAFImplementation") { |element|
+            element.each_element_with_text { |e|
+                text = e.get_text.to_s
+                if e.name == "DisplayClusterCommand"
+                    @displayClusterCommand = text
+                elsif e.name =="StartNodeCommand"
+                    @startNodeCommand = text
+                elsif e.name =="StopNodeCommand"
+                    @stopNodeCommand = text
+                elsif e.name =="AddNodeCommand"
+                    @addNodeCommand = text
+                elsif e.name =="DeleteNodeCommand"
+                    @deleteNodeCommand = text
+                elsif e.name =="DriverLogEnvironmentVariable"
+                    @driverLogEnvironmentVariable = text
+                elsif e.name =="DriverEnvironmentVariableList"
+                    # Do nothing, we'll handle this later
+                else
+                    raise "Unknown implementation element %s" % [e.name]
                 end
-            end
-        rescue XMLParserError
-            line = parser.line
-            raise "XML parse error #{$!}: LINE #{line} FROM #{xml}\n"
-        end
+            }
+        }
+
+        doc.elements.each("SAFImplementation/DriverEnvironmentVariableList/DriverEnvironmentVariableEntry") { |element|
+            name = nil
+            value = nil
+            element.each_element_with_text { |e|
+                if e.name == "name"
+                    name = e.get_text.to_s
+                elsif e.name == "value"
+                    value = e.get_text.to_s
+                else
+                    raise "Unknown environment variable element %s" % [e.name]
+                end
+            }
+            @driverEnvVars[name] = value
+        }
     end
 
     def getDriverLogEnvironmentVariable()

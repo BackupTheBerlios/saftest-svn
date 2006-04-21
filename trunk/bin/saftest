@@ -228,6 +228,7 @@ elsif op == 'delete'
     if File.exists?($utils.configXMLFile())
         config = SAFTestConfig.new()
         config.loadFromXML($utils.configXMLFile())
+        #raise 'blah'
         nodes = config.getStrListValue('main', 'testNodes')
         nodes.each do |node|
             $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS, 

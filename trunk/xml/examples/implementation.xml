@@ -5,4 +5,11 @@
     <StopNodeCommand>/usr/local/cmcluster/bin/cmhaltnode -f</StopNodeCommand>
     <AddNodeCommand>/root/src/saftest_ng/trunk/implementation/serviceguard/sg_node_add.rb</AddNodeCommand>
     <DeleteNodeCommand>/root/src/saftest_ng/trunk/implementation/serviceguard/sg_node_delete.rb</DeleteNodeCommand>
+    <DriverLogEnvironmentVariable>CMDLOG_FILE</DriverLogEnvironmentVariable>
+    <DriverEnvironmentVariableList>
+        <DriverEnvironmentVariableEntry>
+            <name>CONTEXT_LOG_LEVEL</name>
+            <value>5</value>
+        </DriverEnvironmentVariableEntry>
+    </DriverEnvironmentVariableList>
 </SAFImplementation>

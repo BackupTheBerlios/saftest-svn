@@ -1,6 +1,6 @@
 module SAFTest
 
-require 'xmlparser'
+require 'rexml/document'
 require 'SAFTestUtils'
 
 class SAFTestConfig < SAFTestUtils
@@ -193,52 +193,37 @@ class SAFTestConfig < SAFTestUtils
     end
 
     def loadFromXML(xmlConfigFile)
-        f = open(File.expand_path(xmlConfigFile), 'r')
-        xmlLines = f.readlines()
-        f.close
-        xml = ''
-        xmlLines.each do |line|
-            if line =~ /^<\?xml.*/ then
-                next
-            end
-            xml += line
-        end
+        file = open(File.expand_path(xmlConfigFile), 'r')
+        doc = REXML::Document.new(file)
 
-        currentSection = nil
-        currentName = nil
-        currentElement = nil
-
-        parser = XML::Parser.new
-        begin
-            parser.parse(xml) do |type, name, data|
-                case type
-                    when XML::Parser::START_ELEM
-                        case name
-                            when ''
-                                raise 'Empty Start Tag?'
+        doc.elements.each("SAFTestConfig/SAFTestConfigSectionList/SAFTestConfigSection") { 
+            |sectionElement|
+            sectionName = nil
+            sectionElement.each_element_with_text { |e|
+                if e.name == "SAFTestConfigSectionName"
+                    sectionName = e.get_text.to_s
+                elsif e.name == "SAFTestConfigEntryList"
+                    e.each_element_with_text { |configEntryListElement|
+                        entryName = nil
+                        entryValue = nil
+                        configEntryListElement.each_element_with_text {
+                            |configEntryElement|
+                            elementName = configEntryElement.name
+                            if elementName == "name"
+                                entryName = configEntryElement.get_text.to_s
+                            elsif elementName == "value"
+                                entryValue = configEntryElement.get_text.to_s
                             else
-                                currentElement = name
-                        end
-                    when XML::Parser::CDATA
-                        case currentElement
-                            when 'SAFTestConfigSectionName'
-                                currentSection = data
-                            when 'name'
-                                currentName = data
-                            when 'value'
-                                #print "Adding (%s, %s, %s)\n" % \
-                                    #[currentSection, currentName, data]
-                                insertConfigValue(currentSection, currentName,
-                                                  data)
-                        end
-                    when XML::Parser::END_ELEM
-                        currentElement = nil
+                                raise "Unknown element %s" % [elementName]
+                            end    
+                        }
+                        insertConfigValue(sectionName, entryName, entryValue)
+                    }
+                else
+                    raise "Unknown element %s" % [e.name]
                 end
-            end
-        rescue XMLParserError
-            line = parser.line
-            raise "XML parse error #{$!}: LINE #{line} FROM #{xml}\n"
-        end
+            }
+        }
     end
 
 end # class

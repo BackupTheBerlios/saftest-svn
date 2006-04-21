@@ -1,6 +1,6 @@
 module SAFTestEngine
 
-require 'xmlparser'
+require 'rexml/document'
 require 'SAFTestUtils'
 
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
@@ -78,72 +78,37 @@ class SAFTestBundle
     end
     
     def loadFromXML(xmlPath)
-        f = open(File.expand_path(xmlPath), 'r')
-        xmlLines = f.readlines()
-        f.close
-        xml = ''
-        xmlLines.each do |line|
-            if line =~ /^<\?xml.*/ then
-                next
-            end
-            xml += line
-        end
+        file = open(File.expand_path(xmlPath), 'r')
+        doc = REXML::Document.new(file)
 
-        currentCase = nil
-        currentType = nil
-        currentMode = nil
-        currentElement = nil
-        parser = XML::Parser.new
-        begin
-            parser.parse(xml) do |type, name, data|
-                case type
-                    when XML::Parser::START_ELEM
-                        case name
-                            when ''
-                                raise 'Empty Start Tag?'
-                            when 'SAFTestCaseList'
-                                currentType = data['type']
-                                currentMode = data['mode']
-                                if currentType == 'main'
-                                    if currentMode != 'sequential' and
-                                       currentMode != 'random'
-                                        raise "Invalid mode #{currentMode}"
-                                    end
-                                    @mainMode = currentMode
-                                end
-                                @cases[currentType] = []
-                            when 'SAFTestCase'
-                                # No attributes on these tags
-                                currentCase = SAFTestEngineCase.new
-                                currentElement = name
-                            else
-                                currentElement = name
-                        end
-
-                    when XML::Parser::CDATA
-                        case currentElement
-                            when 'name'
-                                currentCase.name = data
-                            when 'cmd'
-                                currentCase.command = data
-                            when 'weight'
-                                currentCase.weight = data.to_i
-                        end
-
-                    when XML::Parser::END_ELEM
-                        case name
-                            when 'SAFTestCase'
-                                @cases[currentType] << currentCase
-                                currentCase = nil
-                        end
-                        currentElement = nil
+        doc.elements.each("SAFTestBundle/SAFTestCaseList") { |element|
+            type = element.attributes["type"]
+            mode = element.attributes["mode"]
+            if type == 'main'
+                if mode != 'sequential' and mode != 'random'
+                    raise "Invalid mode #{mode}"
                 end
+                @mainMode = mode
             end
-        rescue XMLParserError
-            line = parser.line
-            raise "XML parse error #{$!}: LINE #{line} FROM #{xml}\n"
-        end
-    end       
+            @cases[type] = []
+
+            element.each_element { |caseElement|
+                testCase = SAFTestEngineCase.new
+                caseElement.each_element_with_text { |e|
+                    if e.name == "name"
+                        testCase.name = e.get_text.to_s
+                    elsif e.name == "cmd"
+                        testCase.command = e.get_text.to_s
+                    elsif e.name == "weight"
+                        testCase.weight = e.get_text.to_s.to_i
+                    else
+                        raise "Unknown element %s" % [e.name]
+                    end
+                }
+                @cases[type] << testCase
+            }
+        }
+    end
 
     # This function is used to merge the top-level cases file with
     # the per-spec cases file.  There is a certain order to things, which is

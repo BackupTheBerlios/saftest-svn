@@ -1,6 +1,5 @@
 module SAFTestEngine
 
-require 'xmlparser'
 require 'SAFTestUtils'
 
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]

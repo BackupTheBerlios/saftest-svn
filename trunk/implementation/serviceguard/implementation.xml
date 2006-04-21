@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SAFImplementation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SAFImplementation.xsd" schemaVersion="1"> 
-    <DisplayClusterCommand>/root/src/saftest_ng/trunk/implementation/serviceguard/sg_cluster_display.rb</DisplayClusterCommand>
+    <DisplayClusterCommand>$SAFTEST_ROOT/implementation/serviceguard/sg_cluster_display.rb</DisplayClusterCommand>
     <StartNodeCommand>/usr/local/cmcluster/bin/cmrunnode</StartNodeCommand>
     <StopNodeCommand>/usr/local/cmcluster/bin/cmhaltnode -f</StopNodeCommand>
-    <AddNodeCommand>/root/src/saftest_ng/trunk/implementation/serviceguard/sg_node_add.rb</AddNodeCommand>
-    <DeleteNodeCommand>/root/src/saftest_ng/trunk/implementation/serviceguard/sg_node_delete.rb</DeleteNodeCommand>
+    <AddNodeCommand>$SAFTEST_ROOT/implementation/serviceguard/sg_node_add.rb</AddNodeCommand>
+    <DeleteNodeCommand>$SAFTEST_ROOT/implementation/serviceguard/sg_node_delete.rb</DeleteNodeCommand>
     <DriverLogEnvironmentVariable>CMDLOG_FILE</DriverLogEnvironmentVariable>
     <DriverEnvironmentVariableList>
         <DriverEnvironmentVariableEntry>

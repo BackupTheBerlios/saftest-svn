@@ -16,14 +16,14 @@ class NodeGetLocalFinalizedHandleCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, false, "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.clusterNodeGet(resource, "SA_CLM_LOCAL_NODE_ID",
-                         "SA_TIME_MAX", false,nil, 
-                         SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.finalize(:SESSION => session)
+        d.clusterNodeGet(:SESSION => session, 
+                         :NODE_ID => "SA_CLM_LOCAL_NODE_ID",
+                         :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

@@ -1,0 +1,45 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class SyncLockEXUnlockAsyncCase < SAFTestCase
+    @@INVOCATION = $$
+    @@UNLOCK_INVOCATION = $$
+
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession() 
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.selectObjectGet(:SESSION => session)
+        d.resourceOpen(:SESSION => session, 
+                       :LOCK_NAME => "LockEXSyncUnlockAsync")
+        d.lockSync(:SESSION => session, :LOCK_MODE => 'EX', 
+                   :INVOCATION => @@INVOCATION, 
+                   :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        d.unlockAsync(:SESSION => session, 
+                      :INVOCATION => @@UNLOCK_INVOCATION)
+        d.waitForLockAsyncUnlockStatus(:SESSION => session, 
+                                       :EXPECTED_INVOCATION => @@UNLOCK_INVOCATION,
+                                       :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_NO_MORE')
+        d.resourceClose(:SESSION => session)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
+        passed()
+    end
+end
+
+test = SyncLockEXUnlockAsyncCase.new()
+test.run()
+
+end # module

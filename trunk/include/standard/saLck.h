@@ -1,8 +1,35 @@
-/*
+/*******************************************************************************
+**
+** FILE:
+**   SaLck.h
+**
+** DESCRIPTION: 
+**   This file provides the C language binding for the Service 
+**   Availability(TM) Forum AIS Lock Service (LCK). It contains all of 
+**   the prototypes and type definitions required for LCK. 
+**   
+** SPECIFICATION VERSION:
+**   SAI-AIS-LCK-B.02.01
+**
+** DATE: 
+**   Fri  Nov   18  2005  
+**
+** LEGAL:
+**   OWNERSHIP OF SPECIFICATION AND COPYRIGHTS. 
+**   The Specification and all worldwide copyrights therein are
+**   the exclusive property of Licensor.  You may not remove, obscure, or
+**   alter any copyright or other proprietary rights notices that are in or
+**   on the copy of the Specification you download.  You must reproduce all
+**   such notices on all copies of the Specification you make.  Licensor
+**   may make changes to the Specification, or to items referenced therein,
+**   at any time without notice.  Licensor is not obligated to support or
+**   update the Specification. 
+**   
+**   Copyright(c) 2005, Service Availability(TM) Forum. All rights
+**   reserved. 
+**
+*******************************************************************************/
 
-  Header file of SA Forum AIS LCK APIs (SAI-AIS-LCK-B.01.00.09)
-  compiled on 22SEP2004 by sayandeb.saha@motorola.com.
-*/
 
 #ifndef _SA_LCK_H
 #define _SA_LCK_H
@@ -33,10 +60,9 @@ typedef enum {
     SA_LCK_LOCK_GRANTED = 1,
     SA_LCK_LOCK_DEADLOCK = 2,
     SA_LCK_LOCK_NOT_QUEUED = 3,
-    SA_LCK_LOCK_TIMED_OUT = 4,
-    SA_LCK_LOCK_ORPHANED = 5,
-    SA_LCK_LOCK_NO_MORE = 6,
-    SA_LCK_LOCK_DUPLICATE_EX = 7
+    SA_LCK_LOCK_ORPHANED = 4,
+    SA_LCK_LOCK_NO_MORE = 5,
+    SA_LCK_LOCK_DUPLICATE_EX = 6
 } SaLckLockStatusT;
 
 typedef enum {
@@ -67,6 +93,11 @@ typedef struct{
     SaLckLockWaiterCallbackT     saLckLockWaiterCallback;
     SaLckResourceUnlockCallbackT saLckResourceUnlockCallback;
 } SaLckCallbacksT;
+
+
+/*************************************************/
+/******** LCK API function declarations **********/
+/*************************************************/
 
     extern SaAisErrorT 
 saLckInitialize(SaLckHandleT *lckHandle, const SaLckCallbacksT *lckCallbacks,

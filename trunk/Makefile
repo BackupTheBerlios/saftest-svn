@@ -39,7 +39,19 @@ PLATFORM=undefined
 ifeq ($(platform), HP-UX)
    PLATFORM=hpux
    ifeq ($(SAFLIBPATH), )
-       SAFLIBPATH=/usr/lib
+       libpath=/usr/lib
+       ifeq ($(HPUXARCH), )
+           SYSARCH:=$(shell uname -m)
+           ifeq ($(SYSARCH), ia64)
+               HPUXARCH=ia64
+               SAFLIBPATH=$(libpath)/hpux32
+               SAFLIBPATH64=$(libpath)/hpux64
+           else
+               HPUXARCH=pa
+               SAFLIBPATH=$(libpath) 
+               SAFLIBPATH64=$(libpath)/pa20_64
+          endif
+       endif
     endif
 endif
 ifeq ($(platform), Linux)
@@ -57,8 +69,10 @@ include build/vars.mk
 include build/platform_targets_common.mk
 include build/platform_targets_$(PLATFORM).mk
 
+test_libs64=
+
 # This will get appended to in the individual specification vars.mk files
-test_libs=
+test_libs=$(FINAL_SAF_OBJDIR)/saftest_main_lib.so
 
 ifeq ($(CLM), 1)
 include cases/clm/build/vars.mk
@@ -72,7 +86,8 @@ endif
 #include cases/msg/vars.mk
 #endif
 
-saftest: $(FINAL_OBJDIR)/dir_exists $(FINAL_OBJDIR)/saf_driver $(test_libs)
+saftest: $(FINAL_SAF_OBJDIR)/dir_exists $(FINAL_SAF_OBJDIR)/saf_driver \
+         $(test_libs) $(test_libs64)
 
 clean:
-	rm -rf $(OBJDIR)
+	rm -rf $(SAF_OBJDIR) $(SAF_OBJDIR64)

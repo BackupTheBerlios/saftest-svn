@@ -1,0 +1,44 @@
+#!/usr/bin/ruby
+        
+module SAFTest
+            
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+            
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class LockEXCase < SAFTestCase
+    def initialize()
+        super()
+    end          
+                 
+    def run() 
+       d = LCKTestDriver.getRandomLongLivedDriver(nil)   
+       resource = d.createShortLivedTestResource() 
+       d.init(resource, true, true, true, true,
+                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)      
+       d.resourceOpen(resource, "LockExclusive", SAFTestUtils.SA_AIS_OK)
+       d.lockSync(resource, 'EX', 0, 0, false, false, true, false, false,  
+                     'SA_LCK_LOCK_GRANTED', SAFTestUtils.SA_AIS_OK)
+       resource1 = d.createShortLivedTestResource()  
+       d.init(resource1, true, true, true, true, 
+               "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)   
+       d.resourceOpen(resource1, "LockExclusive", SAFTestUtils.SA_AIS_OK)  
+       d.lockSync(resource1, 'EX', 0, 0, false, false, false, false, false,
+                   'SA_LCK_LOCK_GRANTED', SAFTestUtils.SA_AIS_OK)
+       d.finalize(resource1, SAFTestUtils.SA_AIS_OK)
+       #d.resourceClose(resource, SAFTestUtils.SA_AIS_OK) 
+       d.finalize(resource, SAFTestUtils.SA_AIS_OK) 
+       d.deleteTestResource(resource)
+       d.deleteTestResource(resource1)   
+     passed()
+    end            
+end                
+                   
+test = LockEXCase.new()
+test.run()         
+                   
+end # module       
+~             

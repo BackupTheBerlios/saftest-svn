@@ -10,6 +10,16 @@ class SAFTestConfig < SAFTestUtils
         @config = {}
     end
 
+    def valueExists?(section, key)
+        if @config.has_key?(section)
+            if @config[section].has_key?(key)
+                return true
+            end
+        end
+        
+        return false
+    end
+
     def getStrValue(section, key)
         return @config[section][key]
     end
@@ -20,6 +30,10 @@ class SAFTestConfig < SAFTestUtils
 
     def getStrListValue(section, key)
         return [].concat(@config[section][key].split(' '))
+    end
+
+    def getArrValue(section, key)
+        return @config[section][key]
     end
 
     def insertConfigValue(section, key, value)
@@ -44,6 +58,7 @@ class SAFTestConfig < SAFTestUtils
     end
 
     def promptList(section, key, label, defaultList, allowEmpty)
+        return if valueExists?(section, key)
         defaultString = ''
         isFirst = true
         defaultList.each do |option|
@@ -76,6 +91,7 @@ class SAFTestConfig < SAFTestUtils
     end
 
     def promptArray(section, key, label, optionArray, defaultOption)
+        return if valueExists?(section, key)
         optionString = ''
         optionArray.each do |option|
             optionString = '%s|%s' % [optionString, option]
@@ -100,6 +116,7 @@ class SAFTestConfig < SAFTestUtils
     end
 
     def promptYesNo(section, key, label, defaultIsYes)
+        return if valueExists?(section, key)
         while(true)
             if defaultIsYes
                 defaultOption = 'yes'
@@ -127,6 +144,7 @@ class SAFTestConfig < SAFTestUtils
     end
 
     def promptInt(section, key, label, min, max, defaultOption)
+        return if valueExists?(section, key)
         while(true)
             print "%s (%d-%d) [%d]: " % [label, min, max, defaultOption]
             answer = gets
@@ -147,6 +165,7 @@ class SAFTestConfig < SAFTestUtils
     end
 
     def promptStr(section, key, label, defaultOption)
+        return if valueExists?(section, key)
         while(true)
             print "%s [%s]: " % [label, defaultOption]
             answer = gets

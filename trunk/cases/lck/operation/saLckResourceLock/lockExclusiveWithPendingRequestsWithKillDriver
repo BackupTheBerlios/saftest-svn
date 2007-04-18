@@ -1,0 +1,74 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+# An EX lock is held by the first driver and two pending PR locks are queued
+# by 2 other drivers.  Once the first driver holding the EX lock is
+# killed, the waiting PR locks should go through.
+
+class LockEXKillDriverCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        cluster = @implementation.getCluster
+        upNode = cluster.getRandomNode(
+            :STATUS => "up",
+            :EXCLUDE_NODE_SET => [cluster.getLocalNode()])
+        if upNode == nil
+            skipped("Need at least one more up node to continue")
+        end
+
+        d = LCKTestDriver.startNewShortLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.resourceOpen(:SESSION => session, 
+                       :LOCK_NAME => "LockExclusiveWithPendingRequestsWithKillDriver")
+        d.lockSync(:SESSION => session, :LOCK_MODE => 'EX', 
+                   :LOCK_FLAG_NO_QUEUE => true, 
+                   :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+
+        d1 = LCKTestDriver.getRandomLongLivedDriver()
+        session1 = d1.createShortLivedSession()
+        d1.init(:SESSION => session1, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d1.resourceOpen(:SESSION => session1, 
+                        :LOCK_NAME => "LockExclusiveWithPendingRequestsWithKillDriver")
+
+        d2 = LCKTestDriver.getRandomLongLivedDriver(:EXCLUDE_DRIVER_SET => [d1])
+        session2 = d2.createShortLivedSession()
+        d2.init(:SESSION => session2, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d2.resourceOpen(:SESSION => session2, 
+                        :LOCK_NAME => "LockExclusiveWithPendingRequestsWithKillDriver")
+        action1 = d1.lockSyncBG(:SESSION => session1, :LOCK_MODE => 'PR', 
+                                :TIMEOUT => 10000000000, 
+                                :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        action2 = d2.lockSyncBG(:SESSION => session2, :LOCK_MODE => 'PR', 
+                                :TIMEOUT => 10000000000, 
+                                :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        d.stop()
+        d1.waitForLockSyncBG(:ACTION => action1)
+        d2.waitForLockSyncBG(:ACTION => action2)
+
+        d1.resourceClose(:SESSION => session1)
+        d1.finalize(:SESSION => session1)
+        d1.deleteSession(:SESSION => session1)
+
+        d2.resourceClose(:SESSION => session2)
+        d2.finalize(:SESSION => session2)
+        d2.deleteSession(:SESSION => session2)
+
+        passed()
+    end
+end
+test = LockEXKillDriverCase.new()
+test.run()
+
+end # module

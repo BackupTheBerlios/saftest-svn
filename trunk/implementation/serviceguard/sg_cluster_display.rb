@@ -35,11 +35,23 @@ cluster.getNodes().each do |node|
         memberStr = 'TRUE'
     end
     print "            <member>%s</member>\n" % [memberStr]
-    print "            <bootTimestamp>0</bootTimestamp>\n"
-    print "            <initialViewNumber>0</initialViewNumber>\n"
+    print "            <bootTimestamp>%d</bootTimestamp>\n" % [node.getMapValue('boot_timestamp')]
+    print "            <initialViewNumber>%d</initialViewNumber>\n" % [node.getMapValue('initial_incarnation')]
     print "        </SAFNode>\n"
 end
 
 print "    </SAFNodeList>\n"
+
+print "    <SAFNodeChangeFlagList>\n"
+
+cluster.getNodes().each do |node|
+    print "        <SAFNodeChangeFlag>\n"
+    print "            <id>%d</id>\n" % [node.getMapValue('id')]
+    print "            <changeFlag></changeFlag>\n" 
+    print "        </SAFNodeChangeFlag>\n"
+end
+
+print "    </SAFNodeChangeFlagList>\n"
+
 print "</SAFCluster>\n"
 end # module SGImplementation

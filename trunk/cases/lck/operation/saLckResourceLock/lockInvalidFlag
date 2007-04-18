@@ -15,15 +15,18 @@ class LockInvalidFlagCase < SAFTestCase
     end
 
     def run()
-        d = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, true, true, true,
-                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d.lockSync(resource, 'EX', 0, true, false, true, 
-                   false, true, 'SA_LCK_LOCK_GRANTED', 
-                   SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.resourceOpen(:SESSION => session, :LOCK_NAME => "LockInvalidFlag")
+        d.lockSync(:SESSION => session, :LOCK_MODE => 'EX', 
+                   :LOCK_FLAG_NO_QUEUE => true, 
+                   :LOCK_FLAG_INVALID => true, 
+                   :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED',
+                   :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
+        d.resourceClose(:SESSION => session)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

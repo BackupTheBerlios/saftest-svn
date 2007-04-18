@@ -15,14 +15,12 @@ class SelectionObjectGetNullSelectionObjectCase  < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, false, "SA_DISPATCH_ALL",
-               SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, true, 
-                          SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession(:DISPATCH_FLAGS =>
+                                              "SAFTEST_DISPATCH_NONE")
+        d.selectObjectGet(:SESSION => session, 
+                          :NULL_SELECTION_OBJECT => true, 
+                          :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
         passed()
     end
 end

@@ -271,7 +271,7 @@ class SAFTestUtils
         @safSys = SAFSys.new()
         @rootDir = ENV['SAFTEST_ROOT']
         @sourceDirs = ['bin', 'cases', 'conf', 'implementation', 'lib', 'xml']
-        @workDirs = ['conf', 'run', 'log', 'tmp', 'implementation', 'objs',
+        @workDirs = ['conf', 'run', 'run/daemon', 'log', 'tmp', 'implementation', 'objs',
                      'action']
 
         @logLevel = 0
@@ -352,7 +352,7 @@ class SAFTestUtils
             cmd = 'mkdir -p %s/%s' % [rootDir, dir]
             runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
                                "Error running %s" % [cmd])
-            cmd = 'cp -a %s/%s/* %s/%s' % [sourceDir, dir, rootDir, dir]
+            cmd = 'cp -r %s/%s/* %s/%s' % [sourceDir, dir, rootDir, dir]
             runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
                                "Error running %s" % [cmd])
         end
@@ -364,7 +364,7 @@ class SAFTestUtils
         end
 
         # Copy the binary files to the work dir
-        cmd = "cp -a %s/objs/final/* %s" % [sourceDir, objDir]
+        cmd = "cp -r %s/objs/final/* %s" % [sourceDir, objDir]
         $utils.runAndCheckCommand(cmd, SAFTestUtils::EXPECT_SUCCESS,
                                   "Error running %s" % [cmd])
 
@@ -405,22 +405,18 @@ class SAFTestUtils
     EXPECT_FAILURE = false
 
     def passed()
-        print "PASSED\n"
         exit @@PASSED_EXIT_STATUS
     end
 
     def failed(message)
-        print "FAILED: #{message}\n"
         exit @@FAILED_EXIT_STATUS
     end
 
     def skipped(message)
-        print "SKIPPED: #{message}\n"
         exit @@SKIPPED_EXIT_STATUS
     end
 
     def notConfigured(message)
-        print "NOT CONFIGURED: #{message}\n"
         exit @@NOT_CONFIGURED_EXIT_STATUS
     end
 

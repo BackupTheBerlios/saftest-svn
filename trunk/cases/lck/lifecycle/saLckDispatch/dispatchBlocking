@@ -9,49 +9,57 @@ lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
 $: << lckDir
 require 'LCKTestDriver'
 
-class DispatchBlockingCase < SAFTestCase
+class DispatchBlockingLckCase < SAFTestCase
+    @@INVOCATION = $$
     @@WAITER_SIGNAL = $$
     def initialize()
         super()
     end
 
     def run()
-        d1 = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource1 = d1.createShortLivedTestResource()
-        d1.init(resource1, true, true, true, true,
-                "SA_DISPATCH_BLOCKING", SAFTestUtils.SA_AIS_OK)
-        d1.resourceOpen(resource1, "lock1", SAFTestUtils.SA_AIS_OK)
-        d1.lockSync(resource1, 'EX', 0, false, false, true, false, false,
-                    'SA_LCK_LOCK_GRANTED', SAFTestUtils.SA_AIS_OK)
+        d1 = LCKTestDriver.getRandomLongLivedDriver(:THREADED => true)
+        session1 = d1.getRandomLongLivedSession(:GLOBAL => true,
+                                     :DISPATCH_FLAGS => "SA_DISPATCH_BLOCKING")
+        
+        d1.resourceOpen(:SESSION => session1, :LOCK_NAME => "dpBlkg")
+        d1.lockSync(:SESSION => session1, :LOCK_MODE => 'EX',
+                    :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
 
-        d1.lockGetWaitCount(resource1, 0, 0)
+        d2 = LCKTestDriver.getRandomLongLivedDriver()
+        session2 = d2.createShortLivedSession()
+        d2.init(:SESSION => session2, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d2.resourceOpen(:SESSION => session2, :LOCK_NAME => "dpBlkg")
+        d2.lockAsync(:SESSION => session2, :LOCK_MODE => 'EX', 
+                     :INVOCATION => @@INVOCATION + 1, 
+                     :WAITER_SIGNAL => @@WAITER_SIGNAL)
 
-        d2 = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource2 = d2.createShortLivedTestResource()
-        d2.init(resource2, true, true, true, true,
-                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d2.resourceOpen(resource2, "lock1", SAFTestUtils.SA_AIS_OK)
-        d2.lockSync(resource2, 'EX', @@WAITER_SIGNAL,
-                    false, false, true, false, false,
-                    'SA_LCK_LOCK_NOT_QUEUED', SAFTestUtils.SA_AIS_OK)
-        d2.lockSync(resource2, 'EX', @@WAITER_SIGNAL,
-                    false, false, true, false, false,
-                    'SA_LCK_LOCK_NOT_QUEUED', SAFTestUtils.SA_AIS_OK)
+        session3 = d2.createShortLivedSession()
+        d2.init(:SESSION => session3, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d2.resourceOpen(:SESSION => session3, :LOCK_NAME => "dpBlkg")
+        d2.lockAsync(:SESSION => session3, :LOCK_MODE => 'EX', 
+                     :INVOCATION => @@INVOCATION + 2, 
+                     :WAITER_SIGNAL => @@WAITER_SIGNAL)
 
-        d1.lockGetWaitCount(resource1, @@WAITER_SIGNAL, 2)
+        # thread is already sitting in saLckDispatch(DISPATCH_BLOCKING), 
+        # so the notifications should have gotten there already.
+        d1.lockGetWaitCount(:SESSION => session1,
+                            :EXPECTED_LAST_WAITER_SIGNAL => @@WAITER_SIGNAL, 
+                            :EXPECTED_NOTIFICATION_COUNT => 2) 
 
-        d2.resourceClose(resource2, SAFTestUtils.SA_AIS_OK)
-        d2.finalize(resource2, SAFTestUtils.SA_AIS_OK)
-        d2.deleteTestResource(resource2)
+        d2.resourceClose(:SESSION => session2)
+        d2.finalize(:SESSION => session2)
+        d2.deleteSession(:SESSION => session2)
 
-        d1.resourceClose(resource1, SAFTestUtils.SA_AIS_OK)
-        d1.finalize(resource1, SAFTestUtils.SA_AIS_OK)
-        d1.deleteTestResource(resource1)
+        d2.resourceClose(:SESSION => session3)
+        d2.finalize(:SESSION => session3)
+        d2.deleteSession(:SESSION => session3)
+
         passed()
     end
 end
 
-test = DispatchBlockingCase.new()
+
+test = DispatchBlockingLckCase.new()
 test.run()
 
-end # module
+end #module

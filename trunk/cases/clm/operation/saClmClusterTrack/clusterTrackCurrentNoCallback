@@ -16,15 +16,19 @@ class ClusterTrackCurrentNoCallbackCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, false, false, "SA_DISPATCH_ONE",
-               SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
-        d.clusterTrack(resource, true, false, false, false, true, 
-                       false, 0, nil, SAFTestUtils.SA_AIS_ERR_INIT)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, 
+               :NO_CLUSTER_NODE_GET_CB => TRUE,
+               :NO_CLUSTER_TRACK_CB => TRUE,
+               :DISPATCH_FLAGS => "SA_DISPATCH_ONE")
+        d.selectObjectGet(:SESSION => session)
+        d.clusterTrack(:SESSION => session, 
+                       :TRACK_CURRENT => true, 
+                       :NULL_NOTIFICATION_BUFFER => true, 
+                       :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_INIT)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

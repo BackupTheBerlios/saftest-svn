@@ -1,0 +1,35 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class LockEXCase < SAFTestCase
+    def initialize()
+        super()
+    end
+#simple test grant PR lock with timeout set
+    def run()
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.resourceOpen(:SESSION => session, :LOCK_NAME => "LockPRWithTimeout")
+        d.lockSync(:SESSION => session, :LOCK_MODE => 'PR', 
+                   :TIMEOUT => 1000000000, :LOCK_FLAG_NO_QUEUE => true, 
+                   :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        #d.resourceClose(:SESSION => session)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
+        passed()
+    end
+end
+
+test = LockEXCase.new()
+test.run()
+
+end # module

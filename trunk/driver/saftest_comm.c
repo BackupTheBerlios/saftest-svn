@@ -493,6 +493,7 @@ saftest_uds_listen(int *fd, const char *socket_file)
     int ret;
     struct sockaddr_un  sun;
 
+    saftest_log("saftest_uds_listen on %s\n", socket_file);
     memset(&sun, 0, sizeof(sun));
 
     *fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -616,21 +617,6 @@ saftest_uds_connect(int *fd, const char *socket_path)
 }
 
 const char *
-saftest_msg_get_destination(saftest_msg_t *msg)
-{
-    return(saftest_msg_get_internal_str_value(msg, 
-                                              SAFTEST_MSG_DESTINATION_KEY));
-}
-
-static void
-saftest_msg_set_destination(saftest_msg_t *msg,
-                            const char *destination)
-{
-    saftest_msg_set_internal_str_value(msg, SAFTEST_MSG_DESTINATION_KEY,
-                                       destination);
-}
-
-const char *
 saftest_msg_get_destination_library_id(saftest_msg_t *msg)
 {
     return(saftest_msg_get_internal_str_value(msg, SAFTEST_LIBRARY_ID_KEY));
@@ -651,16 +637,15 @@ saftest_send_request(int fd, const char *destination, const char *library_id,
     int bytes_sent;
     saftest_flat_msg_t *sfm = NULL;
 
-    assert(NULL != request);
-
-    saftest_msg_set_destination(request, destination);
     if (NULL != library_id) {
         saftest_msg_set_destination_library_id(request, library_id);
     }
+
     sfm = saftest_create_flat_msg_from_saftest_msg(request);
     assert(NULL != sfm);
 
     bytes_sent = send(fd, sfm, sizeof(saftest_flat_msg_t), 0);
+    free(sfm);
     if (bytes_sent < sizeof(saftest_flat_msg_t)) {
         saftest_abort("Error sending on socket %d: "
                        "Expected %d bytes, sent %d bytes\n",
@@ -674,28 +659,24 @@ saftest_send_request(int fd, const char *destination, const char *library_id,
 void
 saftest_send_reply(int client_connection_fd, saftest_msg_t *reply)
 {
-    int bytes_sent;
+    int bytes_sent = 1;
     int bytes_left;
     int total_length = sizeof(saftest_flat_msg_t);
-    int counter;
+    /* int counter; */
     saftest_flat_msg_t *sfm = NULL;
 
     assert(NULL != reply);
-    saftest_msg_set_destination(
-        reply, 
-        saftest_msg_get_destination(reply->original_request));
-    if (SAFTEST_MSG_DESTINATION_LIBRARY == 
-        saftest_msg_get_destination(reply->original_request)) {
-        saftest_msg_set_destination_library_id(
-            reply, 
+    
+            saftest_msg_set_destination_library_id(
+            reply,
             saftest_msg_get_destination_library_id(reply->original_request));
-    }
+
     sfm = saftest_create_flat_msg_from_saftest_msg(reply);
     assert(NULL != sfm);
 
-    bytes_left = total_length;
-    for (counter = 0;
-         (bytes_left > 0) && (counter < RECV_RETRIES); counter++) {
+    for (bytes_left = total_length;
+         (bytes_left > 0) && (bytes_sent > 0);
+         bytes_left -= bytes_sent)  {
         bytes_sent = send(client_connection_fd, 
                           (char *)sfm + (total_length - bytes_left),
                           bytes_left, 0);
@@ -704,7 +685,6 @@ saftest_send_reply(int client_connection_fd, saftest_msg_t *reply)
                           client_connection_fd, 
                           strerror(errno));
         }
-        bytes_left -= bytes_sent;
     }
     if (bytes_left > 0) {
         saftest_abort("Error sending on socket %d: Only sent %d bytes of %d\n",
@@ -721,29 +701,32 @@ saftest_recv_flat_msg(int fd)
 {
     saftest_flat_msg_t *sfm = NULL;
     int expected_length = sizeof(saftest_flat_msg_t);
-    int bytes_recvd;
+    int bytes_recvd = 1;
     int bytes_left;
-    int counter = 0;
+    /* int counter = 0; */
 
     sfm = malloc(expected_length);
     assert(NULL != sfm);
 
-    bytes_left = expected_length;
-    for (counter = 0; 
-         (bytes_left > 0) && (counter < RECV_RETRIES); counter++) {
+    for (bytes_left = expected_length;
+         (bytes_left > 0) && (bytes_recvd > 0);
+         bytes_left -= bytes_recvd) {
         bytes_recvd = recv(fd, 
                            (char *)sfm + (expected_length - bytes_left), 
                            bytes_left, SAFTEST_RECV_FLAG);
-        bytes_left -= bytes_recvd;
+/*
+        saftest_log("recv_flat counter: %d bytes_recvd: %d bytes_left: %d\n",
+                    counter, bytes_recvd, bytes_left);
+*/
     }
     if (bytes_left > 0) {
-        /*
+/*
         saftest_log("Error receiving on socket %d: "
-                     "Expected %d bytes, received %d bytes\n",
-                     res->client_connection_fd,
-                     expected_length,
-                     expected_length - bytes_left);
-        */
+                    "Expected %d bytes, received %d bytes\n",
+                    fd,
+                    expected_length,
+                    expected_length - bytes_left);
+*/
         free(sfm);
         sfm = NULL;
     }

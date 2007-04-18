@@ -15,16 +15,16 @@ class LockPRCase < SAFTestCase
     end
 
     def run()
-        d = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, true, true, true,
-                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d.resourceOpen(resource, "lock1", SAFTestUtils.SA_AIS_OK)
-        d.lockSync(resource, 'PR', 0, false, false, true, false, false,
-                   'SA_LCK_LOCK_GRANTED', SAFTestUtils.SA_AIS_OK)
-        d.resourceClose(resource, SAFTestUtils.SA_AIS_OK)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.resourceOpen(:SESSION => session, :LOCK_NAME => "ProtectedRead")
+        d.lockSync(:SESSION => session, :LOCK_MODE => 'PR', 
+                   :LOCK_FLAG_NO_QUEUE => true,
+                   :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        d.resourceClose(:SESSION => session)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

@@ -17,6 +17,8 @@
  *
  **********************************************************************/
 
+#define SAFTEST_DISPATCH_NONE 0
+
 /**********************************************************************
  *
  *  G L O B A L S
@@ -31,5 +33,8 @@ saftest_dispatch_flags_from_string(const char *dispatch_flags_str);
 
 extern const char *
 saftest_dispatch_flags_to_string(SaDispatchFlagsT dispatch_flags);
+
+extern SaTimeT
+saftest_time_from_string(const char *time_str);
 
 #endif /* SAFTEST_DRIVER_LIB_UTILS_H */

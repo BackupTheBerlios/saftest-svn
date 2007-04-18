@@ -15,10 +15,11 @@ class FinalizeWithoutInitCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.finalize(resource, SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.finalize(:SESSION => session, 
+                   :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

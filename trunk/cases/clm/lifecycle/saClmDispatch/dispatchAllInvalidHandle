@@ -15,11 +15,12 @@ class DispatchAllInvalidHandleCase < SAFTestCase
     end
      
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.dispatch(resource, "SA_DISPATCH_ALL",
-                   SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.dispatch(:SESSION => session, 
+                   :DISPATCH_FLAGS => "SA_DISPATCH_ALL",
+                   :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

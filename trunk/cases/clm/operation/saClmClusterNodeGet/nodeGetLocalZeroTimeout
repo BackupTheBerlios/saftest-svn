@@ -17,14 +17,13 @@ class NodeGetLocalZeroTimeoutCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.getRandomLongLivedTestResource()
-       
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession()
         validateNode = d.getImplementation().getCluster().getLocalNode()
-        nodeID = "SA_CLM_LOCAL_NODE_ID"
- 
-        d.clusterNodeGet(resource, "SA_CLM_LOCAL_NODE_ID", 0, false,
-                         nil, SAFTestUtils.SA_AIS_ERR_TIMEOUT)
+        d.clusterNodeGet(:SESSION => session, 
+                         :NODE_ID => "SA_CLM_LOCAL_NODE_ID", 
+                         :TIMEOUT => 0, 
+                         :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_TIMEOUT)
         passed()
     end
 end

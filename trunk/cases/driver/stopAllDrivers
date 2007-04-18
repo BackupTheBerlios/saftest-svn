@@ -1,0 +1,26 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+require 'SAFTestDriver'
+
+class StopDriversCase < SAFTestCase
+
+    def initialize()
+        super()
+    end
+
+    def run()
+        @implementation.getCluster().getNodes().each do |node|
+            runCommand("killall -9 saf_driver", node.getName())
+        end
+        passed()
+    end
+end
+
+test = StopDriversCase.new()
+test.run()
+
+end # module

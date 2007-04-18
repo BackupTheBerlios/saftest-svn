@@ -1,8 +1,35 @@
-/*
+/*******************************************************************************
+**
+** FILE:
+**   SaClm.h
+**
+** DESCRIPTION: 
+**   This file provides the C language binding for the Service 
+**   Availability(TM) Forum AIS Cluster Membership Service (CLM). It contains  
+**   all the prototypes and type definitions required for CLM. 
+**   
+** SPECIFICATION VERSION:
+**   SAI-AIS-CLM-B.02.01
+**
+** DATE: 
+**   Fri  Nov   18  2005  
+**
+** LEGAL:
+**   OWNERSHIP OF SPECIFICATION AND COPYRIGHTS. 
+**   The Specification and all worldwide copyrights therein are
+**   the exclusive property of Licensor.  You may not remove, obscure, or
+**   alter any copyright or other proprietary rights notices that are in or
+**   on the copy of the Specification you download.  You must reproduce all
+**   such notices on all copies of the Specification you make.  Licensor
+**   may make changes to the Specification, or to items referenced therein,
+**   at any time without notice.  Licensor is not obligated to support or
+**   update the Specification. 
+**   
+**   Copyright(c) 2005, Service Availability(TM) Forum. All rights
+**   reserved. 
+**
+*******************************************************************************/
 
-  Header file of SA Forum AIS CLM APIs (SAI-AIS-B.01.00.09)
-  compiled on 21SEP2004 by sayandeb.saha@motorola.com.
-*/
 
 #ifndef _SA_CLM_H
 #define _SA_CLM_H
@@ -73,6 +100,13 @@ typedef struct {
          SaClmClusterTrackCallbackT saClmClusterTrackCallback;
 } SaClmCallbacksT;
 
+typedef enum {
+   SA_CLM_CLUSTER_CHANGE_STATUS = 1
+} SaClmStateT;
+
+/*************************************************/
+/******** CLM API function declarations **********/
+/*************************************************/
     extern SaAisErrorT 
 saClmInitialize(SaClmHandleT *clmHandle, const SaClmCallbacksT *clmCallbacks,
                 SaVersionT *version);
@@ -91,6 +125,10 @@ saClmClusterTrack(SaClmHandleT clmHandle,
 );
     extern SaAisErrorT 
 saClmClusterTrackStop(SaClmHandleT clmHandle);
+	extern SaAisErrorT 
+saClmClusterNotificationFree(SaClmHandleT clmHandle,
+                             SaClmClusterNotificationT *notification
+);
     extern SaAisErrorT 
 saClmClusterNodeGet(SaClmHandleT clmHandle,
                     SaClmNodeIdT nodeId, 

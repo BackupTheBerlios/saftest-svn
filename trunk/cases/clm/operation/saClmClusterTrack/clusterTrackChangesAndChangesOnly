@@ -16,15 +16,12 @@ class ClusterTrackChangesAndChangesOnlyCase < SAFTestCase
     end 
     
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, true, "SA_DISPATCH_ONE",
-               SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
-        d.clusterTrack(resource, false, true, true, false, false, 
-                       false, 0, nil, SAFTestUtils.SA_AIS_ERR_BAD_FLAGS)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession()
+        d.clusterTrack(:SESSION => session, 
+                       :TRACK_CHANGES => true, 
+                       :TRACK_CHANGES_ONLY => true, 
+                       :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_BAD_FLAGS)
         passed()
     end
 end

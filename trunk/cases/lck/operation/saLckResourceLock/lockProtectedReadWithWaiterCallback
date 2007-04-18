@@ -1,0 +1,65 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class LockEXCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        impl = d.getImplementation()
+        cluster = impl.getCluster()
+        if cluster.getNodes().length < 2
+            d.log("Need at least 2 nodes to continue, only have %d" % \
+                       [cluster.getNodes().length])
+        else
+            upNode = nil
+            cluster.getUpNodes().each do |node|
+                if !node.isLocalNode()
+                    upNode = node
+                    break
+                end
+             end
+        end
+        if (upNode == nil)
+            d.log("Need at least one more up node to continue")
+        end
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, true, true, true, true,
+                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
+        d.resourceOpen(:SESSION => session, 
+                       :LOCK_NAME => "LockPRWithWaiterCallback")
+        d.lockSync(:SESSION => session, :LOCK_MODE => 'PR', 
+                   :LOCK_FLAG_NO_QUEUE => true,
+                   :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+
+        d1 = LCKTestDriver.getRandomLongLivedDriver(:NODE => upNode)
+        session1 = d1.createShortLivedSession()
+        d1.init(:SESSION => session1, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d1.resourceOpen(:SESSION => session1, 
+                        :LOCK_NAME => "LockPRWithWaiterCallback")
+        d1.lockSync(:SESSION => session1, :LOCK_MODE => 'EX', 
+                    :LOCK_FLAG_NO_QUEUE => true, 
+                    :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_NOT_QUEUED')
+        sleep(10)
+
+        # !!! We need to wait for this to complete
+        action = d.lockSyncBG(:SESSION => session1, :LOCK_MODE => 'EX',
+                              :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        passed()
+    end
+end
+
+test = LockEXCase.new()
+test.run()
+
+end # module

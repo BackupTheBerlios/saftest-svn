@@ -1,11 +1,11 @@
 #!/usr/bin/ruby
- 
+
 module SAFTest
 
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 require 'SAFTestCase'
 
-lckDir = "%s/cases/lck" %  [ENV['SAFTEST_ROOT']]
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
 $: << lckDir
 require 'LCKTestDriver'
 
@@ -13,12 +13,13 @@ class FinalizeWithoutInitCase < SAFTestCase
     def initialize()
         super()
     end
-    
+
     def run()
-        d = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.finalize(resource, SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
-        d.deleteTestResource(resource)
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.finalize(:SESSION => session, 
+                   :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end
@@ -26,4 +27,4 @@ end
 test = FinalizeWithoutInitCase.new()
 test.run()
 
-end #module
+end # module

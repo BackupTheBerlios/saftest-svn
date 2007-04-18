@@ -93,30 +93,28 @@ class SAFTestReport < SAFTestUtils
 
         IO.foreach(@logfile) do |line|
             # Dec 20 21:49:13 BEGIN main node_get_local
-            if line =~ /^(\S+) (\d+) (\S+) BEGIN (\S+) (.*)/
+            if line =~ /^(\S+) (\d+) (\S+) BEGIN (\S+) (\S+) (.*)/
                 name = $5
                 status = nil
                 caseLines = [line]
                 insertCaseResults(name)
                 next
-            # Dec 20 21:49:13 END main node_get_local status 1 in 0.03 seconds
-            elsif line =~ /^(\S+) (\d+) (\S+) END (\S+) (\S+) status (\d+) .*/
+            # Dec 20 21:49:13 END main node_get_local status 1 FAILED in 0.03 seconds
+            elsif line =~ /^(\S+) (\d+) (\S+) END (\S+) (\S+) status (\d+) (\S+) .*/
                 caseLines << line
                 endName = $5
-                status = $6.to_i
+                status = $7
                 if endName != name
                     raise "Error: name is #{name} but endName is #{endName}"
                 end
                 
-                statusStr = SAFTestUtils.EXIT_STATUS_STRINGS[status]
-                if status == SAFTestUtils.PASSED_EXIT_STATUS
+                if status == "PASSED"
                     @caseResults[name].addPassed()
-                elsif status == SAFTestUtils.SKIPPED_EXIT_STATUS
+                elsif status == "SKIPPED"
                     @caseResults[name].addSkipped()
-                elsif status == SAFTestUtils.NOT_CONFIGURED_EXIT_STATUS
+                elsif status == "NOT_CONFIGURED"
                     @caseResults[name].addNotConfigured()
                 else
-                    # FAILED_EXIT_STATUS or unknown exit status
                     @caseResults[name].addFailed()
                     failedLines.concat(caseLines)
                     failedLines << "\n" 

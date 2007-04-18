@@ -214,23 +214,25 @@ class Command
         # parent
         writeme.close
 
+        print "pid is #{pid}\n"
+
         f = File.open(File.join(@dir, "output"), 'w')
         while readme.gets do
             f.write($_)
             f.flush
             begin
-                Process.waitpid(pid, Process::WNOHANG)
+                mypid, status = Process.waitpid2(pid, 
+                                      Process::WNOHANG | Process::WUNTRACED)
             rescue
             end
         end
-
+    
         begin
-            Process.waitpid(pid, Process::WNOHANG)
-        rescue
+            mypid, status = Process.waitpid2(pid, Process::WUNTRACED)
+            rescue
         end
 
-        @result = ($? >> 8).to_i
-        @result = 0 unless $?
+        @result = status.exitstatus
         f.close
 
         @state = "done"

@@ -10,12 +10,28 @@ $: << lckDir
 require 'LCKTestDriver'
 
 class UnlockEXAsyncLockCase < SAFTestCase
+    @@LOCK_INVOCATION = $$
+
     def initialize()
         super()
     end
 
     def run()
-        failed("need to implement")
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.selectObjectGet(:SESSION => session);
+        d.resourceOpen(:SESSION => session, :LOCK_NAME => "lock1")
+        d.lockAsync(:SESSION => session, :LOCK_MODE => 'EX', 
+                    :INVOCATION => @@LOCK_INVOCATION)
+        d.waitForLockAsyncLockStatus(:SESSION => session, 
+                                     :EXPECTED_INVOCATION => @@LOCK_INVOCATION,
+                                     :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        d.unlockSync(:SESSION => session)
+        d.resourceClose(:SESSION => session)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
+        passed()
     end
 end
 

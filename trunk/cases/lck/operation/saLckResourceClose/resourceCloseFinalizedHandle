@@ -15,14 +15,14 @@ class ResourceCloseFinalizedHandleCase < SAFTestCase
     end
 
     def run()
-        d = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, true, true, true,
-                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d.resourceOpen(resource, "lock1", SAFTestUtils.SA_AIS_OK)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.resourceClose(resource, SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
-        d.deleteTestResource(resource)
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.resourceOpen(:SESSION => session, :LOCK_NAME => "lock1")
+        d.finalize(:SESSION => session)
+        d.resourceClose(:SESSION => session, 
+                        :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

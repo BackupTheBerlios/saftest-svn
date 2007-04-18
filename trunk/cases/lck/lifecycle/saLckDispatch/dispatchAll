@@ -10,49 +10,64 @@ $: << lckDir
 require 'LCKTestDriver'
 
 class DispatchAllCase < SAFTestCase
+    @@INVOCATION = $$
     @@WAITER_SIGNAL = $$
+
     def initialize()
         super()
     end
 
     def run()
-        d1 = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource1 = d1.createShortLivedTestResource()
-        d1.init(resource1, true, true, true, true,
-                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d1.resourceOpen(resource1, "lock1", SAFTestUtils.SA_AIS_OK)
-        d1.lockSync(resource1, 'EX', 0, false, false, true, false, false,
-                    'SA_LCK_LOCK_GRANTED', SAFTestUtils.SA_AIS_OK)
+        d1 = LCKTestDriver.getRandomLongLivedDriver()
+        session1 = d1.createShortLivedSession()
+        d1.init(:SESSION => session1, 
+                :DISPATCH_FLAGS => "SAFTEST_DISPATCH_NONE")
+        d1.selectObjectGet(:SESSION => session1)
+        d1.resourceOpen(:SESSION => session1, :LOCK_NAME => "dpAll")
+        d1.lockSync(:SESSION => session1, :LOCK_MODE => 'EX',
+                    :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
 
-        d2 = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource2 = d2.createShortLivedTestResource()
-        d2.init(resource2, true, true, true, true,
-                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d2.resourceOpen(resource2, "lock1", SAFTestUtils.SA_AIS_OK)
-        d2.lockSync(resource2, 'EX', @@WAITER_SIGNAL,
-                    false, false, true, false, false,
-                    'SA_LCK_LOCK_NOT_QUEUED', SAFTestUtils.SA_AIS_OK)
-        d2.lockSync(resource2, 'EX', @@WAITER_SIGNAL,
-                    false, false, true, false, false,
-                    'SA_LCK_LOCK_NOT_QUEUED', SAFTestUtils.SA_AIS_OK)
+        d2 = LCKTestDriver.getRandomLongLivedDriver(:EXCLUDE_DRIVER_SET => [d1])
+        session2 = d2.createShortLivedSession()
+        d2.init(:SESSION => session2, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d2.resourceOpen(:SESSION => session2, :LOCK_NAME => "dpAll")
+        d2.lockAsync(:SESSION => session2, :LOCK_MODE => 'EX', 
+                     :INVOCATION => @@INVOCATION + 1, 
+                     :WAITER_SIGNAL => @@WAITER_SIGNAL)
 
-        d1.lockGetWaitCount(resource1, 0, 0)
-        d1.dispatch(resource1, "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
+        session3 = d2.createShortLivedSession()
+        d2.init(:SESSION => session3, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d2.resourceOpen(:SESSION => session3, :LOCK_NAME => "dpAll")
+        d2.lockAsync(:SESSION => session3, :LOCK_MODE => 'EX', 
+                     :INVOCATION => @@INVOCATION + 2, 
+                     :WAITER_SIGNAL => @@WAITER_SIGNAL)
 
-        d1.lockGetWaitCount(resource1, @@WAITER_SIGNAL, 2)
+        d1.lockGetWaitCount(:SESSION => session1,
+                            :EXPECTED_LAST_WAITER_SIGNAL => 0, 
+                            :EXPECTED_NOTIFICATION_COUNT => 0) 
+        d1.dispatch(:SESSION => session1, 
+                    :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d1.lockGetWaitCount(:SESSION => session1,
+                            :EXPECTED_LAST_WAITER_SIGNAL => @@WAITER_SIGNAL, 
+                            :EXPECTED_NOTIFICATION_COUNT => 2) 
 
-        d2.resourceClose(resource2, SAFTestUtils.SA_AIS_OK)
-        d2.finalize(resource2, SAFTestUtils.SA_AIS_OK)
-        d2.deleteTestResource(resource2)
+        d2.resourceClose(:SESSION => session2)
+        d2.finalize(:SESSION => session2)
+        d2.deleteSession(:SESSION => session2)
 
-        d1.resourceClose(resource1, SAFTestUtils.SA_AIS_OK)
-        d1.finalize(resource1, SAFTestUtils.SA_AIS_OK)
-        d1.deleteTestResource(resource1)
+        d2.resourceClose(:SESSION => session3)
+        d2.finalize(:SESSION => session3)
+        d2.deleteSession(:SESSION => session3)
+
+        d1.resourceClose(:SESSION => session1)
+        d1.finalize(:SESSION => session1)
+        d1.deleteSession(:SESSION => session1)
         passed()
     end
 end
 
+
 test = DispatchAllCase.new()
 test.run()
 
-end # module
+end #module

@@ -9,35 +9,37 @@ clmDir = "%s/cases/clm" % [ENV['SAFTEST_ROOT']]
 $: << clmDir
 require 'CLMTestDriver'
 
-class DispatchAllCase < SAFTestCase
+class DispatchOneCase < SAFTestCase
+    @@TIMES_TO_RUN = 3
+
     def initialize()
         super()
     end
      
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession(:DISPATCH_FLAGS =>
+                                              "SAFTEST_DISPATCH_NONE")
         invocation = d.generateInvocation()
-        d.init(resource, true, false, "SA_DISPATCH_ONE",
-               SAFTestUtils.SA_AIS_OK)
-        d.clusterNodeGetCBCount(resource, 0)
-        d.clusterNodeGetAsyncWithInvocation(resource, invocation,
-			                    "SA_CLM_LOCAL_NODE_ID",
-                                            nil, SAFTestUtils.SA_AIS_OK)
-        d.clusterNodeGetAsyncWithInvocation(resource, invocation,
-                                            "SA_CLM_LOCAL_NODE_ID",
-                                            nil, SAFTestUtils.SA_AIS_OK)
-        d.dispatch(resource, "SA_DISPATCH_ONE", SAFTestUtils.SA_AIS_OK)
-        d.clusterNodeGetCBCount(resource, 1)
-        d.dispatch(resource, "SA_DISPATCH_ONE", SAFTestUtils.SA_AIS_OK)
-        d.clusterNodeGetCBCount(resource, 2)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d.clusterNodeGetResetCBCount(:SESSION => session)
+        d.clusterNodeGetCBCount(:SESSION => session, :EXPECTED_COUNT => 0)
+        @@TIMES_TO_RUN.times do
+            d.clusterNodeGetAsyncWithInvocation(:SESSION => session,
+                                                :INVOCATION => invocation,
+                                                :NODE_ID => "SA_CLM_LOCAL_NODE_ID")
+        end
+
+        for i in 1..@@TIMES_TO_RUN
+            d.dispatch(:SESSION => session,
+                       :DISPATCH_FLAGS => "SA_DISPATCH_ONE")
+            d.clusterNodeGetCBCount(:SESSION => session,
+                                    :EXPECTED_COUNT => i)
+        end
         passed()
     end
 end
 
-test = DispatchAllCase.new()
+test = DispatchOneCase.new()
 test.run()
 
 end # module

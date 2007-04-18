@@ -15,14 +15,14 @@ class ClusterTrackStopWithoutTrackCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, true, "SA_DISPATCH_ONE",
-               SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
-        d.clusterTrackStop(resource, SAFTestUtils.SA_AIS_ERR_NOT_EXIST)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ONE")
+        d.selectObjectGet(:SESSION => session)
+        d.clusterTrackStop(:SESSION => session,
+                           :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_NOT_EXIST)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

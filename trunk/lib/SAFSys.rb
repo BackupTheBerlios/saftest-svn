@@ -60,8 +60,10 @@ class SAFSys
 
     def simpleHostname()
         name = Socket.gethostname()
-        if name =~ /([A-z0-9]+)\..*/
+        if ((name =~ /([A-z0-9]+)\..*/) != nil )
             return $1
+        else
+            return name
         end
     end
 

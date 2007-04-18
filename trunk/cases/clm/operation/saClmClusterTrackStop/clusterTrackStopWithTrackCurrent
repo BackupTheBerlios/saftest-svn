@@ -15,21 +15,16 @@ class ClusterTrackStopWithTrackCurrentCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        xmlFile = tmpFile("cluster_track")
-        numberOfItems = d.getImplementation().getCluster().getNodes().length
-
-        d.init(resource, true, true, "SA_DISPATCH_ONE",
-               SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
-        d.clusterTrack(resource, true, false, false,
-                             false, false,
-                             false, numberOfItems,
-                             xmlFile, SAFTestUtils.SA_AIS_OK)
-        d.clusterTrackStop(resource, SAFTestUtils.SA_AIS_ERR_NOT_EXIST)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession()
+        validateCluster = d.getImplementation().getCluster()
+        numberOfItems = validateCluster.getNodes().length
+        d.clusterTrackWithNoReformation(:SESSION => session, 
+                                        :TRACK_CURRENT => true,
+                                        :NUMBER_OF_ITEMS => numberOfItems,
+                                        :VALIDATE_CLUSTER => validateCluster)
+        d.clusterTrackStop(:SESSION => session, 
+                           :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_NOT_EXIST)
         passed()
     end
 end

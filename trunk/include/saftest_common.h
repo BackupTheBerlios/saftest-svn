@@ -36,7 +36,6 @@
  *
  **********************************************************************/
 #define BUF_SIZE 2048
-#define RECV_RETRIES 5
 
 #define AIS_B_VERSION_MAJOR 0x01
 #define AIS_B_VERSION_MINOR 0x01

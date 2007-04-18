@@ -1,0 +1,38 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class AsyncOpenCase < SAFTestCase
+    @@INVOCATION = $$
+
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.selectObjectGet(:SESSION => session)
+        d.resourceOpenAsync(:SESSION => session, 
+                            :LOCK_NAME => "ResourceOpenAsync",
+                            :INVOCATION => @@INVOCATION)
+        d.waitForResourceOpenAsyncStatus(:SESSION => session, 
+                                         :EXPECTED_INVOCATION => @@INVOCATION)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
+        passed()
+    end
+end
+
+test = AsyncOpenCase.new()
+test.run()
+
+end # module

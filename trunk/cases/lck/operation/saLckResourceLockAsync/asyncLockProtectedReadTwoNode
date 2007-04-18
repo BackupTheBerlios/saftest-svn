@@ -1,0 +1,69 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class AsyncLockPRCase < SAFTestCase
+    @@INVOCATION = $$
+
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        cluster = d.getImplementation().getCluster()
+        upNode = cluster.getRandomNode(
+            :STATUS => "up",
+            :EXCLUDE_NODE_SET => [cluster.getLocalNode()])
+        if (upNode == nil)
+            skipped("Need at least one more up node to continue")
+        end
+
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.selectObjectGet(:SESSION => session)
+        d.resourceOpen(:SESSION => session, 
+                       :LOCK_NAME => "AsyncLockPRTwoNode")
+        d.lockAsync(:SESSION => session, :LOCK_MODE => 'PR',
+                    :INVOCATION => @@INVOCATION)
+        d.waitForLockAsyncLockStatus(:SESSION => session,
+                                     :EXPECTED_INVOCATION => @@INVOCATION,
+                                     :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+
+        d1 = LCKTestDriver.startNewShortLivedDriver(:NODE => upNode)
+        session1 = d1.createShortLivedSession()
+        d1.init(:SESSION => session1, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.selectObjectGet(:SESSION => session)
+        d1.resourceOpen(:SESSION => session1, 
+                        :LOCK_NAME => "AsyncLockPRTwoNode")
+        d1.lockAsync(:SESSION => session1, :LOCK_MODE => 'PR',
+                     :INVOCATION => @@INVOCATION)
+        d.waitForLockAsyncLockStatus(:SESSION => session,
+                                     :EXPECTED_INVOCATION => @@INVOCATION,
+                                     :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+
+        d.resourceClose(:SESSION => session)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
+
+        d1.resourceClose(:SESSION => session1)
+        d1.finalize(:SESSION => session1)
+        d1.deleteSession(:SESSION => session1)
+        d1.stop()
+
+        passed()
+    end
+end
+
+
+test = AsyncLockPRCase.new()
+test.run()
+
+end #module

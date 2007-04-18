@@ -14,7 +14,7 @@
 <SAFTestCaseList type="final" mode="sequential">
  <SAFTestCase>
   <name>driver_stop_all</name>
-  <cmd>driver/stopLongLivedDrivers</cmd>
+  <cmd>driver/stopAllDrivers</cmd>
   <weight/>
  </SAFTestCase>
 </SAFTestCaseList>

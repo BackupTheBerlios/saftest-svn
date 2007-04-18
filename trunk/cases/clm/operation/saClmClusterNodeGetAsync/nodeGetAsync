@@ -16,8 +16,8 @@ class NodeGetAsyncCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.getRandomLongLivedTestResource()
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession()
         validateNode = nil
 
         nodeIDParam = getParam('node-id')
@@ -31,8 +31,8 @@ class NodeGetAsyncCase < SAFTestCase
             raise "Invalid nodeIDParam #{nodeIDParam}"
         end
 
-        d.clusterNodeGetAsync(resource, nodeID, validateNode,
-                              SAFTestUtils.SA_AIS_OK)
+        d.clusterNodeGetAsync(:SESSION => session, :NODE_ID => nodeID, 
+                              :VALIDATE_NODE => validateNode)
         passed()
     end
 end

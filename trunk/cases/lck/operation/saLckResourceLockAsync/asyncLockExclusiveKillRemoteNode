@@ -1,32 +1,5 @@
 #!/usr/bin/ruby
 
-$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
-require 'SAFTestUtils'
-require 'test/unit'
-
-lckDir = "%s/AIS-lck-%s" % \
-         [ENV['SAFTEST_ROOT'], 
-          SAFTestUtils::SAFTestUtils.getAISLibVersion()]
-$: << lckDir
-
-# This test case acquires a lock on a remote node, then attempts to 
-# acquire it on the local node, which shouldn't succeed until we kill
-# the remote node.
-
-class AsyncLockEXKillRemoteNodeCase < Test::Unit::TestCase
-    require 'LCKTestDriver'
-    @@INVOCATION = $$
-    @@WAITER_SIGNAL = $$ + 1
-    @@LOCK_NAME = 'lock1'
-
-    def test_run()
-        end
-    end
-end
-
-
-#!/usr/bin/ruby
-
 module SAFTest
 
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
@@ -36,70 +9,58 @@ lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
 $: << lckDir
 require 'LCKTestDriver'
 
+# This test case acquires a lock on a remote node, then attempts to 
+# acquire it on the local node, which shouldn't succeed until we kill
+# the remote node.
+
 class AsyncLockEXKillRemoteNodeCase < SAFTestCase
     @@INVOCATION = $$
+    @@LOCK_NAME = 'AsyncLockExclusiveKillRemoteNode'
 
     def initialize()
-        super()
+	super()
     end
 
     def run()
-        #driver1 = LCKTestDriver::LCKTestDriver.new(nil)
-        #impl = driver1.getImplementation()
-        #cluster = impl.getClusterFromCommand()
-        #impl.ensureAllNodesAreUp(cluster)
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        impl = d.getImplementation() 
+        cluster = impl.getCluster()
+        if cluster.getNodes().length < 2   
+            d.log("Need at least 2 nodes to continue, only have %d" % \
+                       [cluster.getNodes().length])
+        else    
+            upNode = nil 
+            cluster.getUpNodes().each do |node|
+                if !node.isLocalNode()    
+                    upNode = node
+                    break 
+                end  
+             end
+        end
+        if (upNode == nil)
+            d.log("Need at least one more node to be up continue")
+        end
+        d1 = LCKTestDriver.startNewShortLivedDriver(:NODE => upNode)
+        session1 = d1.createShortLivedSession()
+        d1.init(:SESSION => session1, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d1.resourceOpen(:SESSION => session1, 
+                        :LOCK_NAME => "AsyncLockExclusiveKillRemoteNode")
+        d1.lockSync(:SESSION => session1, :LOCK_MODE => 'EX',
+                    :LOCK_FLAG_NO_QUEUE => true,
+                    :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
 
-        #if cluster.getNodes().length < 2
-            #driver1.log("Need at least 2 nodes to continue, only have %d" % \
-                       #[cluster.getNodes().length])
-        #else
-            #upNode = nil
-            #cluster.getNodes().each do |node|
-                #if !node.isLocalNode()
-                    #upNode = node
-                    #break
-                #end
-            #end
-            #driver2 = LCKTestDriver::LCKTestDriver.new(upNode) 
-            #driver2.killAllDrivers()
-            #driver2.start()
-            #resource2ID = driver2.createTestResource()
-            #driver2.init(resource2ID, "SA_DISPATCH_ALL",
-                        #SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-            #driver2.selectObjectGet(resource2ID, false,
-                                   #SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-            #driver2.resourceOpen(resource2ID, @@LOCK_NAME,
-                                #SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-            #driver2.lockSync(resource2ID, 'EX', 0,
-                             #false, false, true, false, false,
-                             #'SA_LCK_LOCK_GRANTED',
-                             #SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-            #driver2.lockGetWaitCount(resource2ID, 0, 0)
-                
-            #driver1.killAllDrivers()
-            #driver1.start()
-            #resource1ID = driver1.createTestResource()
-            #driver1.init(resource1ID, "SA_DISPATCH_ALL",
-                        #SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-            #driver1.selectObjectGet(resource1ID, false,
-                                   #SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-            #driver1.resourceOpen(resource1ID, @@LOCK_NAME,
-                                #SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-            #driver1.lockAsync(resource1ID, 'EX', @@INVOCATION, @@WAITER_SIGNAL,
-                              #false, false, false, false,
-                             #SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-            #sleep(3)
-            #driver2.lockGetWaitCount(resource2ID, @@WAITER_SIGNAL, 1)
-            #impl.stopNode(upNode.getName())
-            #sleep(3)
-            #driver1.lockGetAsyncLockStatus(resource1ID, @@INVOCATION,
-                                           #'SA_LCK_LOCK_GRANTED',
-                                           #SAFTestUtils::SAFTestUtils.SA_AIS_OK)
-
-            #driver1.stop()
-            # Don't need to stop driver 2.  It should exit on its own
-            #passed()
-            failed("need to implement")
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.resourceOpen(:SESSION => session, 
+                       :LOCK_NAME => "AsyncLockExclusiveKillRemoteNode")
+        action = d.lockSyncBG(:SESSION => session, :LOCK_MODE => 'EX',
+                              :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        d1.stop()
+        d.waitForLockSyncBG(:ACTION => action)
+        d.resourceClose(:SESSION => session)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
+        passed()
     end
 end
 

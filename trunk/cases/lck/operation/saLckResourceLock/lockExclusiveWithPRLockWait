@@ -1,0 +1,53 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class LockEXCase < SAFTestCase
+    def initialize()
+        super()
+    end
+
+    def run()
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.resourceOpen(:SESSION => session, 
+                       :LOCK_NAME => "LockExclusiveWithPRWait")
+        d.lockSync(:SESSION => session, :LOCK_MODE => 'EX', 
+                   :LOCK_FLAG_NO_QUEUE => true,
+                   :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+
+        d1 = LCKTestDriver.getRandomLongLivedDriver(:EXCLUDE_DRIVER_SET => [d]) 
+        session1 = d1.createShortLivedSession()
+        d1.init(:SESSION => session1, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d1.resourceOpen(:SESSION => session1, 
+                        :LOCK_NAME => "LockExclusiveWithPRWait")
+        action = d1.lockSyncBG(:SESSION => session1, :LOCK_MODE => 'PR', 
+                               :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+
+        d.unlockSync(:SESSION => session)
+
+        d1.waitForLockSyncBG(:SESSION => session1, :ACTION => action)
+                          
+        d.resourceClose(:SESSION => session)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
+
+        d1.resourceClose(:SESSION => session1)
+        d1.finalize(:SESSION => session1)
+        d1.deleteSession(:SESSION => session1)
+
+        passed()
+    end
+end
+test = LockEXCase.new()
+test.run()
+
+end # module

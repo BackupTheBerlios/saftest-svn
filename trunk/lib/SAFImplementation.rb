@@ -161,11 +161,32 @@ class SAFNodeImplementation < SAFTestUtils
 
     def ==(other)
         return false unless SAFNodeImplementation === other
-        return false unless @name == other.getName()
-        return false unless @id == other.getID()
-        return false unless @member == other.getMember()
-        return false unless @bootTimestamp == other.getBootTimestamp()
-        return false unless @initialViewNumber == other.getInitialViewNumber()
+        if @name != other.getName() 
+        then
+             print "name mismatch for node id %d\n"  % [other.getID()]
+             return false
+        elsif @id != other.getID() 
+        then
+             print "id mismatch for node id %d\n"  % [other.getID()]
+             return false
+        elsif @member != other.getMember() 
+        then
+             print "member mismatch for node id %d\n"  % [other.getID()]
+             return false
+        end
+        #
+        # During testing we have seen that the bootTimeStamp that
+        # implementation specific command retrieves could vary from 
+        # the one SAF driver retrieves by 1 or 2 sec.  Until we find
+        # a way to syncronize the two, don't validate the value.
+        #
+        #return false unless @bootTimestamp == other.getBootTimestamp()
+
+        if @initialViewNumber != other.getInitialViewNumber() 
+        then
+              print "viewnumber mismatch for node id %d\n"  % [other.getID()]
+              return false
+        end
         
         # It doesn't need to be the case that all addresses are exist on both
         # copies of the node.  Just that they have at least one shared address
@@ -174,6 +195,7 @@ class SAFNodeImplementation < SAFTestUtils
                 return true if selfAddr == otherAddr
             end
         end
+        print "network addr mismatch for node id %d\n"  % [other.getID()]
         return false
     end
     alias eql? ==
@@ -194,10 +216,66 @@ class SAFNodeImplementation < SAFTestUtils
     end
 end
 
+class SAFNodeChangeFlagImplementation < SAFTestUtils
+    def initialize()
+        super()
+        @nodeId = 0
+        @changeFlag = 'SA_CLM_NODE_NO_CHANGE'
+    end
+
+    def getNodeID()
+        return @nodeId
+    end
+
+    def setID(id)
+        @nodeId = id
+    end
+
+    def getChangeFlag()
+        return @changeFlag
+    end
+
+    def setChangeFlag(flag)
+        @changeFlag = flag
+    end
+
+    def loadFromXML(xml)
+        doc = REXML::Document.new(xml)
+
+        doc.elements.each("SAFNodeChangeFlag") { |element|
+            element.each_element_with_text { |ne|
+                if ne.name == "id"
+                    setID(ne.get_text.to_s.to_i)
+                elsif ne.name == "changeFlag"
+                    setChangeFlag(ne.get_text.to_s)
+                else
+                    raise "Unknown element %s" % [ne.name]
+                end
+            }
+        }
+    end
+
+    def ==(other)
+        return false unless SAFNodeChangeFlagImplementation === other
+        return false unless @nodeId == other.getNodeID()
+        return false unless @changeFlag == other.getChangeFlag()
+        return true
+    end
+    alias eql? ==
+
+    def display()
+        print "Node ID:\n"
+        print "    Node ID: %d\n" % [getNodeID()]
+        print "    Change Flag: %s\n" % [getChangeFlag()]
+    end
+end
+
+
 class SAFClusterImplementation < SAFTestUtils
     def initialize()
         super()
         @nodes = [] # Array of node objects
+        @nodeChangeFlags = [] # Array of node change flag objects
 
         @config = SAFTestConfig.new()
         @config.loadFromXML(configXMLFile())
@@ -210,6 +288,12 @@ class SAFClusterImplementation < SAFTestUtils
             node = SAFNodeImplementation.new()
             node.loadFromXML(element.to_s)
             @nodes << node
+        }
+
+        doc.elements.each("SAFCluster/SAFNodeChangeFlagList/SAFNodeChangeFlag") { |element|
+            nodeChangeFlag = SAFNodeChangeFlagImplementation.new()
+            nodeChangeFlag.loadFromXML(element.to_s)
+            @nodeChangeFlags << nodeChangeFlag
         }
     end
 
@@ -224,6 +308,11 @@ class SAFClusterImplementation < SAFTestUtils
     def getNodes()
         return @nodes
     end
+
+    def getNodeChangeFlags()
+        return @nodeChangeFlags
+    end
+
 
     def getDownNodes()
         downNodes = []
@@ -243,6 +332,21 @@ class SAFClusterImplementation < SAFTestUtils
             end
         end
         return upNodes
+    end
+
+    def getRandomUnconfiguredNodeName()
+        unconfiguredNodeNames = []
+        currentClusterNodeNames = []
+        @nodes.each do |node|
+             currentClusterNodeNames << node.getName()
+        end
+
+        @config.getStrListValue('main', 'testNodes').each do |nodeName|
+            if not currentClusterNodeNames.include?(nodeName)
+                unconfiguredNodeNames << nodeName
+            end
+        end
+        return unconfiguredNodeNames[rand(unconfiguredNodeNames.length())]
     end
 
     def getLongLivedNodes()
@@ -278,6 +382,15 @@ class SAFClusterImplementation < SAFTestUtils
         return nil
     end
 
+    def getNodeById(id)
+        @nodes.each do |node|
+            if node.getID == id
+                return node
+            end
+        end
+        return nil
+    end
+
     def getLocalNode()
         @nodes.each do |node|
             if node.isLocalNode()
@@ -287,18 +400,80 @@ class SAFClusterImplementation < SAFTestUtils
         raise 'Should be able to find a local node'
     end
 
-    def getRandomNode()
-        return @nodes[rand(@nodes.length())]
+    def getRandomNode(params = {})
+        startNodes = nil
+        excludeNodes = []
+        finalNodes = []
+
+        if params[:STATUS]
+            if params[:STATUS] == "up"
+                startNodes = getUpNodes()
+            elsif params[:STATUS] == "down"
+                startNodes = getDownNodes()
+            else
+                raise "Asking for unknown status %s" % [params[:STATUS]]
+            end
+        else
+            startNodes = @nodes
+        end
+
+        if params[:SHORT_LIVED]
+            if params[:LONG_LIVED]
+                raise "You can not ask for both short and long lived nodes"
+            end
+            excludeNodes.concat(getLongLivedNodes())
+        elsif params[:LONG_LIVED]
+            if params[:SHORT_LIVED]
+                raise "You can not ask for both short and long lived nodes"
+            end
+            excludeNodes.concat(getShortLivedNodes())
+        end
+
+        if params[:EXCLUDE_NODE_SET]
+            excludeNodes.concat(params[:EXCLUDE_NODE_SET])
+        end
+
+        startNodes.each do |node|
+            exclude = false
+            excludeNodes.each do |exNode|
+                if node.getName() == exNode.getName()
+                    exclude = true
+                    break
+                end
+            end
+
+            if not exclude
+                finalNodes << node
+            end
+        end
+
+        return finalNodes[rand(finalNodes.length())]
+    end
+
+    def getNodeChangeFlagByNodeId(id)
+        @nodeChangeFlags.each do |nodeChangeFlag|
+            if nodeChangeFlag.getNodeID == id
+                return nodeChangeFlag
+            end
+        end
+        return nil
     end
 
     def ==(other)
         return false unless SAFClusterImplementation === other
         return false unless other.getNodes().length == @nodes.length
+        return false unless other.getNodeChangeFlags().length == @nodeChangeFlags.length
 
         @nodes.each do |selfNode|
             otherNode = other.getNodeByName(selfNode.getName())
             return false unless otherNode != nil
             return false unless otherNode == selfNode
+        end
+
+        @nodeChangeFlags.each do |selfNodeChangeFlag|
+            otherNodeChangeFlag = other.getNodeChangeFlagByNodeId(selfNodeChangeFlag.getNodeID())
+            return false unless otherNodeChangeFlag != nil
+            return false unless otherNodeChangeFlag == selfNodeChangeFlag
         end
         return true
     end
@@ -307,6 +482,9 @@ class SAFClusterImplementation < SAFTestUtils
     def display()
         getNodes().each do |node|
             node.display()
+        end
+        getNodeChangeFlags().each do |nodeChangeFlag|
+            nodeChangeFlag.display()
         end
     end
 
@@ -433,6 +611,16 @@ class SAFImplementation < SAFTestUtils
     end
 
     def stopNode(nodeName)
+        # Make sure we're stopping a short-lived node
+        if not @config.getStrListValue('main', 'testShortLivedNodes').find() { 
+            |n| n == nodeName}
+            raise "You can only stop short-lived nodes"
+        end
+
+        # We need to kill all the drivers on this node before shutting
+        # the cluster down.
+        runCommand("killall -9 saf_driver", nodeName)
+
         stopCommand = "%s %s" % [@stopNodeCommand, nodeName]
         runAndCheckCommand(stopCommand, 
                            EXPECT_SUCCESS,

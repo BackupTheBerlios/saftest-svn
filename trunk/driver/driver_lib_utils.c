@@ -1,4 +1,5 @@
 #include "saftest_common.h"
+#include "saftest_system.h"
 #include "saftest_log.h"
 #include "saftest_driver_lib_utils.h"
 
@@ -69,12 +70,24 @@ saftest_dispatch_flags_from_string(const char *dispatch_flags_str)
 {
     SaDispatchFlagsT flags;
 
+    /* 
+     * This is a sanity check.  These should start at 1, but we just want to
+     * be sure since we will use 0 for the case where there is no automatic
+     * dispatching.
+     */
+    saftest_assert((SAFTEST_DISPATCH_NONE != SA_DISPATCH_ONE) &&
+                   (SAFTEST_DISPATCH_NONE != SA_DISPATCH_ALL) && 
+                   (SAFTEST_DISPATCH_NONE != SA_DISPATCH_BLOCKING),
+                   "Why did this happen?");
+
     if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_ONE")) {
         flags = SA_DISPATCH_ONE;
     } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_ALL")) {
         flags = SA_DISPATCH_ALL;
     } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_BLOCKING")) {
         flags = SA_DISPATCH_BLOCKING;
+    } else if (0 == strcmp(dispatch_flags_str, "SAFTEST_DISPATCH_NONE")) {
+        flags = SAFTEST_DISPATCH_NONE;
     } else if (0 == strcmp(dispatch_flags_str, "SA_DISPATCH_INVALID")) {
         flags = -1;
     } else {
@@ -93,9 +106,43 @@ saftest_dispatch_flags_to_string(SaDispatchFlagsT dispatch_flags)
         return("SA_DISPATCH_ALL");
     } else if (SA_DISPATCH_BLOCKING == dispatch_flags) {
         return("SA_DISPATCH_BLOCKING");
+    } else if (SAFTEST_DISPATCH_NONE == dispatch_flags) {
+        return("SAFTEST_DISPATCH_NONE");
     } else {
         saftest_abort("Unknown dispatch flags %d\n",
                       dispatch_flags);
     }
     return(NULL);
+}
+
+SaTimeT
+saftest_time_from_string(const char *time_str)
+{
+    SaTimeT time;
+
+    if (0 == strcmp(time_str, "SA_TIME_BEGIN")) {
+        time = SA_TIME_BEGIN;
+    } else if (0 == strcmp(time_str, "SA_TIME_END")) {
+        time = SA_TIME_END;
+    } else if (0 == strcmp(time_str, "SA_TIME_UNKNOWN")) {
+        time = SA_TIME_UNKNOWN;
+    } else if (0 == strcmp(time_str, "SA_TIME_ONE_MICROSECOND")) {
+        time = SA_TIME_ONE_MICROSECOND;
+    } else if (0 == strcmp(time_str, "SA_TIME_ONE_MILLISECOND")) {
+        time = SA_TIME_ONE_MILLISECOND;
+    } else if (0 == strcmp(time_str, "SA_TIME_ONE_SECOND")) {
+        time = SA_TIME_ONE_SECOND;
+    } else if (0 == strcmp(time_str, "SA_TIME_ONE_MINUTE")) {
+        time = SA_TIME_ONE_MINUTE;
+    } else if (0 == strcmp(time_str, "SA_TIME_ONE_HOUR")) {
+        time = SA_TIME_ONE_HOUR;
+    } else if (0 == strcmp(time_str, "SA_TIME_ONE_DAY")) {
+        time = SA_TIME_ONE_DAY;
+    } else if (0 == strcmp(time_str, "SA_TIME_MAX")) {
+        time = SA_TIME_MAX;
+    } else {
+        time = SAFTEST_STRTOULL(time_str, NULL, 0);
+    }
+
+    return(time);
 }

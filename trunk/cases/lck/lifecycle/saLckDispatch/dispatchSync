@@ -1,0 +1,56 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class DispatchSyncCase < SAFTestCase
+    @@INVOCATION = $$
+    @@WAITER_SIGNAL = $$
+    def initialize()
+        super()
+    end
+
+    def run()
+        d1 = LCKTestDriver.getRandomLongLivedDriver()
+        session1 = d1.createShortLivedSession()
+        d1.init(:SESSION => session1, 
+                :DISPATCH_FLAGS => "SAFTEST_DISPATCH_NONE")
+        d1.resourceOpen(:SESSION => session1, :LOCK_NAME => "dpSync")
+        d1.lockAsync(:SESSION => session1, :LOCK_MODE => 'EX',
+                     :INVOCATION => @@INVOCATION + 1)
+        d2 = LCKTestDriver.getRandomLongLivedDriver(:EXCLUDE_DRIVER_SET => [d1])
+        session2 = d2.createShortLivedSession()
+        d2.init(:SESSION => session2, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d2.resourceOpen(:SESSION => session2, :LOCK_NAME => "dpSync")
+        action = d2.lockSyncBG(:SESSION => session2, :LOCK_MODE => 'EX',
+                               :WAITER_SIGNAL => @@WAITER_SIGNAL, 
+                               :TIMEOUT => 3000000000,
+                               :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        sleep(2) 
+        d1.dispatch(:SESSION => session1,
+                    :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d1.waitForWaiterNotificationCount(:SESSION => session1,
+                            :EXPECTED_LAST_WAITER_SIGNAL => @@WAITER_SIGNAL,
+                            :EXPECTED_NOTIFICATION_COUNT => 1)
+
+        d2.resourceClose(:SESSION => session2)
+        d2.finalize(:SESSION => session2)
+        d2.deleteSession(:SESSION => session2)
+
+        d1.resourceClose(:SESSION => session1)
+        d1.finalize(:SESSION => session1)
+        d1.deleteSession(:SESSION => session1)
+        passed()
+    end
+end
+
+test = DispatchSyncCase.new()
+test.run()
+
+end # module

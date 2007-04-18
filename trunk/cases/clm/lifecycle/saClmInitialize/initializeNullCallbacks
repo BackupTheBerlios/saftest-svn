@@ -16,15 +16,13 @@ class InitializeNullCallbacksCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.initWithOptions(resource, "SA_DISPATCH_ALL",
-                          SAFTestUtils.SA_AIS_RELEASE_CODE,
-                          SAFTestUtils.SA_AIS_MAJOR_VERSION,
-                          SAFTestUtils.SA_AIS_MINOR_VERSION,
-                          false, true, false,
-                          SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, 
+               :DISPATCH_FLAGS => "SA_DISPATCH_ALL",
+               :NULL_CALLBACKS => true,
+               :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

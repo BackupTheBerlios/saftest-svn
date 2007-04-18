@@ -15,14 +15,14 @@ class SelectionObjectGetFinalizedHandleCase  < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, false, "SA_DISPATCH_ALL",
-               SAFTestUtils.SA_AIS_OK)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, true, 
-                          SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, 
+               :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.finalize(:SESSION => session)
+        d.selectObjectGet(:SESSION => session,
+                          :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_BAD_HANDLE)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

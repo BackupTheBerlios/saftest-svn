@@ -1,0 +1,63 @@
+depot
+    layout_version 1.0
+
+vendor 
+    tag          HP
+    title        Hewlett-Packard Company
+    description  Hewlett-Packard Company
+end
+
+category
+    tag          OrderedApps
+    title        Orderedd Software Applications
+end
+
+product
+    tag            saftest
+    vendor_tag     HP
+    revision       %%SAF_TEST_VERSION%%
+    title          Saftest Test Suite (%%TAG%%)
+    description    Serviceguard String Bean Test Suite
+    machine_type   %%MACHINE_TYPE%%
+    os_name        HP-UX
+    os_release     %%OS_RELEASE%%
+    os_version     *
+    architecture   %%ARCHITECTURE%%
+    category_tag   OrderedApps
+    fileset
+        tag          Saftest
+        title        Saftest Test Suite
+        description  Saftest Test Suite
+        file_permissions -o root -g root
+
+# test cases for saftest
+
+        directory ../bin = /opt/saftest
+        file_permissions  -o root -g root -m 555
+        file *
+
+        directory ../cases = /opt/saftest
+        file_permissions  -o root -g root -m 555
+        file *
+
+        directory ../conf = /opt/saftest
+        file_permissions  -o root -g root -m 555
+        file *
+
+        directory ../implementation = /opt/saftest
+        file_permissions  -o root -g root -m 555
+        file *
+
+        directory ../lib = /opt/saftest
+        file_permissions  -o root -g root -m 555
+        file *
+
+        directory ../xml = /opt/saftest
+        file_permissions  -o root -g root -m 555
+        file *
+
+        directory final = /opt/saftest
+        file_permissions  -o root -g root -m 555
+        file *
+
+end #product

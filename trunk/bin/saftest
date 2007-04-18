@@ -10,6 +10,7 @@ class Log
         print "         stop\n"
         print "         delete\n"
         print "         report\n"
+        print "         status\n"
         exit 1
     end
 
@@ -65,6 +66,7 @@ require 'SAFTestReport'
 $log = Log.new()
 $utils = SAFTestUtils.new()
 $utils.setLogLevel(-1)
+$optionHash = {}
 op = nil
 
 while (true)
@@ -87,13 +89,24 @@ end
 
 if op == 'create'
     nodes = []
+    config = SAFTestConfig.new
     xmlConfig = nil
+    section = nil
+    key = nil
+    value = nil
     while (true)
         opt = ARGV.shift;
 
         if opt == '--from-xml' then
             opt = ARGV.shift
             xmlConfig = opt 
+        elsif opt == '--config-section' then
+            section = ARGV.shift
+        elsif opt == '--config-key' then
+            key = ARGV.shift
+        elsif opt == '--config-value' then
+            value = ARGV.shift
+            config.insertConfigValue(section, key, value)
         elsif opt != nil and opt[1,1] == '-' then
             Log.usage("Invalid option: #{opt}")
         else
@@ -115,7 +128,6 @@ if op == 'create'
     end
 
     if xmlConfig != nil
-        config = SAFTestConfig.new
         config.loadFromXML(xmlConfig)
     else
         implementations = []
@@ -139,7 +151,6 @@ if op == 'create'
             Log.errExit("%s/implementation has no entries" % [$utils.rootDir])
         end
 
-        config = SAFTestConfig.new
         config.promptArray('main', 'testType', 'Test Type', 
                            ['conformance', 'functional'], 'functional')
         if config.getStrValue('main', 'testType') == 'functional'
@@ -157,8 +168,14 @@ if op == 'create'
 
         config.promptArray('main', 'implementation', 'Implementation', 
                            implementations, implementations[0])
-        config.promptInt('main', 'numLongLivedDrivers', 
-                         'Number of Long-Lived Drivers', 1, 10, 3)
+
+        # Always 4 long-lived drivers per node
+        config.insertConfigValue('main', 'numLongLivedDrivers', 4)
+        # For drivers that have threads
+        config.insertConfigValue('main', 'numWorkerThreadsPerDriver', 4)
+        config.insertConfigValue('main', 'numDispatchThreadsPerSpec', 2)
+        config.insertConfigValue('main', 'numSessionsPerThread', 4)
+
         SAFTestUtils.SUPPORTED_SPECS.each do |spec|
             config.promptYesNo('main', "testSpec#{spec}", "Test #{spec}", true)
             if config.valueIsYes('main', "testSpec#{spec}")
@@ -196,7 +213,7 @@ if op == 'create'
     bundle.writeToXML($utils.bundleFile)
 
     # Copy the implementation files into the work directory
-    cmd = "cp -a %s/implementation/%s/* %s" % 
+    cmd = "cp -r %s/implementation/%s/* %s" % 
           [$utils.rootDir, 
            config.getStrValue('main', 'implementation'),
            $utils.implementationDir]
@@ -223,6 +240,13 @@ elsif op == 'stop'
 elsif op == 'report'
     report = SAFTestReport.new()
     report.printReport()
+elsif op == 'status'
+    if not File.exists?($utils.configXMLFile())
+        puts "saftest not configured"
+    else
+        engine = SAFTestEngine::SAFTestEngine.new()
+        engine.displayStatus()
+    end
 elsif op == 'delete'
     cmd = 'rm -rf %s' % [$utils.rootDir]
     if File.exists?($utils.configXMLFile())

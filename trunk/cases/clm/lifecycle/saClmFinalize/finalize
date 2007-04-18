@@ -15,11 +15,11 @@ class FinalizeCase < SAFTestCase
     end
 
     def run()
-        @implementation.getCluster().getNodes().each do |node|
-            CLMTestDriver.getLongLivedDrivers(node).each do |d|
-                d.getAllLongLivedTestResources().each do |r|
-                    d.finalize(r, SAFTestUtils.SA_AIS_OK)
-                    d.deleteTestResource(r)
+        @implementation.getCluster().getLongLivedNodes().each do |node|
+            CLMTestDriver.getLongLivedDrivers(:NODE => node).each do |d|
+                d.getAllLongLivedSessions().each do |r|
+                    d.finalize(:SESSION => r)
+                    d.deleteSession(:SESSION => r)
                 end
             end
         end

@@ -14,17 +14,13 @@ class ClusterTrackChangesStopCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        xmlFile = tmpFile("cluster_track")
-        d.init(resource, true, true, "SA_DISPATCH_ONE",
-               SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
-        d.clusterTrack(resource, false, true, false, false,
-                       true, true, 0, xmlFile, SAFTestUtils.SA_AIS_OK)
-        d.clusterTrackStop(resource, SAFTestUtils.SA_AIS_OK)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession()
+        d.clusterTrackWithNoReformation(:SESSION => session, 
+                                        :TRACK_CHANGES => true, 
+                                        :NULL_NOTIFICATION_BUFFER => true, 
+                                        :NULL_CLUSTER_NOTIFICATION => true)
+        d.clusterTrackStop(:SESSION => session)
         passed()
     end
 end

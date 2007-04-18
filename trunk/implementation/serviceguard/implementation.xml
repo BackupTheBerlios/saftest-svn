@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SAFImplementation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SAFImplementation.xsd" schemaVersion="1"> 
     <DisplayClusterCommand>$SAFTEST_ROOT/implementation/serviceguard/sg_cluster_display.rb</DisplayClusterCommand>
-    <StartNodeCommand>/usr/local/cmcluster/bin/cmrunnode</StartNodeCommand>
-    <StopNodeCommand>/usr/local/cmcluster/bin/cmhaltnode -f</StopNodeCommand>
-    <AddNodeCommand>$SAFTEST_ROOT/implementation/serviceguard/sg_node_add.rb</AddNodeCommand>
-    <DeleteNodeCommand>$SAFTEST_ROOT/implementation/serviceguard/sg_node_delete.rb</DeleteNodeCommand>
-    <DriverLogEnvironmentVariable>CMDLOG_FILE</DriverLogEnvironmentVariable>
+    <StartNodeCommand>cmrunnode</StartNodeCommand>
+    <StopNodeCommand>cmhaltnode -f</StopNodeCommand>
+    <AddNodeCommand>$SAFTEST_ROOT/implementation/serviceguard/cmaddnode.pl</AddNodeCommand>
+    <DeleteNodeCommand>$SAFTEST_ROOT/implementation/serviceguard/cmdelnode.pl</DeleteNodeCommand>
+    <DriverLogEnvironmentVariable>SAF_LOG_FILE</DriverLogEnvironmentVariable>
     <DriverEnvironmentVariableList>
         <DriverEnvironmentVariableEntry>
-            <name>CONTEXT_LOG_LEVEL</name>
-            <value>5</value>
+            <name>SAF_LOG_LEVEL</name>
+            <value>2</value>
         </DriverEnvironmentVariableEntry>
     </DriverEnvironmentVariableList>
 </SAFImplementation>

@@ -16,16 +16,12 @@ class ClusterTrackInvalidNumberOfItemsCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, true, "SA_DISPATCH_ONE",
-               SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
-        d.clusterTrack(resource, true, false, false, false, 
-                       false, false, 0, nil,
-                       SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession()
+        d.clusterTrack(:SESSION => session, 
+                       :TRACK_CURRENT => true, 
+                       :NUMBER_OF_ITEMS => 0,
+                       :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
         passed()
     end
 end

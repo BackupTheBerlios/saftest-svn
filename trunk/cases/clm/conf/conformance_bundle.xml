@@ -1,17 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SAFTestBundle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SAFTestBundle.xsd" schemaVersion="1">
-<SAFTestCaseList type="initial" mode="sequential">
- <SAFTestCase>
-  <name>clm_init_all</name>
-  <cmd>clm/lifecycle/saClmInitialize/initialize</cmd>
-  <weight/>
- </SAFTestCase>
 
- <SAFTestCase>
-  <name>clm_select_obj_get_all</name>
-  <cmd>clm/lifecycle/saClmSelectionObjectGet/selectionObjectGet</cmd>
-  <weight/>
- </SAFTestCase>
+<SAFTestCaseList type="initial" mode="sequential">
 </SAFTestCaseList>
 
 <SAFTestCaseList type="main" mode="sequential">
@@ -136,8 +126,39 @@
  </SAFTestCase>
 
  <SAFTestCase>
+  <name>cluster_track_stop_with_track_changes</name>
+  <cmd>clm/operation/saClmClusterTrackStop/clusterTrackChangesStop</cmd>
+  <weight/>
+ </SAFTestCase>
+
+
+ <SAFTestCase>
   <name>cluster_track_changes_and_changes_only</name>
   <cmd>clm/operation/saClmClusterTrack/clusterTrackChangesAndChangesOnly</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_cluster_track_changes</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrack --track-changes=yes</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_cluster_track_changes_only</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrack --track-changes-only=yes</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_cluster_track_current_and_changes</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrack --track-current=yes  --track-changes=yes</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_cluster_track_current_and_changes_only</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrack --track-current=yes  --track-changes-only=yes</cmd>
   <weight/>
  </SAFTestCase>
 
@@ -206,6 +227,55 @@
   <cmd>clm/operation/saClmClusterNodeGet/nodeGetLocalZeroTimeout</cmd>  
   <weight/>
  </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_cluster_track_changes</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrack --track-changes=yes</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_cluster_track_changes_only</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrack --track-changes-only=yes</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_cluster_track_current_and_changes</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrack --track-current=yes  --track-changes=yes</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_cluster_track_current_and_changes_only</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrack --track-current=yes  --track-changes-only=yes</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_current_and_changes_only</name>
+  <cmd>clm/operation/saClmClusterTrack/clusterTrack --track-current=yes  --track-changes-only=yes</cmd>
+  <weight/>
+ </SAFTestCase>
+  
+ <SAFTestCase>
+  <name>clm_dispatchAll_finalized_handle</name>
+  <cmd>clm/lifecycle/saClmDispatch/dispatchAllFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_dispatchAll_Invalid_Handle</name>
+  <cmd>clm/lifecycle/saClmDispatch/dispatchAllInvalidHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>clm_dispatchAll_Invalid_flags</name>
+  <cmd>clm/lifecycle/saClmDispatch/dispatchAllInvalidFlags</cmd>
+  <weight/>
+ </SAFTestCase>
+
 </SAFTestCaseList>
 
 <SAFTestCaseList type="final" mode="sequential">

@@ -18,24 +18,24 @@ class AsyncUnlockEXAsyncLockCase < SAFTestCase
     end
 
     def run()
-        d = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, true, true, true, true,
-                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
-        d.resourceOpen(resource, "lock1", SAFTestUtils.SA_AIS_OK)
-        d.lockAsync(resource, 'EX', @@LOCK_INVOCATION, false, false, false, 
-                    false, false, SAFTestUtils.SA_AIS_OK)
-        d.waitForLockAsyncLockStatus(resource, @@LOCK_INVOCATION,
-                                     'SA_LCK_LOCK_GRANTED',
-                                     SAFTestUtils.SA_AIS_OK)
-        d.unlockAsync(resource, @@UNLOCK_INVOCATION, SAFTestUtils.SA_AIS_OK)
-        d.waitForLockAsyncUnlockStatus(resource, @@UNLOCK_INVOCATION,
-                                       'SA_LCK_LOCK_NO_MORE',
-                                       SAFTestUtils.SA_AIS_OK)
-        d.resourceClose(resource, SAFTestUtils.SA_AIS_OK)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = LCKTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d.selectObjectGet(:SESSION => session)
+        d.resourceOpen(:SESSION => session, :LOCK_NAME => "lock1")
+        d.lockAsync(:SESSION => session, :LOCK_MODE => 'EX', 
+                    :INVOCATION => @@LOCK_INVOCATION)
+        d.waitForLockAsyncLockStatus(:SESSION => session, 
+                                     :EXPECTED_INVOCATION => @@LOCK_INVOCATION,
+                                     :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+        d.unlockAsync(:SESSION => session, 
+                      :INVOCATION => @@UNLOCK_INVOCATION)
+        d.waitForLockAsyncUnlockStatus(:SESSION => session, 
+                                       :EXPECTED_INVOCATION => @@UNLOCK_INVOCATION,
+                                       :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_NO_MORE')
+        d.resourceClose(:SESSION => session)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

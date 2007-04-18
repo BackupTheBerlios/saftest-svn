@@ -17,5 +17,7 @@
 typedef signed long long sbit64;
 typedef unsigned long long ubit64;
 
+#define SAFTEST_STRTOLL strtoll
+#define SAFTEST_STRTOULL strtoull
 
 #endif /* HPUX_SAFTEST_SYSTEM_H */

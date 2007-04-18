@@ -16,8 +16,8 @@ class NodeGetCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.getRandomLongLivedTestResource()
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession()
         validateNode = nil
 
         nodeIDParam = getParam('node-id')
@@ -31,8 +31,9 @@ class NodeGetCase < SAFTestCase
             raise "Invalid nodeIDParam #{nodeIDParam}"
         end
             
-        d.clusterNodeGet(resource, nodeID, "SA_TIME_MAX", 
-                         false, validateNode, SAFTestUtils.SA_AIS_OK)
+        d.clusterNodeGet(:SESSION => session, :NODE_ID => nodeID, 
+                         :TIMEOUT => "SA_TIME_MAX", 
+                         :VALIDATE_NODE => validateNode)
         passed()
     end
 end

@@ -40,11 +40,9 @@ class SGNetworkInterface < SGBase
     end
 
     def processLine(line)
-        if line =~ /^ip_address:(.+)\|(.*)/ then
-            ip_address, line = $1, $2
-            @map['ip_address'] = $1
-        else
-            processLineToMap(line)
+        #interfaces can be configured with multiple IP's. Parse for only IPv4 A.B.C.D
+        if line =~ /^ip_address:(\d+\.\d+\.\d+\.\d+)/ then
+            @map['ip_address'] = $1 
         end
     end
 
@@ -138,6 +136,9 @@ class SGCluster < SGBase
         print "Incarnation: %s\n" % [@map['incarnation']]
         getNodes().each do |node|
             node.display()
+        end
+        getNodeChangeFlags().each do |nodeChangeFlag|
+            nodeChangeFlag.display()
         end
     end
 

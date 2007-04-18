@@ -15,15 +15,12 @@ class DispatchAllInvalidFlagsCase < SAFTestCase
     end
      
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, false, false, "SA_DISPATCH_INVALID",
-               SAFTestUtils.SA_AIS_OK)
-        d.selectObjectGet(resource, false, SAFTestUtils.SA_AIS_OK)
-        d.dispatch(resource, "SA_DISPATCH_INVALID",
-                   SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession(:DISPATCH_FLAGS =>
+                                              "SAFTEST_DISPATCH_NONE")
+        d.dispatch(:SESSION => session, 
+                   :DISPATCH_FLAGS => "SA_DISPATCH_INVALID",
+                   :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
         passed()
     end
 end

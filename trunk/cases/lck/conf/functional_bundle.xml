@@ -1,25 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SAFTestBundle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SAFTestBundle.xsd" schemaVersion="1">
-<SAFTestCaseList type="initial" mode="sequential">
- <SAFTestCase>
-  <name>lck_init_all</name>
-  <cmd>lck/lifecycle/saLckInitialize/initialize</cmd>
-  <weight/>
- </SAFTestCase>
 
- <SAFTestCase>
-  <name>lck_select_obj_get_all</name>
-  <cmd>lck/lifecycle/saLckSelectionObjectGet/selectionObjectGet</cmd>
-  <weight/>
- </SAFTestCase>
+<SAFTestCaseList type="initial" mode="sequential">
 </SAFTestCaseList>
 
 <SAFTestCaseList type="main" mode="random">
- <SAFTestCase>
-  <name>lck_async_lock_exclusive_kill_remote_node</name>
-  <cmd>lck/operation/saLckResourceLockAsync/asyncLockExclusiveKillRemoteNode</cmd>
+  <SAFTestCase>
+  <name>lck_async_lock_PR_EX</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockProtectedReadExclusive</cmd>
   <weight>1</weight>
  </SAFTestCase>
+  
+  <SAFTestCase>
+  <name>lck_async_lock_EX_PR</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockExclusiveProtectedRead</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+  
+ <SAFTestCase>
+  <name>lck_async_lock_PR_two_node</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockProtectedReadTwoNode</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_protected_read_with_timeout</name>
+  <cmd>lck/operation/saLckResourceLock/lockProtectedReadWithTimeout</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_exclusive_withPendingRequests_KillDriver</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveWithPendingRequestsWithKillDriver</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_exclusive_with_timeout_twice</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveWithTimerTwice</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_exclusive_with_timer_pop_twice</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveWithTimerPopTwice</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_exclusive_async_lock</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockExclusiveAsyncLock</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_exclusive_sync_lock</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockExclusiveSyncLock</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_PR_async_lock</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockProtectedReadAsyncLock</cmd>
+  <weight>1</weight>
+ </SAFTestCase>
+
+  <SAFTestCase>
+  <name>lck_PR_sync_lock</name>
+  <cmd>lck/operation/saLckResourceUnlock/unlockProtectedReadSyncLock</cmd>
+  <weight>1</weight>
+  </SAFTestCase>
+ 
 </SAFTestCaseList>
 
 <SAFTestCaseList type="final" mode="sequential">

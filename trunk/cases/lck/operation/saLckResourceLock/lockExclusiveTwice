@@ -15,28 +15,30 @@ class LockEXCase < SAFTestCase
     end
 
     def run()
-        d1 = LCKTestDriver.startNewShortLivedDriver(nil)
-        resource1 = d1.createShortLivedTestResource()
-        d1.init(resource1, true, true, true, true,
-                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d1.resourceOpen(resource1, "lock1", SAFTestUtils.SA_AIS_OK)
-        d1.lockSync(resource1, 'EX', 0, false, false, true, false, false,
-                   'SA_LCK_LOCK_GRANTED', SAFTestUtils.SA_AIS_OK)
+        d1 = LCKTestDriver.startNewShortLivedDriver()
+        session1 = d1.createShortLivedSession()
+        d1.init(:SESSION => session1, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d1.resourceOpen(:SESSION => session1, 
+                        :LOCK_NAME => "lockExclusiveTwice")
+        d1.lockSync(:SESSION => session1, :LOCK_MODE => 'EX', 
+                    :LOCK_FLAG_NO_QUEUE => true, 
+                    :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED', 
+                    :EXPECTED_RETURN => SAFTestUtils.SA_AIS_OK)
 
-        d2 = LCKTestDriver.getRandomLongLivedDriver(nil)
-        resource2 = d2.createShortLivedTestResource()
-        d2.init(resource2, true, true, true, true,
-                "SA_DISPATCH_ALL", SAFTestUtils.SA_AIS_OK)
-        d2.resourceOpen(resource2, "lock1", SAFTestUtils.SA_AIS_OK)
-        action = d2.lockSyncBG(resource2, 'EX', 0, false, false, 
-                               false, false, false, 'SA_LCK_LOCK_GRANTED')
+        d2 = LCKTestDriver.getRandomLongLivedDriver()
+        session2 = d2.createShortLivedSession()
+        d2.init(:SESSION => session2, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d2.resourceOpen(:SESSION => session2, 
+                        :LOCK_NAME => "lockExclusiveTwice")
+        action = d2.lockSyncBG(:SESSION => session2, :LOCK_MODE => 'EX', 
+                               :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
         sleep(5)
         d1.stop()
-        d2.waitForLockSyncBG(action, SAFTestUtils.SA_AIS_OK)
+        d2.waitForLockSyncBG(:ACTION => action)
 
-        d2.resourceClose(resource2, SAFTestUtils.SA_AIS_OK)
-        d2.finalize(resource2, SAFTestUtils.SA_AIS_OK)
-        d2.deleteTestResource(resource2)
+        d2.resourceClose(:SESSION => session2)
+        d2.finalize(:SESSION => session2)
+        d2.deleteSession(:SESSION => session2)
         passed()
     end
 end

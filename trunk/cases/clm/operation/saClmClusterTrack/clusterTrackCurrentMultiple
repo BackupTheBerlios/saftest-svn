@@ -17,15 +17,16 @@ class ClusterTrackCurrentMultipleCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.getMainLongLivedTestResource()
-        d.clusterTrackResetCBCount(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getMainLongLivedSession()
+        d.clusterTrackResetCBCount(:SESSION => session)
         @@TIMES_TO_RUN.times do 
-            d.clusterTrack(resource, true, false, false, false, 
-                           true, false, 0, nil, 
-                           SAFTestUtils.SA_AIS_OK)
+            d.clusterTrack(:SESSION => session, 
+                           :TRACK_CURRENT => true,
+                           :NULL_NOTIFICATION_BUFFER => true)
         end
-        d.waitForClusterTrackCBCount(resource, @@TIMES_TO_RUN)
+        d.waitForClusterTrackCBCount(:SESSION => session, 
+                                     :EXPECTED_COUNT => @@TIMES_TO_RUN)
         passed()
     end
 end

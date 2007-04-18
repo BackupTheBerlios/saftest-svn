@@ -33,20 +33,11 @@ typedef struct saftest_msg {
     struct saftest_msg *original_request;
 } saftest_msg_t;
 
-/*
- * There are 2 kinds of messages:
- *  - Messages bound for the saftest_driver (the base class, essentially)
- *    level.  In this case destination will be "BASE".
- *  - Messages bound for a specific library.  In this case the destination
- *    will be "LIB", and the LIBRARY_ID will specify which library to route
- *    the message to.
- */
-
-#define SAFTEST_MSG_DESTINATION_MAIN "MAIN"
-#define SAFTEST_MSG_DESTINATION_LIBRARY "LIB"
-
 extern saftest_msg_t *
 saftest_request_msg_create(const char *type);
+
+/* !!! Remove this */
+#define SAFTEST_MSG_DESTINATION_LIBRARY "LIB"
 
 extern saftest_msg_t *
 saftest_reply_msg_create(saftest_msg_t *original_msg,
@@ -93,9 +84,6 @@ saftest_msg_get_sbit64_value(saftest_msg_t *msg, const char *key);
 
 extern ubit64
 saftest_msg_get_ubit64_value(saftest_msg_t *msg, const char *key);
-
-extern const char *
-saftest_msg_get_destination(saftest_msg_t *msg);
 
 extern const char *
 saftest_msg_get_destination_library_id(saftest_msg_t *msg);

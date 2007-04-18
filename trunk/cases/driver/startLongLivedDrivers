@@ -13,9 +13,9 @@ class StartDriversCase < SAFTestCase
     end
 
     def run()
-        @implementation.getCluster().getNodes().each do |node|
+        @implementation.getCluster().getLongLivedNodes().each do |node|
             @config.getIntValue('main', 'numLongLivedDrivers').times do
-                SAFTestDriver.startNewLongLivedDriver(node)
+                SAFTestDriver.startNewLongLivedDriver(:NODE => node)
             end
         end
         passed()

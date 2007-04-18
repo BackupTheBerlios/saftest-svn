@@ -1,0 +1,58 @@
+#!/usr/bin/ruby
+
+module SAFTest
+
+$: << "%s/lib" % [ENV['SAFTEST_ROOT']]
+require 'SAFTestCase'
+
+lckDir = "%s/cases/lck" % [ENV['SAFTEST_ROOT']]
+$: << lckDir
+require 'LCKTestDriver'
+
+class LockEXCase < SAFTestCase
+    def initialize()
+        super()
+    end
+#Tests the lock timer pop logic-- that timer will pop and
+# fail the lock if timeout is exceeded before lock is free
+#
+#First EX is granted
+#Second EX lock is attempted with a 3 second timeout
+#sleep for 5 sec and timer should pop before second
+#lock is granted -- second lock should fail
+
+    def run()
+        d1 = LCKTestDriver.startNewShortLivedDriver()
+        session1 = d1.createShortLivedSession()
+        d1.init(:SESSION => session1, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d1.resourceOpen(:SESSION => session1, 
+                        :LOCK_NAME => "lockExclusiveWithTimerPopTwice")
+        d1.lockSync(:SESSION => session1, :LOCK_MODE => 'EX', 
+                    :LOCK_FLAG_NO_QUEUE => true, 
+                    :EXPECTED_LOCK_STATUS => 'SA_LCK_LOCK_GRANTED')
+
+        d2 = LCKTestDriver.getRandomLongLivedDriver()
+        session2 = d2.createShortLivedSession()
+        d2.init(:SESSION => session2, :DISPATCH_FLAGS => "SA_DISPATCH_ALL")
+        d2.resourceOpen(:SESSION => session2, 
+                        :LOCK_NAME => "lockExclusiveWithTimerPopTwice")
+
+        action = d2.lockSyncBG(:SESSION => session2, :LOCK_MODE => 'EX', 
+                               :TIMEOUT => 1000000000, 
+                               :EXPECTED_LOCK_STATUS => "SA_LCK_LOCK_GRANTED")
+        sleep(5)
+        d1.stop()
+        d2.waitForLockSyncBG(:ACTION => action, 
+                             :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_TIMEOUT)
+
+        d2.resourceClose(:SESSION => session2)
+        d2.finalize(:SESSION => session2)
+        d2.deleteSession(:SESSION => session2)
+        passed()
+    end
+end
+
+test = LockEXCase.new()
+test.run()
+
+end # module

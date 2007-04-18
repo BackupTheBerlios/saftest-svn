@@ -1,17 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SAFTestBundle xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="SAFTestBundle.xsd" schemaVersion="1">
-<SAFTestCaseList type="initial" mode="sequential">
- <SAFTestCase>
-  <name>lck_init_all</name>
-  <cmd>lck/lifecycle/saLckInitialize/initialize</cmd>
-  <weight/>
- </SAFTestCase>
 
- <SAFTestCase>
-  <name>lck_select_obj_get_all</name>
-  <cmd>lck/lifecycle/saLckSelectionObjectGet/selectionObjectGet</cmd>
-  <weight/>
- </SAFTestCase>
+<SAFTestCaseList type="initial" mode="sequential">
 </SAFTestCaseList>
 
 <SAFTestCaseList type="main" mode="sequential">
@@ -76,8 +66,8 @@
  </SAFTestCase>
 
  <SAFTestCase>
-  <name>lck_select_object_get_null_selection_object</name>
-  <cmd>lck/lifecycle/saLckSelectionObjectGet/selectionObjectGetNullSelectionObject</cmd>
+  <name>lck_exclusive_with_timeout</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveWithTimeout</cmd>
   <weight/>
  </SAFTestCase>
 
@@ -160,14 +150,20 @@
  </SAFTestCase>
 
  <SAFTestCase>
-  <name>lck_resource_async_lock_exclusive</name>
-  <cmd>lck/operation/saLckResourceLockAsync/asyncLockExclusive</cmd>
+  <name>lck_resource_PR_lock_Wait</name>
+  <cmd>lck/operation/saLckResourceLock/lockExclusiveWithPRLockWait</cmd>
   <weight/>
  </SAFTestCase>
 
  <SAFTestCase>
-  <name>lck_resource_unlock_exclusive_async_lock</name>
-  <cmd>lck/operation/saLckResourceUnlock/unlockExclusiveAsyncLock</cmd>
+  <name>lck_resource_open_async</name>
+  <cmd>lck/operation/saLckResourceLockAsync/resourceOpenAsync</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_resource_async_lock_exclusive</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockExclusive</cmd>
   <weight/>
  </SAFTestCase>
 
@@ -208,8 +204,86 @@
  </SAFTestCase>
 
  <SAFTestCase>
-  <name>lck_unlock_exlusive_async_lock</name>
+  <name>lck_async_unlock_exlusive_async_lock</name>
   <cmd>lck/operation/saLckResourceUnlockAsync/asyncUnlockExclusiveAsyncLock</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_async_unlock_protected_read_async_lock</name>
+  <cmd>lck/operation/saLckResourceUnlockAsync/asyncUnlockProtectedReadAsyncLock</cmd>
+  <weight/>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_dispatch_all_finalized_handle</name>
+  <cmd>lck/lifecycle/saLckDispatch/dispatchAllFinalizedHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_dispatch_all_Invalid_Handle</name>
+  <cmd>lck/lifecycle/saLckDispatch/dispatchAllInvalidHandle</cmd>
+  <weight/>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_dispatch_all_Invalid_flags</name>
+  <cmd>lck/lifecycle/saLckDispatch/dispatchAllInvalidFlags</cmd>
+  <weight/>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_dispatchAll</name>
+  <cmd>lck/lifecycle/saLckDispatch/dispatchAll</cmd>
+  <weight/>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_dispatchSync</name>
+  <cmd>lck/lifecycle/saLckDispatch/dispatchSync</cmd>
+  <weight/>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_dispatchOne</name>
+  <cmd>lck/lifecycle/saLckDispatch/dispatchOne</cmd>
+  <weight/>
+ </SAFTestCase>
+ 
+ <SAFTestCase>
+  <name>lck_dispatchBlocking</name>
+  <cmd>lck/lifecycle/saLckDispatch/dispatchBlocking</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_asyncLock_Exclusive_UnlockAsync</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockExclusiveUnlockAsync</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>asyncLock_ProtectedRead_UnlockAsync</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockProtectedUnlockAsync</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>asyncLock_exclusive_kill_remote_node</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockExclusiveKillRemoteNode</cmd>
+  <weight/>
+ </SAFTestCase>
+
+ <SAFTestCase>
+  <name>lck_async_lock_PR_EX</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockProtectedReadExclusive</cmd>
+  <weight/>
+ </SAFTestCase>
+
+  <SAFTestCase>
+  <name>lck_async_lock_EX_PR</name>
+  <cmd>lck/operation/saLckResourceLockAsync/asyncLockExclusiveProtectedRead</cmd>
   <weight/>
  </SAFTestCase>
 

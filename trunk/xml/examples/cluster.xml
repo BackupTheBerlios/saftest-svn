@@ -30,4 +30,14 @@
             <initialViewNumber>0</initialViewNumber>
         </SAFNode>
     </SAFNodeList>
+    <SAFNodeChangeFlagList>
+        <SAFNodeChangeFlag>
+            <id>1</id>
+            <changeFlag>SA_CLM_NODE_LEFT</changeFlag>
+        </SAFNodeChangeFlag>
+        <SAFNodeChangeFlag>
+            <id>2</id>
+            <changeFlag>SA_CLM_NODE_NO_CHANGE</changeFlag>
+        </SAFNodeChangeFlag>
+    </SAFNodeChangeFlagList>
 </SAFCluster>

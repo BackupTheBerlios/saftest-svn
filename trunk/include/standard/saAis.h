@@ -1,10 +1,33 @@
-
-/*
-
-  Header file of SA Forum AIS APIs (SAI-AIS-B.01.00.09)
-  compiled on 21SEP2004 by sayandeb.saha@motorola.com.
-
-*/
+/*******************************************************************************
+**
+** FILE:
+**   SaAis.h
+**
+** DESCRIPTION: 
+**   This file contains the prototypes and type definitions required by all
+**   Service Availability(TM) Forum's AIS services. 
+**   
+** SPECIFICATION VERSION:
+**   SAI-Overview-B.02.01
+**
+** DATE: 
+**   Fri  Nov   18  2005  
+**
+** LEGAL:
+**   OWNERSHIP OF SPECIFICATION AND COPYRIGHTS. 
+**   The Specification and all worldwide copyrights therein are
+**   the exclusive property of Licensor.  You may not remove, obscure, or
+**   alter any copyright or other proprietary rights notices that are in or
+**   on the copy of the Specification you download.  You must reproduce all
+**   such notices on all copies of the Specification you make.  Licensor
+**   may make changes to the Specification, or to items referenced therein,
+**   at any time without notice.  Licensor is not obligated to support or
+**   update the Specification. 
+**   
+**   Copyright(c) 2005, Service Availability(TM) Forum. All rights
+**   reserved. 
+**
+*******************************************************************************/
 
 #ifndef _SA_AIS_H
 #define _SA_AIS_H
@@ -27,14 +50,28 @@ typedef unsigned short        SaUint16T;
 typedef unsigned long         SaUint32T;
 typedef unsigned long long    SaUint64T;
 
+/** Types used by the NTF/IMMS service **/
+typedef float                 SaFloatT;
+typedef double                SaDoubleT;
+typedef char*                 SaStringT;
+
+
 typedef SaInt64T              SaTimeT;
 typedef SaUint64T             SaInvocationT;
 typedef SaUint64T             SaSizeT;
 typedef SaUint64T             SaOffsetT;
 typedef SaUint64T             SaSelectionObjectT;
-typedef SaUint64T             SaNtfIdentifierT;
 
-/* SAFTest: All of these SA_TIME_* macros were changed to append "LL" */
+typedef struct {				
+   SaSizeT   bufferSize;
+   SaUint8T  *bufferAddr;
+} SaAnyT;
+
+/*
+ * I added the "LL" to these to work around compiler warnings.  SAF already
+ * has the errata and sayan is working on fixing this in the published header
+ * files.
+ */
 #define SA_TIME_END              0x7FFFFFFFFFFFFFFFLL
 #define SA_TIME_BEGIN            0x0LL
 #define SA_TIME_UNKNOWN          0x8000000000000000LL
@@ -97,8 +134,24 @@ typedef enum {
    SA_AIS_ERR_QUEUE_NOT_AVAILABLE = 24,
    SA_AIS_ERR_BAD_FLAGS = 25,
    SA_AIS_ERR_TOO_BIG = 26,
-   SA_AIS_ERR_NO_SECTIONS = 27
+   SA_AIS_ERR_NO_SECTIONS = 27,
+   SA_AIS_ERR_NO_OP = 28,          
+   SA_AIS_ERR_REPAIR_PENDING = 29
 } SaAisErrorT;
+
+typedef enum {
+ SA_SVC_HPI  =  1,
+ SA_SVC_AMF  =  2,
+ SA_SVC_CLM  =  3,
+ SA_SVC_CKPT =  4,
+ SA_SVC_EVT  =  5,
+ SA_SVC_LCK  =  6,
+ SA_SVC_MSG  =  7,
+ SA_SCV_LOG  =  8,
+ SA_SVC_NTF  =  9,
+ SA_SVC_IMMS = 10
+} SaServicesT;
+
 
 #ifdef  __cplusplus
 }

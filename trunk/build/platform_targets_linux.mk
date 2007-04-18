@@ -13,9 +13,9 @@ RPM_DEFINES=--define 'saftest_version $(SAFTEST_VERSION)' \
             --define 'rpm_arch $(PKG_ARCH)' \
             --define 'distro $(DISTRO)' \
             --define '_topdir $(SAFTEST)' \
-            --define 'buildobjdir $(OBJDIR)'
+            --define 'buildobjdir $(SAF_OBJDIR)'
 
-saftestrpm: $(FINAL_OBJDIR)/saftest-$(SAFTEST_VERSION)-$(SAFTEST_RELEASE).$(RPM_ARCH).rpm
+saftestrpm: $(FINAL SAF_OBJDIR)/saftest-$(SAFTEST_VERSION)-$(SAFTEST_RELEASE).$(RPM_ARCH).rpm
 
-$(FINAL_OBJDIR)/saftest-$(SAFTEST_VERSION)-$(SAFTEST_RELEASE).$(RPM_ARCH).rpm: build/linux/rpm/saftest.spec saftest
+$(FINAL SAF_OBJDIR)/saftest-$(SAFTEST_VERSION)-$(SAFTEST_RELEASE).$(RPM_ARCH).rpm: build/linux/rpm/saftest.spec saftest
 	$(RPMCMD) -bb --quiet $(rpm_target) $(RPM_DEFINES) $<

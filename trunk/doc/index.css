@@ -1,7 +1,0 @@
-div.feature {border: 1px gray dashed; 
-             padding: .5em; 
-             margin: 1em;
-             background-color: #efefff; }
-div.feature #title {font-style: bold; font-size: 110%; }
-div.feature #description {font-style: bold; font-size: 90%; }
-div.feature #url {margin: 0; margin-left: 1em;}

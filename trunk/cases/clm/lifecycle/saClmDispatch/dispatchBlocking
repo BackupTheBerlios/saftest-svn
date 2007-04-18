@@ -10,24 +10,32 @@ $: << clmDir
 require 'CLMTestDriver'
 
 class DispatchBlockingCase < SAFTestCase
+    @@TIMES_TO_RUN = 6
+
     def initialize()
         super()
     end
      
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
+        # The threads should already be sitting in DISPATCH_BLOCKING for
+        # the global session
+        d = CLMTestDriver.getRandomLongLivedDriver(:THREADED => true)
+        session = d.getRandomLongLivedSession(:GLOBAL => true)
         invocation = d.generateInvocation()
-        d.init(resource, true, false, "SA_DISPATCH_BLOCKING",
-               SAFTestUtils.SA_AIS_OK)
-        d.clusterNodeGetCBCount(resource, 0)
-        d.clusterNodeGetAsyncWithInvocation(resource, invocation,
-                                            "SA_CLM_LOCAL_NODE_ID",
-                                            nil, SAFTestUtils.SA_AIS_OK)
-        d.clusterNodeGetAsyncWithInvocation(resource, invocation,
-                                            "SA_CLM_LOCAL_NODE_ID",
-                                            nil, SAFTestUtils.SA_AIS_OK)
-        d.waitForClusterNodeGetCBCount(resource, 2)
+        thread1 = d.getRandomWorkerThread()
+        thread2 = d.getRandomWorkerThread(:THREAD_EXCLUDE_SET => [thread1])
+        threadArray = [thread1, thread2]
+        d.clusterNodeGetResetCBCount(:SESSION => session)
+        d.clusterNodeGetCBCount(:SESSION => session, :EXPECTED_COUNT => 0)
+        for i in 1..@@TIMES_TO_RUN
+            d.clusterNodeGetAsyncWithInvocation(:SESSION => session, 
+                                                :INVOCATION => invocation,
+                                                :NODE_ID => 
+                                                    "SA_CLM_LOCAL_NODE_ID",
+                                                :THREAD => threadArray[i % 2])
+        end
+        d.waitForClusterNodeGetCBCount(:SESSION => session, 
+                                       :EXPECTED_COUNT => @@TIMES_TO_RUN)
         passed()
     end
 end

@@ -17,12 +17,13 @@ class NodeGetLocalNullClusterNodeCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.getRandomLongLivedSession()
         nodeID = "SA_CLM_LOCAL_NODE_ID"
-        d.clusterNodeGet(resource, nodeID, "SA_TIME_MAX", true,
-                         nil, SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
-        d.deleteTestResource(resource)
+        d.clusterNodeGet(:SESSION => session,
+                         :NODE_ID => "SA_CLM_LOCAL_NODE_ID", 
+                         :NULL_CLUSTER_NODE => true,
+                         :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_INVALID_PARAM)
         passed()
     end
 end

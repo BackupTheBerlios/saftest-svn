@@ -16,14 +16,18 @@ class NodeGetAsyncLocalNoCallbackCase < SAFTestCase
     end
 
     def run()
-        d = CLMTestDriver.getRandomLongLivedDriver(nil)
-        resource = d.createShortLivedTestResource()
-        d.init(resource, false, false, "SA_DISPATCH_ONE", 
-               SAFTestUtils.SA_AIS_OK)
-        d.clusterNodeGetAsync(resource, "SA_CLM_LOCAL_NODE_ID", nil,
-                              SAFTestUtils.SA_AIS_ERR_INIT)
-        d.finalize(resource, SAFTestUtils.SA_AIS_OK)
-        d.deleteTestResource(resource)
+        d = CLMTestDriver.getRandomLongLivedDriver()
+        session = d.createShortLivedSession()
+        d.init(:SESSION => session, 
+               :NO_CLUSTER_NODE_GET_CB => true, 
+               :NO_CLUSTER_TRACK_CB => true, 
+               :DISPATCH_FLAGS => "SA_DISPATCH_ONE", 
+               :EXPECTED_RETURN => SAFTestUtils.SA_AIS_OK)
+        d.clusterNodeGetAsync(:SESSION => session, 
+                              :NODE_ID => "SA_CLM_LOCAL_NODE_ID",
+                              :EXPECTED_RETURN => SAFTestUtils.SA_AIS_ERR_INIT)
+        d.finalize(:SESSION => session)
+        d.deleteSession(:SESSION => session)
         passed()
     end
 end

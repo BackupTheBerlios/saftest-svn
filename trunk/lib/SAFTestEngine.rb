@@ -1,6 +1,8 @@
 module SAFTestEngine
 
 require 'SAFTestUtils'
+require 'rexml/document'
+require 'parsedate'
 
 $: << "%s/lib" % [ENV['SAFTEST_ROOT']]
 
@@ -10,6 +12,7 @@ class SAFTestEngine < SAFTest::SAFTestUtils
     @@RUNNING_MAIN_CASES = 'RUNNING_MAIN_CASES'
     @@RUNNING_FINAL_CASES = 'RUNNING_FINAL_CASES'
     @@HALTING = 'HALTING'
+    @@COMPLETED = 'COMPLETED'
 
     def initialize()
         super()
@@ -18,6 +21,7 @@ class SAFTestEngine < SAFTest::SAFTestUtils
         @bundle = SAFTestBundle.new(bundleFile())
         @cases = @bundle.cases()
         @pidfile = "%s/engine.pid" % [runDir()]
+        @statusFile = "%s/engine.status" % [runDir()]
         @logfile = "%s/%s.log" % [logDir(), 
                                  @config.getStrValue("main", "testType")]
         @needToHalt = false
@@ -39,9 +43,12 @@ class SAFTestEngine < SAFTest::SAFTestUtils
 
     def setupMainTestCases()
         @cases['main'].each do |testCase|
-            tmpArray = Array.new(testCase.weight, testCase)
-            tmpArray.each do |tmpCase|
-                @weightedCaseArray << tmpCase
+            # If weight is 0 then the case is disabled
+            if testCase.weight > 0
+                tmpArray = Array.new(testCase.weight, testCase)
+                tmpArray.each do |tmpCase|
+                    @weightedCaseArray << tmpCase
+                end
             end
         end
     end
@@ -123,21 +130,107 @@ class SAFTestEngine < SAFTest::SAFTestUtils
         end
     end
 
+    def writeStatus(currentCase)
+        f = File.new(@statusFile, "w")
+        f.puts "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        f.puts "<SAFTestStatus " + \
+              " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " + \
+              " xsi:noNamespaceSchemaLocation=\"SAFTestStatus.xsd\" " + \
+              " schemaVersion=\"1\">\n"
+
+        f.puts " <SAFTestState>%s</SAFTestState>\n" % [@state]
+        f.puts " <SAFTestStartTime>%s</SAFTestStartTime>\n" % [@testStartTime.to_s]
+        if currentCase == nil
+            f.puts " <SAFTestEndTime>%s</SAFTestEndTime>" % [Time.now().to_s]
+        else
+            f.puts " <SAFTestCurrentTestCase>\n"
+            f.puts "  <name>#{currentCase.name}</name>\n"
+            f.puts "  <startTime>%s</startTime>\n" % [Time.now().to_s]
+            f.puts " </SAFTestCurrentTestCase>\n"
+        end
+        f.puts "</SAFTestStatus>\n"
+        f.close()
+    end
+
+    def displayStatus()
+        file = open(File.expand_path(@statusFile), 'r')
+        doc = REXML::Document.new(file)
+
+        now = Time.now()
+        state = nil
+        startTime = nil
+        endTime = nil
+        currentCaseName = nil
+        currentCaseStartTime = nil
+        doc.elements.each("SAFTestStatus") {
+            |statusElement|
+            statusElement.each_element_with_text { |e|
+                if e.name == "SAFTestState"
+                    state = e.get_text.to_s
+                elsif e.name == "SAFTestStartTime"
+                    startTime = e.get_text.to_s
+                elsif e.name == "SAFTestEndTime"
+                    endTime = e.get_text.to_s
+                elsif e.name == "SAFTestCurrentTestCase"
+                    e.each_element_with_text { |caseElement|
+                        if caseElement.name == "name"
+                            currentCaseName = caseElement.get_text.to_s
+                        elsif caseElement.name == "startTime"
+                            currentCaseStartTime = caseElement.get_text.to_s
+                        else
+                            raise "Unknown element %s" % [caseElement.name]
+                        end
+                    }
+                else
+                    raise "Unknown element %s" % [e.name]
+                end
+            }
+        }
+        if endTime != nil
+            if state != @@COMPLETED
+                raise "endTime is non-null only if state is COMPLETED"
+            end
+            testDuration = Time.local(*ParseDate::parsedate(endTime)) - 
+                           Time.local(*ParseDate::parsedate(startTime))
+            durationStr = formatSeconds(testDuration.to_s.to_i)
+            puts "saftest %s %s in %s" % \
+                [@config.getStrValue("main", "testType"), state, durationStr]
+        else
+            testDuration = now - Time.local(*ParseDate::parsedate(startTime))
+            durationStr = formatSeconds(testDuration.to_s.to_i)
+            caseDuration = 
+                now - Time.local(*ParseDate::parsedate(currentCaseStartTime))
+            caseDurationStr = formatSeconds(caseDuration.to_s.to_i)
+            puts "saftest %s %s running %s" % \
+                [@config.getStrValue("main", "testType"), state, durationStr]
+            puts "Current Case: %s running %s" % \
+                [currentCaseName, caseDurationStr]
+        end
+    end
+
     def runTestCase(testCase, testPhase, node)
+        # These test cases are disabled if weight is 0 
+        if not testCase.weight > 0
+            return SAFTest::SAFTestUtils.NOT_CONFIGURED_EXIT_STATUS
+        end
+
         nodeLog = ""
         if node != nil
             nodeLog = " on #{node}"
         end
 
-        log("BEGIN #{testPhase} #{testCase.name}#{nodeLog}")
-
+        log("BEGIN #{testPhase} #{testCase.name}#{nodeLog} " + 
+                "($SAFTEST_ROOT/cases/%s) " % [testCase.command])
         startTime = Time.now()
+        writeStatus(testCase)
         exitCode = testCase.run(node)
         endTime = Time.now()
+       
+        statusStr = SAFTest::SAFTestUtils.EXIT_STATUS_STRINGS[exitCode] 
 
         elapsedTime = ((endTime - startTime).to_f).to_s
         log("END #{testPhase} #{testCase.name}#{nodeLog} " + 
-            "status #{exitCode} in #{elapsedTime} seconds\n")
+            "status #{exitCode} %s in #{elapsedTime} seconds\n" % [statusStr])
         return exitCode
     end
 
@@ -170,8 +263,10 @@ class SAFTestEngine < SAFTest::SAFTestUtils
             exitCode = runTestCase(testCase, 'final', nil)
         end
 
+        @state = @@COMPLETED
         @testRealEndTime = Time.now()
         elapsedTime = (@testRealEndTime - @testStartTime).to_i
+        writeStatus(nil)
         log("FINISHED in " + formatSeconds(elapsedTime))
     end
 
